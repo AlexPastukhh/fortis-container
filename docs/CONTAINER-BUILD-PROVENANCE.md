@@ -190,3 +190,41 @@ Two PowerShell `foreach { ... } | Format-Table` statements then failed to parse 
 - Current root `.dockerignore`: not found. The historical BuildKit log says it loaded a 2-byte `.dockerignore`; this discrepancy remains unresolved and the original build context is still not proven.
 
 No backup file contents were read or changed. No files were copied, moved, deleted or edited on the Windows host. A corrected read-only inventory is still required to establish snapshot contents and compare historical Dockerfile/build-log copies.
+
+
+## 11. Complete Windows backup inventory — 2026-11-04
+
+The corrected read-only PowerShell inventory completed successfully. It enumerated 85 files across the eight snapshot directories (the first access snapshot is empty). Snapshot counts and rounded sizes:
+
+| Snapshot | Files | Total |
+|---|---:|---:|
+| `access-20261010T111644398Z` | 0 | 0 MB |
+| `access-20261010T111717413Z` | 9 | 0.03 MB |
+| `access-20261010T111828502Z` | 9 | 0.03 MB |
+| `access-20261010T112024336Z` | 9 | 0.03 MB |
+| `access-20261010T112331268Z` | 9 | 0.03 MB |
+| `docs-centralization-20261010` | 46 | 0.31 MB |
+| `retired-initializer-20261011` | 1 | 0 MB |
+| `startup-saved-key-20261010T115550Z` | 2 | 0 MB |
+
+### Build-related files and hashes
+
+- The only file matching the backup inventory's Dockerfile pattern is `docs-centralization-20261010/originals/runtime/repo-mode/Dockerfile`.
+- Its SHA-256 is `1717E364B2F5CD92F4C6CABB039D4272598FE573B5E6CD9CFE7357A0ABD4FA0B`, exactly matching the current Windows Dockerfile and the Tunnel historical copy.
+- No `build.log`, `.dockerignore`, Compose YAML or other Dockerfile candidate was found in the eight backup snapshots under the inventory patterns.
+- This establishes that the scanned backup set contains one matching archived Dockerfile, not which directory was used as the original Docker build context. The original 2-byte `.dockerignore` discrepancy remains unresolved.
+
+### Source and documentation candidates found
+
+The four non-empty `access-*` snapshots contain repeated copies of these launcher/bridge/probe files: `check-controls.ps1`, `check-presentation.mjs`, `configure-tunnel.ps1`, `control.ps1`, `fortis-mcp-bridge.mjs`, `probe.mjs`, and `run-tunnel.ps1`. The final access snapshot additionally contains `bridge-before-worktree-guidance.mjs`. The displayed sizes and modification timestamps match across repeated copies, but hashes were not computed for these files; byte identity is therefore not established.
+
+The `docs-centralization-20261010` snapshot contains archived documentation under `originals/history/`, host launcher files under `originals/runtime/host/`, and a preserved Repo Mode source/documentation set under `originals/runtime/repo-mode/`. That Repo Mode set includes the single Dockerfile above, `fortis-mcp-bridge.mjs`, `probe.mjs`, PowerShell launch/control scripts, schema files and `workspace-config.example.json`. These are archived originals under a backup directory, not a current active build context.
+
+The remaining snapshots contain one `configure-tunnel.ps1` in `retired-initializer-20261011` and one `run-tunnel.ps1` in `startup-saved-key-20261010T115550Z`; the other file in the latter snapshot was outside the candidate-name filter.
+
+### What this does and does not establish
+
+- The backup inventory is complete at the directory/file-count level for the eight snapshots, and the relevant candidate filenames/sizes/timestamps were listed.
+- Only the archived Dockerfile was hashed. The bridge, launchers, probe scripts, schema/configuration files and historical documentation have not yet been content-compared.
+- The backup contents were not modified, copied into a repository, or deleted.
+- Do not import the whole backup tree into Git. First review the small set of candidate source/documentation files, compare them with the current Tunnel and Fortis Container copies, and screen configuration/access artifacts before deciding what belongs in version control.
