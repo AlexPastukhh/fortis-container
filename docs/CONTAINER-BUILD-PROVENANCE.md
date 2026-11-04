@@ -228,3 +228,24 @@ The remaining snapshots contain one `configure-tunnel.ps1` in `retired-initializ
 - Only the archived Dockerfile was hashed. The bridge, launchers, probe scripts, schema/configuration files and historical documentation have not yet been content-compared.
 - The backup contents were not modified, copied into a repository, or deleted.
 - Do not import the whole backup tree into Git. First review the small set of candidate source/documentation files, compare them with the current Tunnel and Fortis Container copies, and screen configuration/access artifacts before deciding what belongs in version control.
+
+
+## 12. Current Tunnel Repo Mode hash baseline — 2026-11-04
+
+Read-only SHA-256 values from the current checkout at `/workspace/repos/tunnel/runtime/repo-mode`. These are comparison anchors for the Windows backup files; they do not prove that the backup copies are identical until their own hashes are collected.
+
+| File | SHA-256 |
+|---|---|
+| `Dockerfile` | `1717e364b2f5cd92f4c6cabb039d4272598fe573b5e6cd9cfe7357a0abd4fa0b` |
+| `Fortis-Repo-Control.cmd` | `bb1d002bde31aae23e9f882e2ac343122ada0dd36c0cba3743867b5453c95389` |
+| `check-controls.ps1` | `20eae01d8ed89d5352203b93e67ab012a158d5104ed7419a7510bbd53edcf869` |
+| `check-presentation.mjs` | `a1f2176170863bb01cc67d1eae5eeef266fcbd9fe4d2c80703b5db8ce31ace9f` |
+| `check-schemas.mjs` | `5d6a589bb749b6c498657aff445b2c77f9af10fa6815edbd0e3002dddd7ebcc2` |
+| `control.ps1` | `e80e209b4758b194d2bcc7dcafdfb83d296289e29a543f192e6726538641ae34` |
+| `expected-schemas.json` | `db4dc0e7d0811a93994a1f8e208daac6dfdb6a4d32cf115f31ed7077ad3249ef` |
+| `fortis-mcp-bridge.mjs` | `863fd54cf49995adc94d9b5d41b00f36d8872d89d32d1864c0ce4fe405caefca` |
+| `probe.mjs` | `f300ef82966ac0b12a981143d3f8ae4062f129699ab6c6e3234a790c2b747105` |
+| `run-tunnel.ps1` | `3877266c3c97becc82045be16d994981eb4f8973353b285236df9caac158a5a3` |
+| `workspace-config.example.json` | `6e153483baf9021a74353cca3443d33ad0d38a949e3ec8488eeb9a85fa2515fc` |
+
+`configure-tunnel.ps1` and `bridge-before-worktree-guidance.mjs` were not present in the current `runtime/repo-mode` directory. Their backup copies remain historical candidates pending content/hash review. No source file was changed by this hash collection.
