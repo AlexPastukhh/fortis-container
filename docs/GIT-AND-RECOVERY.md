@@ -17,7 +17,7 @@ Windows clones are separate directories. The documented Tunnel / Script Center d
 | `script-control-center` | `main` / `8fc2731` | 2 modified/staged entries, 44 untracked; second feature worktree |
 | `rd-graphs` | `main` / `176ce44` | 58 modified/staged entries, 325 untracked, one deletion |
 | `fortis-approvals` | `main` / no commit | Local Git initialized; 204 non-ignored untracked files; canonical development source owner-approved; no remote |
-| `fortis-container` | `main` / no commit | Local Git initialized; 14 untracked files; no remote |
+| `fortis-container` | `main` / `2119ccb` | First documentation-baseline commit; clean immediately after commit; no remote |
 
 Never use `reset --hard`, `git clean`, broad stash, force-push or mass checkout to make these trees appear clean. Review only the files needed for the task. Do not commit unrelated work.
 
@@ -85,7 +85,7 @@ This changes the container user's Git config; it is not required for commands th
 
 Use `git worktree list --porcelain` and `git status --short --branch` before starting work. Worktrees are useful for genuinely parallel tasks, but do not create branches/worktrees mechanically for every repository or task.
 
-The current Script Center has a second feature worktree. Tunnel has one main worktree with the documentation/MCP-guidance changes listed above. RDG has one dirty main worktree. `fortis-approvals` and `fortis-container` are now separate local Git repositories on `main`; neither has a commit or remote.
+The current Script Center has a second feature worktree. Tunnel has one main worktree with the documentation/MCP-guidance changes listed above. RDG has one dirty main worktree. `fortis-approvals` and `fortis-container` are separate local Git repositories on `main`; `fortis-container` has the documentation-baseline commit `2119ccb`, `fortis-approvals` remains without a commit, and neither has a remote.
 
 A more controlled Git model is PLANNED, not current:
 - protected `main`;

@@ -48,7 +48,7 @@ A separate read-only mount at `/run/fortis-client` was also confirmed by `findmn
 - `tunnel`: one worktree, branch `main`, HEAD `81720265017787a587a338c8e9c0fd6e203fba89`; currently 11 modified tracked files and 2 untracked files from this documentation/MCP-guidance task; no commit or push.
 - `script-control-center`: main worktree plus `script-control-center-filequarantine-launch` worktree on `feature/filequarantine-script-center-launch-20261103`; both at HEAD `8fc2731`. Main has 2 modified (unstaged) files and 44 untracked files.
 - `rd-graphs`: one worktree, branch `main`, HEAD `176ce44c820757ecfb827ea881c0cac6613c8831`; 58 modified/staged entries, 325 untracked files and one deletion.
-- `fortis-container` was created as the cross-project documentation repository and now has local Git metadata on `main`; no commit or remote exists.
+- `fortis-container` is the cross-project documentation repository on `main`; first local documentation-baseline commit `2119ccb` exists; no remote is configured.
 - `fortis-approvals` was extracted from the RDG subtree, accepted by the owner as the canonical development source, and initialized as a local Git repository on `main`; no commit or remote exists. The original RDG subtree remains untouched.
 
 Do not clean, reset, stash, overwrite, commit or push these existing working trees as part of documentation work.

@@ -84,7 +84,7 @@ The adjacent Tunnel `runtime/repo-mode/README.md` explicitly labels that directo
 
 Therefore, the matching Tunnel Dockerfile is a preserved identical copy, but the surrounding directory is not evidence that the current container is built from the Tunnel checkout.
 
-The `fortis-container` repository is currently the central documentation project. It has local Git metadata on `main`, but no commit or remote. No Dockerfile or complete, canonical build context has yet been added to it. The future location for reviewed, version-controlled container build sources should be decided here before files are moved or copied.
+The `fortis-container` repository is currently the central documentation project. It has its first local documentation-baseline commit (`2119ccb`) on `main`, but no remote. No Dockerfile or complete, canonical build context has yet been added to it. The future location for reviewed, version-controlled container build sources should be decided here before files are moved or copied.
 
 ## 5. Owner-provided live container inspection
 
@@ -157,3 +157,12 @@ The owner-provided inspect also reported tmpfs mounts:
 - `/tmp`: RW, `nosuid,nodev,noexec`, mode 1777, size 128 MiB.
 
 These are part of the supplied runtime snapshot, not a rebuild instruction.
+
+
+## 9. Backup audit access boundary — 2026-11-04
+
+The original Windows directory `C:\Users\alexa\chatgpt-repo-mode` and its `backups/` subtree are not present at the corresponding checked paths under `/workspace/repo`, `/workspace/repos` or `/workspace/files` in the current MCP container. The eight backup directory names supplied by the owner (`access-*`, `docs-centralization-20261010`, `retired-initializer-20261011`, `startup-saved-key-20261010T115550Z`) were also not found in those mounted trees during a bounded directory-name search.
+
+This is consistent with the owner-provided Docker inspection: the container receives named-volume mounts for the Fortis workspace, not a bind mount of `C:\Users\alexa\chatgpt-repo-mode`. The presence of other unrelated backup directories under mounted workspaces does not make them copies of this original source backup set; their contents were not inspected.
+
+**Result:** no backup file contents have been read and no backup files have been changed. A read-only inventory must be run on the Windows host against the original directory. First collect filenames, sizes, timestamps and hashes for candidate Docker/build files; only then decide which specific files are safe and useful to read. Do not copy the full backup tree into Git.
