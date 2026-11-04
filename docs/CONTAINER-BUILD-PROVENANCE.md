@@ -166,3 +166,27 @@ The original Windows directory `C:\Users\alexa\chatgpt-repo-mode` and its `backu
 This is consistent with the owner-provided Docker inspection: the container receives named-volume mounts for the Fortis workspace, not a bind mount of `C:\Users\alexa\chatgpt-repo-mode`. The presence of other unrelated backup directories under mounted workspaces does not make them copies of this original source backup set; their contents were not inspected.
 
 **Result:** no backup file contents have been read and no backup files have been changed. A read-only inventory must be run on the Windows host against the original directory. First collect filenames, sizes, timestamps and hashes for candidate Docker/build files; only then decide which specific files are safe and useful to read. Do not copy the full backup tree into Git.
+
+
+## 10. Windows backup inventory — partial result, 2026-11-04
+
+The owner ran a read-only PowerShell inventory against `C:\Users\alexa\chatgpt-repo-mode\backups`. The top-level directory enumeration succeeded and confirmed these eight snapshots:
+
+| Snapshot | Created UTC | Last written UTC |
+|---|---|---|
+| `access-20261010T111644398Z` | 2026-10-10 11:16:44 | 2026-10-10 11:16:44 |
+| `access-20261010T111717413Z` | 2026-10-10 11:17:17 | 2026-10-10 11:17:26 |
+| `access-20261010T111828502Z` | 2026-10-10 11:18:28 | 2026-10-10 11:18:55 |
+| `access-20261010T112024336Z` | 2026-10-10 11:20:24 | 2026-10-10 11:20:52 |
+| `access-20261010T112331268Z` | 2026-10-10 11:23:31 | 2026-10-10 11:30:00 |
+| `docs-centralization-20261010` | 2026-10-10 12:23:07 | 2026-10-10 12:30:43 |
+| `retired-initializer-20261011` | 2026-10-11 03:12:25 | 2026-10-11 03:12:25 |
+| `startup-saved-key-20261010T115550Z` | 2026-10-10 11:55:50 | 2026-10-10 11:55:50 |
+
+Two PowerShell `foreach { ... } | Format-Table` statements then failed to parse with `EmptyPipeElement`. Consequently, the per-snapshot file counts/byte totals, recursive candidate file list and backup-file SHA-256 values were **not** produced. The subsequent current-source checks did execute:
+
+- Current Windows `Dockerfile`: SHA-256 `1717E364B2F5CD92F4C6CABB039D4272598FE573B5E6CD9CFE7357A0ABD4FA0B`. This exactly matches the hash already recorded for the owner-provided Dockerfile and the Tunnel historical copy.
+- Current Windows `build.log`: SHA-256 `D73DECE36147A2DA79E4C5B6FA0D8622D8F903B2E84BA9A8E52997CB24EEBBA1` (newly recorded; no backup copy has yet been hashed for comparison).
+- Current root `.dockerignore`: not found. The historical BuildKit log says it loaded a 2-byte `.dockerignore`; this discrepancy remains unresolved and the original build context is still not proven.
+
+No backup file contents were read or changed. No files were copied, moved, deleted or edited on the Windows host. A corrected read-only inventory is still required to establish snapshot contents and compare historical Dockerfile/build-log copies.
