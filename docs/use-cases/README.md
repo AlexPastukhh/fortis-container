@@ -38,14 +38,17 @@
 Один проект может содержать несколько реестров. Главный реестр содержит **ссылки
 на реестры**, не копирует их UC. `ACTIVE` — реестр уже существует в текущем
 repo; `PREPARED` — создан в отдельном task worktree, но ещё не принят в main;
-`NO REGISTRY` — проект использует другой действующий индекс.
+`NO REGISTRY` — проект использует другой действующий индекс. Ссылка `main / PR`
+ведёт к принятому источнику; пока файла в `main` нет, открыть указанный PR
+как source candidate. Статус runtime/installation проверяется у владельца,
+а не выводится из наличия реестра.
 
 | Репозиторий / область | Реестр / owner | Статус |
 | --- | --- | --- |
 | `fortis-approvals` | [Gateway use cases](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/README.md) | ACTIVE (`UC-GW-001…008` в `main`, PR №29/30 merged) |
-| `docke-windows-mirror` | [Mirror use cases](https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/use-cases/README.md) | PREPARED до одобренного merge |
-| `tunnel` | [Tunnel use cases](https://github.com/AlexPastukhh/tunnel/blob/main/docs/use-cases/README.md) | PREPARED до одобренного merge |
-| `script-control-center` | [Script Center use cases](https://github.com/AlexPastukhh/script-control-center/blob/main/docs/use-cases/README.md) | PREPARED до одобренного merge |
+| `docke-windows-mirror` | [Mirror use cases](https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/use-cases/README.md) | main / [публикация PR #4](https://github.com/AlexPastukhh/docke-windows-mirror/pull/4) |
+| `tunnel` | [Tunnel use cases](https://github.com/AlexPastukhh/tunnel/blob/main/docs/use-cases/README.md) | main / [публикация PR #2](https://github.com/AlexPastukhh/tunnel/pull/2) |
+| `script-control-center` | [Script Center use cases](https://github.com/AlexPastukhh/script-control-center/blob/main/docs/use-cases/README.md) | ACTIVE — принят в `main` |
 | `obs-planning-docs` — repository | [Planning repository registry](https://github.com/AlexPastukhh/obs-planning-docs/blob/main/planning/use-case-registry.md) | ACTIVE |
 | `obs-planning-docs` — OBS — session | [local registry](https://github.com/AlexPastukhh/obs-planning-docs/blob/main/planning/session/use-case-registry.md) | ACTIVE |
 | `obs-planning-docs` — OBS — documentation | [local registry](https://github.com/AlexPastukhh/obs-planning-docs/blob/main/planning/documentation/use-case-registry.md) | ACTIVE |

@@ -51,23 +51,16 @@ The owner completed a second Windows GO3 run against this exact container on 202
 
 ## Fortis Approvals Gateway runtime
 
-The earlier Windows Docker Host inventory supplied 2026-11-04 was a **pre-start snapshot**: it showed the R7 P1-named container `fortis-r7-p1-fortis-1` exited at that time. The owner subsequently confirmed on 2026-11-05 that **R7-P1 / Compose project `fortis-r7-p1` is the active Gateway**; there is no G2/G4/R7 runtime conflict. Owner-provided live PowerShell output on 2026-11-05 confirmed the active container ID `0852c39c9e5d0889290f94128b93555522d9447f9bebc7d880397bd43b4f5a6b`, image ID `sha256:e751f6ca0cfe6ce290cf580de2f243071ee1f3e681baa8827c6cea41a16fa402`, Compose project/service labels `fortis-r7-p1` / `fortis`, and historical Compose config path `C:\Users\alexa\Downloads\fortis-r7-p2-rollout-go3-20261103\compose-r7-p2-20261103.yaml`. The existing Repo typed client previously completed live Sonar READ, ASK, Reject and WebAuthn Approve through `https://host.docker.internal:19104`, recorded in `fortis-approvals/fortis_approvals/evidence/FORTIS-SONAR-LIVE-E2E-20261104.md`.
-
-| Existing volume identifier | Container path | Purpose | Decision for naming cleanup | Evidence |
-|---|---|---|---|---|
-| `fortis-r7-state` | `/state` | Approval state, owner state and Sonar receipts | Keep existing name and contents | OWNER-REPORTED; recheck live attachment |
-| `fortis-r7-identity` | `/run/r7-identity` | Server certificate and private TLS key | Keep existing name and contents | OWNER-REPORTED; recheck live attachment |
-| `fortis-r7-grant` | `/run/r7-grant` | Machine ingress grant | Keep existing name and contents | OWNER-REPORTED; recheck live attachment |
-| `fortis-r7-sonar-token` | `/run/r7-sonar-token` | Private SonarCloud token | Keep existing name and contents | OWNER-REPORTED; recheck live attachment |
-| `fortis-r7-client` | `/run/fortis-client` in Repo | Client grant copy and public server certificate | Keep existing name and contents; do not touch | LIVE VERIFIED in current Repo container |
-
-The Repo client mount is confirmed read-only in the current container. It contains `grant` and `server.crt`. Metadata: grant owned by UID 1000, mode 0600; public certificate owned by UID 1000, mode 0644. Desktop Commander runs as UID 1000 and can read the grant. Read-only prevents writes, not reads.
-
-The preserved R7 P2 Compose reference documents loopback-only ports 19103 (Owner Portal) and 19104 (machine ingress), read-only root filesystem, UID/GID 10001, dropped capabilities and no-new-privileges. The earlier pre-start inspect showed the R7 volumes listed above, but it is not a post-start snapshot. The current naming cleanup deliberately retains all existing Gateway and Repo volume names and contents; no target volumes are to be created and no data is to be copied. Verify the active container's exact mounts immediately before the in-place rename.
-
-## Planned Gateway GitHub credential volume — not created
-
-The Gateway currently has a separate Sonar token volume but no GitHub credential volume. The planned GitHub integration targets a new external volume named `fortis-github-token`, mounted read-only at `/run/github-token` (PAT file: `/run/github-token/token`). This volume has not been created, populated or attached; do not add it to a historical Compose file or infer that the running Gateway can access GitHub. Provisioning and deployment require a reviewed source/Compose target and a separate owner-approved release. The existing Sonar, state, identity and machine-grant volumes remain unchanged.
+Gateway state, TLS identity, machine authentication and provider credentials
+are separate from the Repo workspace. Source map, active release identity,
+exact mounts and backup/admission belong to the
+[Gateway operating guide](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/guides/FORTIS-APPROVALS-SECURE-DEVELOPMENT.md)
+and [Primary controller](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/PRIMARY-GATEWAY-OPERATIONS.md).
+The active route is Primary 19203/19204; older 19103/19104 inventory describes
+retained Legacy. Do not infer current volume attachment from old Compose labels.
+Repo's read-only client-auth mount is described above; it does not contain
+provider credentials or Gateway state. Read-only access does not isolate
+processes sharing the grant's UID; see [authorization](AUTHORIZATION-AND-APPROVALS.md).
 
 ## Persistence and recovery distinctions
 
@@ -82,12 +75,20 @@ Never delete, recreate, repair or reattach these volumes as part of a documentat
 
 ## Compose and deployment references
 
-The current source index identifies `fortis_approvals/deploy/compose-r7-p2-20261103.yaml` as the preserved deployment reference for the currently documented artifact. The paired image-only build script pins `fortis_approvals/deploy/Dockerfile-R7-Unified-Read-Ask-Candidate`; the top-level `deploy/Dockerfile` is an older, separate server recipe and must not be substituted. Its filename retains historical implementation labels; it is not a routine command to rerun or a proposed naming convention. Older Compose files and provisioning/cutover scripts are historical unless a later owner-approved deployment explicitly selects them.
+`fortis_approvals/deploy/compose-r7-p2-20261103.yaml` is a historical deployment reference, not the current Primary release procedure. The supported Gateway release entry is [UC-GW-005](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/releases.md#uc-gw-005). The paired image-only build script pins `fortis_approvals/deploy/Dockerfile-R7-Unified-Read-Ask-Candidate`; the top-level `deploy/Dockerfile` is an older, separate server recipe and must not be substituted. Its filename retains historical implementation labels; it is not a routine command to rerun or a proposed naming convention. Older Compose files and provisioning/cutover scripts are historical unless a later owner-approved deployment explicitly selects them.
 
 ## Human-readable names versus Docker identifiers
 
-Use **Fortis Approvals Gateway** as the human-readable product name. The owner-confirmed active Compose project is `fortis-r7-p1`; the Compose service remains `fortis`. On 2026-11-05 the owner successfully renamed the existing running container in place to `fortis-approvals-gateway` and added image tag `fortis-approvals-gateway:current` to the existing image ID `sha256:e751f6ca0cfe6ce290cf580de2f243071ee1f3e681baa8827c6cea41a16fa402`. The container ID remained `0852c39c9e5d0889290f94128b93555522d9447f9bebc7d880397bd43b4f5a6b`; post-operation `docker ps` reported `Up 44 minutes (healthy)`, and image inspect confirmed the new tag resolves to the same image ID. No volume, port, network, data, credential or application configuration operation was performed.
+The product is **Fortis Approvals Gateway**. Active Primary lifecycle is owned by
+[Primary operations](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/PRIMARY-GATEWAY-OPERATIONS.md)
+and its protected release records. The owner promoted to `fortis-gateway` and
+stopped/retained the older `fortis-approvals-gateway` as Legacy on 2026-11-07;
+this does not make older Compose project/service labels current deployment inputs.
+Before a later release, read exact live identity and the controller records.
 
-**Future Compose caveat:** this was a Docker runtime rename only; it did not change the Compose file or its project/service labels. If Compose later recreates service `fortis`, it may generate the old name `fortis-r7-p1-fortis-1` again. At the next planned deployment, identify the maintained Compose source and, if the friendly name should persist, add `container_name: fortis-approvals-gateway` there as part of a reviewed deployment (which may recreate the container). Do not edit or deploy the historical P2 Compose reference just for this naming change.
-
-The exact completion record and evidence limits are maintained in [Future improvements — Fortis Approvals Gateway naming cleanup](FUTURE-IMPROVEMENTS.md#fortis-approvals-gateway-naming-cleanup-completed--2026-11-05). The old full-recreation Compose candidate is superseded; do not use it.
+The minimal rename of 2026-11-05 is a
+[historical completion](FUTURE-IMPROVEMENTS-ARCHIVE-2026-11-05.md#fortis-approvals-gateway-naming-cleanup-completed--2026-11-05).
+Do not recreate its old Compose service, rename today's Primary back, or run
+superseded Compose candidates from that record. Runtime names and Compose
+labels are separate; any new lifecycle change follows
+[UC-CONT-021](use-cases/docker.md#uc-cont-021).
