@@ -1,6 +1,10 @@
 # Documentation map
 
-This is the complete index for the Fortis Container documentation set. The repository-root [README](../README.md) is the compact entry point; use this file when you need the full catalogue, a recommended reading path or the authority rules. [Future improvements](FUTURE-IMPROVEMENTS.md) is the single living plan; dated snapshots and audits are historical evidence, not live dashboards.
+Начать с короткого входа [главного реестра](use-cases/README.md) и полностью
+прочитать UC-CONT-002/003; весь каталог не просматривать. Этот файл — карта
+технических owners по выбранной задаче.
+
+This is the topic index for the Fortis Container documentation set. The repository-root [README](../README.md) is the compact entry point; use this file when you need the full catalogue, a recommended reading path or the authority rules. [Future improvements](BACKLOG-IMPROVEMENTS.md) is the single living plan; dated snapshots and audits are historical evidence, not live dashboards.
 
 ## Reading paths
 
@@ -9,7 +13,7 @@ This is the complete index for the Fortis Container documentation set. The repos
 - **Container/runtime work:** [Containers and volumes](CONTAINERS-AND-VOLUMES.md) → [Container build provenance](CONTAINER-BUILD-PROVENANCE.md) → [Validation policy](VALIDATION-POLICY.md).
 - **Authenticated external-service request or new integration:** [Fortis Approvals Gateway agent guide](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/GATEWAY-AGENT-GUIDE.md) → this repository's [authorization boundary](AUTHORIZATION-AND-APPROVALS.md) for current runtime boundaries and owner approval.
 - **Repo1/Repo2 Guard or GO3:** [GO3 Guard baseline audit](audits/REPO-CONTAINER-GUARD-BASELINE-2026-11-04.md) → canonical Tunnel and Script Center runbooks linked from [Source map](SOURCE-MAP.md).
-- **Proposed change or rename:** [Future improvements](FUTURE-IMPROVEMENTS.md) → the relevant priority section → [Validation policy](VALIDATION-POLICY.md). A plan is not authorization to execute.
+- **Proposed change or rename:** [Future improvements](BACKLOG-IMPROVEMENTS.md) → the relevant priority section → [Validation policy](VALIDATION-POLICY.md). A plan is not authorization to execute.
 - **Git or recovery:** [Git and recovery](GIT-AND-RECOVERY.md) → [Source map](SOURCE-MAP.md) → the owning repository's runbook.
 - **Ordinary application repo / Worktree handoff:** [Canonical Mirror workflow](https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/WORKFLOW.md) → this repository's [Git and recovery](GIT-AND-RECOVERY.md) only for credential and recovery details.
 
@@ -34,7 +38,7 @@ This is the complete index for the Fortis Container documentation set. The repos
 - [Source map](SOURCE-MAP.md) — canonical source ownership, development copies, deployed copies and historical artifacts.
 - [Git and recovery](GIT-AND-RECOVERY.md) — shared credential boundaries, dated repository-state snapshots and recovery practices; ordinary project Worktree layout and delivery flow are owned by Mirror.
 - [Canonical Mirror workflow](https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/WORKFLOW.md) — ordinary project primary clones, Worktrees, GitHub Actions checks and Docker → GitHub → Windows handoff.
-- [Future improvements](FUTURE-IMPROVEMENTS.md) — the sole living plan and prioritized backlog, including approved Gateway naming, proposed Docker mapping and migration gates; items remain planned unless separately approved.
+- [Future improvements](BACKLOG-IMPROVEMENTS.md) — the sole living plan and prioritized backlog, including approved Gateway naming, proposed Docker mapping and migration gates; items remain planned unless separately approved.
 - [Validation policy](VALIDATION-POLICY.md) — proportionate static checks versus manual host/runtime verification.
 - [Glossary](GLOSSARY.md) — stable component names and terminology.
 
@@ -58,7 +62,7 @@ Audits preserve what was checked, the evidence supplied, limitations and decisio
 | Who owns each implementation? | [Source map](SOURCE-MAP.md) | Link to the owning repository and its runbook. |
 | What tools do ChatGPT and Qwen expose, and what are their shared capability boundaries? | [AI integrations](AI-INTEGRATIONS.md) | Keep the cross-client 26-tool catalog here; Qwen README owns only transport-specific details and legacy artifact status. |
 | What is the ordinary project clone / Worktree and Windows handoff convention? | [Mirror workflow](https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/WORKFLOW.md) | Link here; do not restate the process in Fortis Container docs. |
-| What work is planned, including approved names and migration gates? | [Future improvements](FUTURE-IMPROVEMENTS.md) | Keep the sole plan here; link to technical evidence rather than duplicating it. |
+| What work is planned, including approved names and migration gates? | [Future improvements](BACKLOG-IMPROVEMENTS.md) | Keep the sole plan here; link to technical evidence rather than duplicating it. |
 | What did a specific verification prove? | The corresponding dated audit | Keep evidence there; link to it rather than duplicating it. |
 | How should a check be performed? | [Validation policy](VALIDATION-POLICY.md) plus the owning runbook | Do not create parallel test policies. |
 

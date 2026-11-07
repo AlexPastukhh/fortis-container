@@ -22,7 +22,7 @@
   [UC-CONT-023 — retire/cleanup](docs/use-cases/docker.md#uc-cont-023).
 - Gateway, Sonar, credentials и Primary-specific release —
   [локальный Gateway Registry](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/README.md) (принят в `main`; live Gateway проверен).
-- Mirror UI и Windows sync — [Mirror Registry](https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/use-cases/README.md) (до принятого merge статус локальной подготовки).
+- Mirror UI и Windows sync — [Mirror Registry](https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/use-cases/README.md) (до появления в `main` — [публикация PR #4](https://github.com/AlexPastukhh/docke-windows-mirror/pull/4)).
 
 Общие сценарии принадлежат `fortis-container`, предметные — их собственному
 репозиторию. Для проектов без реестра пользоваться их действующим README/картой

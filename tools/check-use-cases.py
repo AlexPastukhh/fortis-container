@@ -25,8 +25,8 @@ for p in sorted(CASES.glob('*.md')):
             assert (('## '+anchor.upper()) in target.read_text() or ('id="'+anchor+'"') in target.read_text()),(p.name,dest)
 assert sorted(found)==sorted(registered), 'missing or duplicate case descriptions'
 
-# Entrypoints must make both shared workflows mandatory. Reading the registry
-# titles is sufficient; the rest of the detailed cases remain goal-dependent.
+# Each chat reads the short registry introduction and both required workflows
+# in full. Other use cases remain goal-dependent; do not scan the whole table.
 for entrypoint in (ROOT/'README.md', CASES/'README.md', ROOT/'workspace/AGENTS.md'):
     text=entrypoint.read_text()
     assert all(case in text for case in ('UC-CONT-002','UC-CONT-003')), (
@@ -70,13 +70,13 @@ for item in args.local_root:
     index=local/'docs/use-cases/README.md'
     assert index.is_file(),('local registry missing',index)
     assert name in registry,('local registry not in central catalog',name)
-    registered=re.findall(r'^\| (UC-[A-Z]+-\d{3}) \|',index.read_text(),re.M)
+    registered=re.findall(r'^\| (?:\[)?(UC-[A-Z]+-\d{3})(?:\]| \|)',index.read_text(),re.M)
     assert registered and len(set(registered))==len(registered),(name,'duplicate/missing local IDs')
     assert all(x.startswith(expected[name]) for x in registered),(name,'wrong local ID prefix')
     found=[]
     for doc in sorted(index.parent.glob('*.md')):
         content=doc.read_text()
-        pieces=re.split(r'^## (UC-[A-Z]+-\d{3})\s*$',content,flags=re.M)
+        pieces=re.split(r'^#{1,2} (UC-[A-Z]+-\d{3})(?:[ \t]+[—-][^\n]*)?[ \t]*$',content,flags=re.M)
         for i in range(1,len(pieces),2):
             found.append(pieces[i])
             for mark in ('**Когда:**','**Цель:**','**Как:**','**Готово:**'):
@@ -87,7 +87,7 @@ for item in args.local_root:
             target=doc.parent/part if part else doc
             assert target.is_file(),(name,doc.name,link)
             if anchor.startswith(expected[name].lower()):
-                assert ('## '+anchor.upper()) in target.read_text(),(name,doc.name,link)
+                assert re.search(r'^#{1,2} '+re.escape(anchor.upper())+r'(?=\s|$)',target.read_text(),re.M),(name,doc.name,link)
     assert sorted(found)==sorted(registered),(name,'registry/owners mismatch')
     assert 'docs/use-cases/README.md' in (local/'README.md').read_text(),(name,'README local registry link missing')
     print('LOCAL_REGISTRY_PASS',name,len(registered))

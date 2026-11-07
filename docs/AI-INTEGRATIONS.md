@@ -4,7 +4,11 @@
 
 When an AI task needs an authenticated request to an external service, Fortis Approvals is the intended central broker: AI sends a typed operation, while the Gateway owns the upstream credential and enforces its ALLOW / ASK / DENY policy. Use the [Fortis Approvals Gateway agent guide](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/GATEWAY-AGENT-GUIDE.md) for the canonical usage and service-extension procedure.
 
-This is the target routing rule, not a claim that every provider is already connected. The current live integration is the scoped SonarCloud READ / ASK path; GitHub operations are not yet integrated. This document describes AI-to-container client paths, while Fortis Approvals owns service authorization and operation policy.
+Accepted integrations include scoped SonarCloud READ / ASK and token-scoped
+multi-repo GitHub/native workspace operations. This does not imply every provider,
+repository or operation is enabled: verify live capabilities and policy.
+This document owns AI-to-container client paths; Fortis Approvals owns service
+authorization and operation policy.
 
 ## Shared execution model
 

@@ -6,20 +6,41 @@
 
 These three topics belong next to each other because they share the same trust boundary.
 
-**Source-only follow-up (2026-11-03):** the Tunnel checkout contains a corrected candidate for the legacy Repo bridge's mount guidance; its 4/4 source tests pass. The installed bridge was not updated, and the current ChatGPT tool schema still contains stale Windows-mount wording. The installed Desktop Commander package also has generic Docker path-translation text. The active description/wrapper chain remains unresolved. No runtime metadata or package was changed.
-
 ### A1. Tool isolation and metadata accuracy
 
-- Identify the active source chain for Desktop Commander tool descriptions and remove stale hard-coded Windows mount/path-translation claims. Prefer stable role descriptions and link to current-state documentation rather than embedding mutable mount details in every tool.
+- **Completed 2026-11-04 — Fortis path-guidance correction:** the hash-pinned Desktop Commander 0.2.52 derivative was deployed to `fortis-repo-test`; post-cutover Docker verification passed, both Repo1/Repo2 Guard Previews passed, Repo2 live MCP metadata was verified and Repo1's corrected description was owner-confirmed. The path-guidance plan item is closed. The old container remains stopped for rollback; Qwen reconnect is not required for acceptance by owner decision, while the separate source-provenance observation remains non-blocking. See the [deployment record](../patches/desktop-commander-0.2.52/README.md) and [GO3 baseline audit](audits/REPO-CONTAINER-GUARD-BASELINE-2026-11-04.md).
+- **Completed 2026-11-04 — Desktop Commander MCP UI suppression:** the behavior-compatible 0.2.52 patch preserves the deployed path-guidance behavior and adds the G2-proven `DESKTOP_COMMANDER_DISABLE_MCP_UI=1` image default. Candidate build, disposable runtime checks and normalized Windows-host pre-cutover checks passed; the owner then executed the typed-confirmation cutover successfully. Both Repo1/Repo2 Guard Previews passed; Repo2 live runtime directly verified the environment switch, false UI-preview decision, empty UI-resource list and blocked reads for both UI resources; Repo1 post-cutover reconnect is owner-confirmed. The former path-guidance container is preserved as rollback; no named volume was deleted and no Windows profile or tunnel lifecycle action was requested. Qwen reconnect is not required for acceptance by owner decision. See the [verification audit](audits/DOCKER-MCP-UI-HEADLESS-2026-11-04.md), [AI integrations](AI-INTEGRATIONS.md) and the [deployment record](../patches/desktop-commander-0.2.52-mcp-ui-headless/README.md).
 - Define separate capability profiles for read, write, process execution and deployment.
 - Decide whether ChatGPT and Qwen need separate Linux identities, containers, mounts or workspace roots.
 - Separate shared project files from credentials, runtime state and owner-only files.
 - Treat MCP tool filtering as an interface restriction, not an OS security boundary.
 - Add lightweight unit tests for pure allowlist/policy decisions, while keeping OS permissions as the actual enforcement layer; validate real container boundaries manually rather than building Docker mocks.
 
+#### Optional host PowerShell and container-control bridge (PLANNED)
+
+The normal execution path remains inside the existing Repo container. Investigate a separately brokered, least-privilege path for the occasional task that genuinely needs the Windows host or needs to rebuild/manage the agent's own container. Do not expose an unrestricted host shell as the shortcut.
+
+- Compare a dedicated non-admin Windows service account plus NTFS ACLs, PowerShell JEA, Constrained Language Mode, WDAC/AppLocker and a small typed-operation broker. Protected owner directories and secrets must deny the AI identity both read and write access; verify inherited ACLs, traversal, junctions/reparse points and alternate paths.
+- Prefer typed operations with fixed verbs, validated parameters and canonicalized paths over arbitrary `powershell -Command`, CMD, script text or free-form command strings. Keep the broker out of the owner's interactive profile and credentials.
+- If a command-policy layer is added, parse PowerShell syntax/AST and validate the full execution chain: aliases, encoded/dynamic invocation, child processes, external executables, environment variables, working directory, file paths and network destinations. A text blocklist alone is not an enforcement boundary.
+- Use deterministic deny-by-default policy as the enforcement layer. A second local or remote model may provide risk scoring/explanations, but must be advisory only; it must never turn a policy-denied command into an allowed command. Unknown or high-impact operations require explicit owner approval and an auditable receipt.
+- For container self-management, use a narrow host-side broker for a named agent-owned target and an allowlisted build context. Never mount the Docker socket/named pipe or grant generic Docker API/CLI access to the AI. Deny host binds, privileged mode, host namespaces/network, devices, `VolumesFrom`, published ports and volume deletion; require owner approval for stop/start/recreate or other lifecycle changes. Account for the fact that the current Repo container is shared by Repo1, Repo2 and Qwen.
+- Design egress separately: allow only required external services through a controlled proxy/VPN with fail-closed behavior; block private/LAN, link-local, metadata and host-gateway destinations except explicitly approved API endpoints. Do not claim anonymity from a VPN alone; review DNS, timezone, locale and host-identifying metadata.
+- Acceptance must include adversarial tests proving that protected files cannot be listed/read/written, command-policy bypasses fail closed, child processes inherit restrictions, and the broker cannot escape its target container or approved network/API surface.
+
 ### A2. Authentication and credential isolation
 
-- **Owner-confirmed 2026-11-07:** native Gateway multi-repo rollout завершён; `dynamicRepositories=true`, 34 token-scoped repos обнаружены, `tunnel` task branch опубликована через typed Gateway и SHA проверен. `fortis-container` вернул 403, поэтому не разрешено обходить Gateway или подменять token scope старым PAT. Это не означает, что запись разрешена во все обнаруженные репозитории. Текущий результат и риски — `fortis-approvals/docs/MULTI-REPO-WORKFLOW-REVIEW-20261107.md` после принятия его PR.
+- **Verified 2026-11-07:** token-scoped multi-repo Gateway публикация проверена
+  для `fortis-approvals`, `fortis-container`, Mirror, Tunnel, Script Center и
+  Tab Notifier. Прежний 403 у `fortis-container` преодолён; remote сам по себе
+  не доказывает permissions. Для каждого нового repo/operation проверять
+  token scope и live policy по [UC-CONT-018](use-cases/delivery.md#uc-cont-018).
+- Остаточный риск: старые Repo credentials могут сохраняться в shared workspace;
+  наличие нового маршрута не доказывает их отзыв/удаление. Отдельно проверить
+  зависимости и выполнить owner-controlled rotation/removal, не читая token
+  bytes и не возвращая helper как fallback.
+- Включить Repo Observatory token и machine grant в credential inventory;
+  `0600`/`0700` и read-only mount не изолируют процессы с одним UID.
 - Complete migration of remaining repository-specific GitHub routes to the scoped Gateway native workflow; do not enable direct network Git publication.
 - Avoid placing long-lived credentials in the common workspace.
 - Give each agent or service its own machine identity and least-privilege scopes where appropriate.
@@ -48,6 +69,12 @@ The ordinary project workflow uses primary main plus task worktrees, PR review a
 - **Historical 2026-11-03 proposed Compose naming, superseded for active Primary:** the draft named a Compose `gateway` service and `fortis-approvals-*` resources; the owner ultimately promoted the existing container in place to `fortis-gateway` on 2026-11-07. Do not use former Compose names to locate, launch or rename the active runtime. See [naming proposal](NAMING-AND-RENAME-PLAN-ARCHIVE-2026-11-04.md) (history) and [verified cutover](https://github.com/AlexPastukhh/fortis-approvals/blob/main/fortis_approvals/evidence/FORTIS-PRIMARY-CUTOVER-LIVE-20261107.md).
 - **Original Compose-level rename proposal — superseded as a Primary cutover plan:** the render-only Compose candidate `fortis_approvals/deploy/compose-fortis-approvals-dryrun.yaml` remains a historical candidate, not a live launcher. On 2026-11-07 the owner instead promoted the *existing* Gateway in-place to `fortis-gateway`, verified autostart and stopped/retained Legacy; see [cutover evidence](https://github.com/AlexPastukhh/fortis-approvals/blob/main/fortis_approvals/evidence/FORTIS-PRIMARY-CUTOVER-LIVE-20261107.md). No broad Compose/volume renaming is implied or authorized by that migration.
 - **Owner decision 2026-11-03:** do not create a separate Qwen repository or move its files now. Keep `/workspace/files/Qwen-Fortis-MCP` in place; revisit ownership only if the integration later needs independent release/versioning.
+- **Completed 2026-11-05:** ChatGPT / Qwen MCP documentation consolidation;
+  `AI-INTEGRATIONS.md` owns the shared catalog, Qwen README owns its transport.
+  The route remains OWNER-REPORTED; full schema comparison is not archived.
+- Naming-only completion of 2026-11-05 is retained in the
+  [historical record](FUTURE-IMPROVEMENTS-ARCHIVE-2026-11-05.md#fortis-approvals-gateway-naming-cleanup-completed--2026-11-05).
+  It does not describe the active Primary after the 2026-11-07 cutover.
 - Review stale module docstrings in `fortis_approvals/repo_action_contract.py` and `fortis_approvals/sonar.py` as a separate code-maintenance task; do not infer deployed behavior from old comments.
 - Separate canonical source, development worktree, deployed image and historical snapshot in release manifests.
 - Add reproducible build metadata and source-to-image provenance.

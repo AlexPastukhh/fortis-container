@@ -16,7 +16,8 @@
 
 Registry — навигация. Операционный раздел разовой передачи Workfiles пока
 остаётся в корневом README; UC-CONT-015 ссылается на него, не копируя полный шаблон.
-Наличие `origin` или локальных коммитов в `fortis-container` само по себе
-не даёт права на GitHub-операции. Проверяй live Gateway capabilities:
-если repo не зарегистрирован, сохраняй изменения в локальном linked worktree
-и следуй UC-CONT-018; **не** публикуй напрямую через Git/PAT/коннектор.
+Наличие `origin` или локальных коммитов само по себе не доказывает GitHub
+permissions. В token-scoped multi-repo режиме проверять live capabilities,
+provider scope, owner/origin и canonical local roots по UC-CONT-018.
+Недоступный repo/operation — STOP; не добавлять второй allowlist и не
+публиковать напрямую через Git/PAT/коннектор.

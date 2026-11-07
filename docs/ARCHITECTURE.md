@@ -77,4 +77,4 @@ Approval application and private Sonar token are inside Fortis Approvals Gateway
 - The Desktop Commander processes serving ChatGPT and Qwen run as Linux UID 1000. They are separate MCP process instances; separate per-client OS identities have not been established.
 - `/workspace/repo`, `/workspace/repos` and `/workspace/files` are three mountpoints into one ext4 volume tree, not three independent trust domains.
 
-These boundaries are described separately in [Containers and volumes](CONTAINERS-AND-VOLUMES.md), [Authorization](AUTHORIZATION-AND-APPROVALS.md) and [Future improvements](FUTURE-IMPROVEMENTS.md).
+These boundaries are described separately in [Containers and volumes](CONTAINERS-AND-VOLUMES.md), [Authorization](AUTHORIZATION-AND-APPROVALS.md) and [Future improvements](BACKLOG-IMPROVEMENTS.md).
