@@ -39,8 +39,8 @@
    зафиксировать и опубликовать PR. Не скрывать грязь через `.gitignore` и не
    очищать primary до сохранения и сверки точного состава файлов. Не применять
    автоматические `stash/reset/clean`, не обходить Gateway прямым GitHub API.
-   `workspace.update_main_from_pr` работает в установленном Gateway после
-   release 2026-11-07; обе операции обновления `main` требуют clean primary.
+   Обе операции обновления `main` требуют clean primary; наличие нужного
+   client/API проверять по live capabilities и native contract.
    Одна ветка не должна быть одновременно checkout в двух worktrees.
 3. Выполнять edit, проверки, stage/commit именно в выбранном task path. Для
    параллельной задачи выбрать другой worktree/ветку; каждый раз явно проверять
@@ -54,5 +54,5 @@
 к этому worktree, primary остаётся на `main`, другие задачи сохранены. Windows
 получает source только после принятого merge по [UC-CONT-005](delivery.md#uc-cont-005).
 
-[mirror]: https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/WORKFLOW.md#canonical-docker-directory-layout-primary-clones-and-task-worktrees
+[mirror]: https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/WORKFLOW.md
 [native]: https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/NATIVE-WORKTREE-GATEWAY-2026-11-06.md
