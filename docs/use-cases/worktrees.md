@@ -54,5 +54,5 @@
 к этому worktree, primary остаётся на `main`, другие задачи сохранены. Windows
 получает source только после принятого merge по [UC-CONT-005](delivery.md#uc-cont-005).
 
-[mirror]: https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/WORKFLOW.md#canonical-docker-directory-layout-primary-clones-and-task-worktrees
+[mirror]: https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/WORKFLOW.md
 [native]: https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/NATIVE-WORKTREE-GATEWAY-2026-11-06.md
