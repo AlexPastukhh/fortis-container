@@ -1,0 +1,28 @@
+# Local secrets and runtime state
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+credentials
+credentials.*
+*.sqlite
+*.db
+*.crt
+*.cer
+__pycache__/
+*.py[cod]
+
+# Backups, runtime diagnostics and local build output
+**/backups/
+*.bak
+*.bak.*
+*.backup*
+runtime-diag-*.jsonl
+*.log
+node_modules/
+coverage/
+.DS_Store
+Thumbs.db
