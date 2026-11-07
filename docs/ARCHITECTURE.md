@@ -65,7 +65,14 @@ The owner-provided Qwen transcript reports 26 tools and successful read/write/pr
 
 ## Fortis Approvals
 
-The documented live route is Fortis Repo → typed client → TLS 1.3 machine ingress on Fortis Approvals Gateway → Core/policy → Sonar adapter → SonarCloud. Fortis Approvals is the intended central broker for credentialed external-service requests; its [AI-agent and service-integration guide](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/GATEWAY-AGENT-GUIDE.md) owns the extension procedure and ALLOW / ASK / DENY model. The current deployed integration remains Sonar-only; other providers must not be described as connected until implemented and verified.
+Fortis Repo sends typed requests over authenticated TLS to the same Gateway
+Core/policy. Accepted routes include Sonar and token-scoped GitHub/native
+workspace operations. Upstream API calls use Gateway-held provider credentials;
+authorized local workspace jobs execute in the Repo worker and return durable
+receipts. The [Gateway agent guide](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/GATEWAY-AGENT-GUIDE.md)
+owns usage/extension rules; its
+[current state](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/guides/FORTIS-APPROVALS-SECURE-DEVELOPMENT.md)
+owns deployed scope. Source presence alone does not activate another provider.
 
 Owner Portal/WebAuthn is a separate route into the same Fortis Approvals Gateway service. The machine actor can submit an ASK proposal but cannot approve it or call owner routes.
 

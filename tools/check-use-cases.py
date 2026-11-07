@@ -4,6 +4,23 @@ from pathlib import Path
 import argparse
 import re
 
+def has_uc_anchor(text, anchor):
+    # A titled heading generates a longer GitHub slug; a short UC link then
+    # needs an explicit anchor. Matching only its ID prefix hides broken links.
+    if re.search(r'^#{1,6} '+re.escape(anchor.upper())+r'[ \t]*$',text,re.M):
+        return True
+    return any(re.search(r'<a\b[^>]*\b(?:id|name)='+re.escape(q+anchor+q),text)
+               for q in (chr(34),chr(39)))
+
+
+def check_entrypoint(path):
+    text=path.read_text()
+    obsolete=(r'scan all (?:IDs|case titles)',r'Every chat scans its titles',
+              r'общий реестр \(обзор ID')
+    assert not any(re.search(pattern,text,re.I) for pattern in obsolete), (
+        path,'obsolete full-registry scanning instruction')
+
+
 ROOT=Path(__file__).resolve().parents[1]
 CASES=ROOT/'docs/use-cases'
 registry=(CASES/'README.md').read_text()
@@ -22,12 +39,13 @@ for p in sorted(CASES.glob('*.md')):
         path,_,anchor=dest.partition('#');target=p.parent/path if path else p
         assert target.is_file(),(p.name,dest)
         if anchor.startswith('uc-cont-'):
-            assert (('## '+anchor.upper()) in target.read_text() or ('id="'+anchor+'"') in target.read_text()),(p.name,dest)
+            assert has_uc_anchor(target.read_text(),anchor),(p.name,dest)
 assert sorted(found)==sorted(registered), 'missing or duplicate case descriptions'
 
 # Each chat reads the short registry introduction and both required workflows
 # in full. Other use cases remain goal-dependent; do not scan the whole table.
 for entrypoint in (ROOT/'README.md', CASES/'README.md', ROOT/'workspace/AGENTS.md'):
+    check_entrypoint(entrypoint)
     text=entrypoint.read_text()
     assert all(case in text for case in ('UC-CONT-002','UC-CONT-003')), (
         entrypoint,'mandatory delivery/Gateway orientation missing')
@@ -67,6 +85,9 @@ for item in args.local_root:
     name,location=item.split('=',1)
     assert name in expected,('unknown local family',name)
     local=Path(location).resolve()
+    for relative in ('README.md','AGENTS.md','docs/README.md','fortis_approvals/README.md'):
+        entrypoint=local/relative
+        if entrypoint.is_file():check_entrypoint(entrypoint)
     index=local/'docs/use-cases/README.md'
     assert index.is_file(),('local registry missing',index)
     assert name in registry,('local registry not in central catalog',name)
@@ -87,7 +108,7 @@ for item in args.local_root:
             target=doc.parent/part if part else doc
             assert target.is_file(),(name,doc.name,link)
             if anchor.startswith(expected[name].lower()):
-                assert re.search(r'^#{1,2} '+re.escape(anchor.upper())+r'(?=\s|$)',target.read_text(),re.M),(name,doc.name,link)
+                assert has_uc_anchor(target.read_text(),anchor),(name,doc.name,link)
     assert sorted(found)==sorted(registered),(name,'registry/owners mismatch')
     assert 'docs/use-cases/README.md' in (local/'README.md').read_text(),(name,'README local registry link missing')
     print('LOCAL_REGISTRY_PASS',name,len(registered))

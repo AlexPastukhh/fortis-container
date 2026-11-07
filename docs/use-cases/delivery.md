@@ -19,25 +19,14 @@
    отправлять от имени ИИ ASK на `github.merge_pull_request`**: наличие такого
    ASK — запрет свободного машинного merge, а не обязательный удобный способ
    публикации. Владелец самостоятельно просматривает и нажимает Merge в GitHub.
-4. [UC-CONT-004](#uc-cont-004): проверить обязательные CI для точного PR HEAD;
-   после действий владельца через typed Gateway read-only проверить `merged`,
-   PR HEAD, merge SHA, GitHub `main` и отсутствие новой гонки. Не считать PR
-   опубликованным до подтверждённого merge. После ручного GitHub UI merge
-   вызвать через typed Gateway **`workspace.update_main_from_pr`** с чистым
-   Docker `main` и точными `expectedHeadSha`, `number` PR,
-   `expectedPrHeadSha`, `expectedMergeSha`. Gateway проверяет same-repo
-   `task/*`, `merged=true`, владельца `merged_by`, PR HEAD, merge SHA и
-   текущий GitHub `main`; Repo worker делает только `git merge --ff-only`,
-   проверяя неизменность чистого локального `main`. Устаревший
-   `workspace.update_main` требует Gateway `mergeRequestId` и не заменяет
-   подтверждение owner UI merge. **Не создавать фиктивный merge ASK/requestId,
-   не обходить Gateway прямым Git.** Сценарий подтверждён live после
-   owner-managed Gateway image release 2026-11-07 (PR №29/30,
-   `fortis-approvals/main` `217dbcc05a735052e2531d6839c9d808e433792e`).
-   В иных repo проверять live capabilities, remote SHA, clean status и receipt,
-   не выводить доступность из одного source commit. Для нового client
-   method/route см. [UC-GW-003][api-change]. При `UNCERTAIN` сначала
-   reconcile, не повторять эффект.
+4. [UC-CONT-004](#uc-cont-004): проверить обязательные CI для точного PR HEAD.
+   После owner GitHub UI merge проверить PR/head/merge и текущий remote `main`,
+   затем вызвать typed **`workspace.update_main_from_pr`** для чистого Docker
+   primary. Условия доказательства merge и параметры принадлежат
+   [native contract][native], а не этому общему UC. Старый `workspace.update_main`
+   требует Gateway merge receipt и не подходит после UI merge; не создавать
+   фиктивную ASK. Для нового client/API — [UC-GW-003][api-change]. При
+   `UNCERTAIN` сначала reconcile того же UUID, без слепого повтора эффекта.
 5. [UC-CONT-005](#uc-cont-005): получить этот merged main в Windows. Source pull
    не заменяет image build/deploy или перезапуск приложения.
 6. Cleanup — отдельное действие по контракту. Сохранять worktrees/volumes,
