@@ -106,6 +106,31 @@ Before changing any item:
 5. Obtain explicit owner approval for runtime, credential or Windows changes.
 6. Update this document and the current-state evidence after acceptance.
 
+## Future: CI, GitHub Actions и сценарии настройки
+
+**PLANNED:** подробнее разобрать модель CI/GitHub Actions и оформить повторяемый
+путь создания и изменения CI для нового или существующего репозитория.
+
+- Определить минимальные проверки по стеку и риску: что выполняется локально,
+  что в Actions, какие нужны runners/dependencies/cache/artifacts и когда
+  дополнительные jobs только дублируют проверки.
+- Разобрать triggers (`pull_request`, `push`, ручной запуск), workflow/job names,
+  permissions, secrets и доверие к PR-коду; выбрать required checks и правила
+  защиты `main`, учесть skipped/pending/re-run и привязку к точному HEAD SHA.
+- Сначала сверить существующий [UC-CONT-004](use-cases/delivery.md#uc-cont-004)
+  (чтение результата Actions) и владельцев workflow source; улучшить его либо
+  добавить отдельный UC настройки/изменения CI по
+  [UC-CONT-024](use-cases/orientation.md#uc-cont-024). Не превращать readback UC
+  в копию YAML каждого проекта; связать новый маршрут с
+  [созданием repo](use-cases/repositories.md#uc-cont-027).
+- Предусмотреть typed Gateway публикацию `.github/workflows/*` с действующей
+  policy/ASK, проверку первого exact-head run и owner настройку required checks.
+  Оценить reusable workflows/templates только там, где они уменьшают поддержку.
+
+**Ожидаемый результат:** понятный маршрут от выбора нужных проверок до первого
+подтверждённого run и required checks, с применимыми UC и ссылками на source.
+Общий процесс остаётся здесь; YAML и конкретные команды — у repo-владельцев.
+
 ## Future: reproducible Fortis Repo image and Guard preflight
 
 - Establish a reviewed, versioned canonical Docker build context and immutable base/package provenance before promising a deterministic **full** rebuild; the current historical source context and `.dockerignore` are not fully established. A narrow derivative build may use its own reviewed source and SHA guards.
