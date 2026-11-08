@@ -68,7 +68,7 @@ native операции и политика — [native contract][native].
 нужны точный local checkout/worktree, repo ownership/origin, защита `main` и
 допустимая typed operation. Отсутствующий token scope => STOP, а не изменение
 другого allowlist.
-**GitHub-операции выполняются только через Gateway.** Если repo/операция ещё не
+**GitHub-операции ИИ выполняются только через Gateway.** Если repo/операция ещё не
 зарегистрированы, Gateway недоступен или вернул DENY, остановиться; перейти к
 [UC-CONT-018](#uc-cont-018), а не подменять маршрут прямым Git или иным клиентом.
 Токены GitHub не читать, не передавать в Repo и не конфигурировать в локальном Git.
@@ -78,6 +78,10 @@ native операции и политика — [native contract][native].
 клиентом Gateway. Локальные `git status/diff` в task worktree не являются
 GitHub API. Не использовать GitHub connector, старый credential helper,
 прямые сетевые Git-команды или сторонний API-клиент вместо Gateway.
+
+Первичный Windows `git clone` нового repo выполняет владелец по готовой команде
+из чата — [UC-CONT-027](repositories.md#uc-cont-027). Это отдельный owner-run
+bootstrap, не доступ ИИ к Windows credentials или прямому Git из Docker.
 
 **Готово:** получен проверенный typed result/receipt нужного действия; токен не
 попал в Repo/payload/log. Политики не переписываются в этом сценарии: [native][native].
@@ -115,6 +119,9 @@ origin остановиться без reset/stash. CLI-эквивалент д�
 
 ## UC-CONT-018
 
+**Когда:** нужно подключить уже созданный repo к Gateway workflow. Полное
+создание нового repo и Windows-клона — [UC-CONT-027](repositories.md#uc-cont-027).
+
 **Цель:** включить ещё один repo в авторизованный GitHub/CI/Windows маршрут.
 
 **Как:** проверить наличие remote и доступ, repo ownership, allowed local roots,
@@ -130,7 +137,8 @@ origin остановиться без reset/stash. CLI-эквивалент д�
 legacy `dynamicRepositories=false` прежний single-repo scope сохраняется,
 и расширение требует принятого source/config + rollout. Не выдавать ALLOW всем
 репозиториям только потому, что они видны по API.
-Windows-получатель подключается по [UC-CONT-005](#uc-cont-005).
+Первичный Windows-клон — [UC-CONT-027](repositories.md#uc-cont-027),
+последующее обновление — [UC-CONT-005](#uc-cont-005).
 
 **Готово:** repo явно поддержан контрактом и live capabilities, выполнен нужный
 GitHub/CI цикл. Отсутствующий remote и отказ в доступе различаются; `Repository
