@@ -45,8 +45,9 @@
 3. Выполнять edit, проверки, stage/commit именно в выбранном task path. Для
    параллельной задачи выбрать другой worktree/ветку; каждый раз явно проверять
    target. Политики публикации и approvals остаются у [UC-CONT-003](delivery.md#uc-cont-003).
-4. Для PR/CI/merge, обновления Docker main, получения Windows main и возможного
-   cleanup перейти к [UC-CONT-002](delivery.md#uc-cont-002). Не принимать выбор
+4. Для PR/CI/merge, обновления Docker main, получения Windows main и завершения
+   задачи очисткой worktree перейти к [UC-CONT-002](delivery.md#uc-cont-002),
+   шаг 6. Не принимать выбор
    ветки для просмотра в Mirror за checkout или выбор Docker worktree: текущие
    ограничения GUI описаны только в [Mirror workflow][mirror].
 
