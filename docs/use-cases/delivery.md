@@ -29,11 +29,21 @@
    `UNCERTAIN` сначала reconcile того же UUID, без слепого повтора эффекта.
 5. [UC-CONT-005](#uc-cont-005): получить этот merged main в Windows. Source pull
    не заменяет image build/deploy или перезапуск приложения.
-6. Cleanup — отдельное действие по контракту. Сохранять worktrees/volumes,
-   на которые ещё ссылаются owner deployment records; не удалять их автоматически.
+6. Завершить свою задачу очисткой выбранного task worktree: сверить repo,
+   task и фактический HEAD, убедиться, что работа закончена и source path не
+   нужен deployment/recovery records или другой активной задаче. По
+   [контракту очистки][cleanup] проверить live capability и вызвать typed
+   `workspace.cleanup_task`; решение ALLOW/ASK принимает Gateway, порядок
+   approvals — [UC-CONT-003](#uc-cont-003). Проверить receipt `EXECUTED`,
+   отсутствие выбранного worktree и его локальной task-ветки. Если очистка
+   заблокирована или worktree ещё нужен, явно указать причину сохранения;
+   не обходить отказ через force/reset/clean. Это не массовая очистка других
+   задач, remote branches или Docker volumes.
 
 **Готово:** PR/CI/merge и Docker/Windows SHA проверены раздельно; необходимое
 развёртывание прошло [UC-CONT-012](operations.md#uc-cont-012), если оно было целью.
+Task worktree удалён с подтверждённым receipt либо указан конкретный повод
+его сохранить; завершённые задачи не остаются висеть без причины.
 Детальные команды и правила директорий принадлежат [Mirror workflow][mirror],
 native операции и политика — [native contract][native].
 
@@ -128,6 +138,7 @@ not found` сам по себе не доказывает причину.
 
 [mirror]: https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/WORKFLOW.md
 [native]: https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/NATIVE-WORKTREE-GATEWAY-2026-11-06.md
+[cleanup]: https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/NATIVE-WORKTREE-GATEWAY-2026-11-06.md#task-worktree-cleanup
 [api-change]: https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/integrations.md#uc-gw-003
 [guide]: https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/GATEWAY-AGENT-GUIDE.md
 [analysis]: https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/ANALYSIS-REVIEW-CONTRACT.md
