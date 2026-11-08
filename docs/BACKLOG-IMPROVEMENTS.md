@@ -112,3 +112,32 @@ Before changing any item:
 - Create one owner-run Windows PowerShell 5.1 **image-only build** script with exact pinned build context, image ID readback and offline smoke; do not stop/recreate `fortis-repo-test` during a build. An image exists is not the same as a deployed runtime.
 - Before **any** Fortis Repo container runtime change, require read-only previews of **both** Repo1 and Repo2 Guards against the proposed effective mounts/networks/identity/resource settings (and account for shared Qwen). `tunnel/runtime/windows-repo/current/launchers/shared/FortisContainerPolicy.ps1` is the only shared policy owner. Reconnect is a separate owner operation after checks.
 - General host-only actions should follow `UC-CONT-025`; Fortis Repo image and Guard review is `UC-CONT-026`. Keep owner commands short, deterministic, reviewable, and fail closed. Do not grant AI generic Windows shell/Docker API or edit protected runtime records.
+
+## Future: автоматизация изменений Gateway integrations
+
+**PLANNED / оценить целесообразность:** сократить повторяемые ручные действия
+при подключении и изменении API через Gateway:
+
+- **Новый API/provider** — собственный или сторонний:
+  переиспользовать существующий scaffold, оценить генерацию связанного каркаса
+  schemas, adapters, typed client и проверок по
+  [UC-GW-002](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/integrations.md#uc-gw-002).
+- **Новый токен/credential для Gateway:** оценить единый guarded путь подготовки
+  конфигурации, проверки необходимых scopes и проверки доступа по
+  [UC-GW-004](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/credential-lifecycle.md#uc-gw-004).
+  Ввод и хранение секрета остаются на стороне владельца/Gateway, без передачи в Repo или чат.
+- **Добавление или изменение доступных методов существующего API** — своего
+  или стороннего, например Sonar: оценить согласованное обновление schemas, routes, handlers,
+  клиентских методов, policy и проверок совместимости по
+  [UC-GW-003](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/integrations.md#uc-gw-003),
+  с учётом различий native и extension операций.
+
+Предпочтительный результат — короткий детерминированный plan/preflight:
+что уже поддержано, что меняется в source/config/credentials, нужен ли image
+build/deploy, какие точные команды должен выполнить владелец вне контейнера
+и как проверить live результат. Сначала переиспользовать существующие helpers;
+не пересобирать image без необходимости и не расширять права автоматически.
+Этот пункт принадлежит контейнерному backlog как улучшение общего процесса;
+реализация Gateway остаётся в `fortis-approvals`. Процедуры и контракты по ссылкам
+не дублировать здесь; при выделении конкретной разработки перенести её
+в backlog репозитория-владельца со ссылкой отсюда.
