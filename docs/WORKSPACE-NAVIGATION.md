@@ -4,7 +4,7 @@
 Операционные `/workspace/repo/README.md` и `/workspace/repo/AGENTS.md` находятся
 в постоянном workspace, вне Git repo. Они ведут к реестру, не дублируя каталог. Проекция в начале каждого чата
 не требует даже просмотра полного списка ID. Она ведёт через короткий вход
-к полному чтению UC-CONT-002/003, затем к нужным локальным реестрам.
+к полному чтению UC-CONT-002, UC-CONT-003 и UC-GW-009, затем к нужным локальным реестрам.
 Источник standing agent rules — `workspace/AGENTS.md` этого repo.
 
 `python3 tools/install-workspace-navigation.py` устанавливает только помеченные

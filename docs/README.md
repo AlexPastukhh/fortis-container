@@ -1,7 +1,8 @@
 # Documentation map
 
 Начать с короткого входа [главного реестра](use-cases/README.md) и полностью
-прочитать UC-CONT-002/003; весь каталог не просматривать. Этот файл — карта
+прочитать UC-CONT-002/003 и [UC-GW-009 — UNCERTAIN/Owner Portal](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/incidents.md#uc-gw-009);
+весь каталог не просматривать. Этот файл — карта
 технических owners по выбранной задаче.
 
 This is the topic index for the Fortis Container documentation set. The repository-root [README](../README.md) is the compact entry point; use this file when you need the full catalogue, a recommended reading path or the authority rules. [Future improvements](BACKLOG-IMPROVEMENTS.md) is the single living plan; dated snapshots and audits are historical evidence, not live dashboards.

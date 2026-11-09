@@ -2,9 +2,10 @@
 
 **Для каждого нового чата:** сначала учти исходное сообщение пользователя,
 затем открой [главный реестр Fortis](docs/use-cases/README.md) и прочитай его
-короткий вступительный маршрут. **Полностью прочитай только обязательные**
-[UC-CONT-002 — Docker → GitHub → CI → Windows/Mirror](docs/use-cases/delivery.md#uc-cont-002)
-и [UC-CONT-003 — GitHub только через Gateway](docs/use-cases/delivery.md#uc-cont-003).
+короткий вступительный маршрут. **Полностью прочитай три обязательных сценария:**
+[UC-CONT-002 — Docker → GitHub → CI → Windows/Mirror](docs/use-cases/delivery.md#uc-cont-002),
+[UC-CONT-003 — GitHub только через Gateway](docs/use-cases/delivery.md#uc-cont-003)
+и [UC-GW-009 — расследование UNCERTAIN и Owner Portal](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/incidents.md#uc-gw-009).
 **Просматривать всю таблицу реестра не нужно.** Выбор одного, нескольких, нового
 репозитория или работы без репозитория — [UC-CONT-001](docs/use-cases/orientation.md#uc-cont-001).
 Выбранные локальные use cases читаются по необходимости.

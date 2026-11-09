@@ -35,7 +35,9 @@ def main():
         +'[UC-CONT-002 — Docker → GitHub → CI → Windows/Mirror]('
         +str(SOURCE/'docs/use-cases/delivery.md')+'#uc-cont-002) и '
         +'[UC-CONT-003 — GitHub только через typed Gateway-клиент]('
-        +str(SOURCE/'docs/use-cases/delivery.md')+'#uc-cont-003). '
+        +str(SOURCE/'docs/use-cases/delivery.md')+'#uc-cont-003) и '
+        +'[UC-GW-009 — расследование UNCERTAIN и Owner Portal]('
+        +'/workspace/repo/Repos/fortis-approvals/docs/use-cases/incidents.md#uc-gw-009'+'). '
         +'Контекст repo или работа без него — UC-CONT-001; остальные UC по задаче. Перед GitHub-эффектом проверь '
         +'live capabilities; при отсутствии scope — STOP / [UC-CONT-018]('
         +str(SOURCE/'docs/use-cases/delivery.md')+'#uc-cont-018).')
