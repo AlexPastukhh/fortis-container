@@ -8,8 +8,11 @@
 ## Обязательное чтение каждого нового чата
 
 1. Учитывать исходное сообщение пользователя (включая то, которое вызвало чтение README).
-2. **Полностью прочитать [UC-CONT-002 — Docker → GitHub → CI → Windows/Mirror](delivery.md#uc-cont-002)**
-   и **[UC-CONT-003 — GitHub только через typed Gateway-клиент](delivery.md#uc-cont-003)**.
+2. **Полностью прочитать три обязательных UC:** [UC-CONT-002 — Docker → GitHub → CI → Windows/Mirror](delivery.md#uc-cont-002),
+   [UC-CONT-003 — GitHub только через typed Gateway-клиент](delivery.md#uc-cont-003)
+   и [UC-GW-009 — UNCERTAIN, чтение полной заявки и Owner Portal](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/incidents.md#uc-gw-009).
+   Для UNCERTAIN начинать с безопасного чтения и независимой проверки
+   эффекта, не выполнять повторно push/commit и не закрывать за владельца.
 3. Определить контекст по [UC-CONT-001](orientation.md#uc-cont-001): один,
    несколько, новый репозиторий после согласования или работа без репозитория.
    README, открытый для ориентации, **не означает** владение текущей задачей.
