@@ -77,7 +77,7 @@ repo; `PREPARED` — создан в отдельном task worktree, но ещ
 | ID | Ситуация / цель | Владелец |
 | --- | --- | --- |
 | UC-CONT-001 | Контекст задачи, репозитории и worktrees | [orientation](orientation.md#uc-cont-001) |
-| UC-CONT-002 | Docker → GitHub → exact-SHA CI → Windows/Mirror | [delivery](delivery.md#uc-cont-002) |
+| UC-CONT-002 | Docker → GitHub → exact-SHA CI → Windows/Mirror при необходимости | [delivery](delivery.md#uc-cont-002) |
 | UC-CONT-003 | GitHub только через Gateway | [delivery](delivery.md#uc-cont-003) |
 | UC-CONT-004 | GitHub Actions для нужного SHA | [delivery](delivery.md#uc-cont-004) |
 | UC-CONT-005 | Принятый Windows main | [delivery](delivery.md#uc-cont-005) |
