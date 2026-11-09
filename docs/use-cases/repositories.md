@@ -1,4 +1,4 @@
-# Новый репозиторий: Docker, GitHub и Windows
+# Новый репозиторий: GitHub владельца → Docker → Windows
 
 ## UC-CONT-027
 
@@ -7,12 +7,22 @@
 [UC-CONT-018](delivery.md#uc-cont-018), для обычной новой задачи —
 [UC-CONT-019](worktrees.md#uc-cont-019).
 
-**Цель:** получить одну историю Git, чистый Docker primary на `main`, GitHub
-remote, Windows-клон в зеркальной папке и рабочий маршрут дальнейших изменений.
+**Цель:** получить одну историю Git, чистый Docker primary на `main`,
+GitHub `origin`, **пустую папку будущих worktrees** и Windows-клон
+в зеркальной папке. Первый task worktree и PR не входят в bootstrap.
 
-**Статус:** ручной bootstrap с проверками; это не автоматический provisioner.
-GitHub-действия ИИ выполняются по [UC-CONT-003](delivery.md#uc-cont-003).
-Первичный Windows `git clone` выполняет владелец по команде из чата.
+**Статус:** проверяемый ручной bootstrap, не автоматический provisioner.
+**Владелец** создаёт GitHub repo с начальным коммитом и даёт HTTPS URL;
+**ИИ** выполняет доступные Docker-действия самостоятельно, использует
+typed Gateway для GitHub READ/fetch и выдаёт готовую Windows-команду;
+**владелец** запускает первичный `git clone` на Windows.
+Создание локального Git (`git init`) не требует нового метода Gateway.
+Границы GitHub-действий — [UC-CONT-003](delivery.md#uc-cont-003).
+
+**Как:** проверить существующий GitHub `main` по URL владельца, самостоятельно
+подготовить Docker Git и пустую папку будущих worktrees, получить историю
+через Gateway, затем выдать Windows-команду и проверить отчёт владельца.
+Первый task worktree и PR — только при отдельной задаче.
 
 ### Предварительные условия
 
@@ -29,23 +39,31 @@ GitHub-действия ИИ выполняются по [UC-CONT-003](delivery.
 
 ### Порядок
 
-1. **Подготовить пустой Docker anchor.** Проверить реальные allowed roots,
-   отсутствие symlink и чужого Git-корня в целевом пути. Создать новый primary
-   directory и отдельный task root. В *пустом* primary выполнить локальный
-   `git init --initial-branch=main`; задать согласованные `user.name` и
-   `user.email` в конфигурации **этого** repo. Инициализация и авторство не
-   требуют GitHub credentials. Пока `main` unborn, не создавать в нём свою
-   отдельную историю или проектные файлы. Это разовый bootstrap, а не разрешение
-   разрабатывать в primary.
+1. **Получить URL от владельца и проверить GitHub.** Владелец заранее
+   создаёт repo через [GitHub UI](https://github.com/new), сам выбирает
+   owner/visibility/лицензию, включает начальный README-коммит в `main`
+   и даёт URL `https://github.com/<owner>/<repo>`. Без URL или GitHub
+   `main` с коммитом — STOP, а не попытка вызвать отсутствующий
+   `create_repository`, применить GitHub connector/PAT или придумать SHA.
+   ИИ **до локальных записей** через typed Gateway `get_repository` /
+   `list_branches` сверяет точный owner, имя, private/public, default
+   branch `main`, archived/disabled, существующий SHA, token scope
+   и live capabilities. READ не доказывает права на будущий push.
 
-2. **Создать GitHub repo и начальный `main`.** Сначала проверить, существует ли
-   такая typed операция в live Gateway. Если её нет, дать владельцу ссылку на
-   [New repository](https://github.com/new) и точные owner/name/visibility; владелец создаёт repo
-   в GitHub UI **с начальным README-коммитом**, затем сообщает URL. Проверить
-   default branch `main`. Не оставлять remote совсем без коммитов: обычные
-   native task/publish операции требуют существующий GitHub `main`.
-   Не выдумывать `create_repository` и не обходить Gateway connector/токеном.
-   Если repo уже создан, сверить его identity и продолжить с фактической фазы.
+2. **Самостоятельно подготовить Docker anchor и пустую task-папку.**
+   Проверить allowed roots, существующие пути/истории, symlink, чужой
+   Git-корень, отсутствие занятого target; сверить aliases
+   `/workspace/repo/Repos` и `/workspace/repos`, не делать дубликатов.
+   В свободных местах создать **два** каталога: primary
+   `/workspace/repo/Repos/<repo>` и root для будущих worktrees
+   `/workspace/repo/Worktrees/<repo>`. **Последний оставить пустым**:
+   не создавать подкаталог задачи, task-ветку и linked worktree, не вызывать
+   `workspace.create_task` в ходе bootstrap. В пустом primary локально
+   выполнить `git init --initial-branch=main`; согласованные
+   `user.name`/`user.email` при необходимости задать лишь для этого
+   repo. GitHub credentials не нужны. Пока `main` unborn, не делать
+   независимого initial commit, не класть проектные файлы в primary
+   и не вести там разработку.
 
 3. **Связать remote и проверить доступ Gateway.** Добавить локальный `origin`
    с точным HTTPS URL `https://github.com/<owner>/<repo>.git` без credentials;
@@ -69,7 +87,8 @@ GitHub-действия ИИ выполняются по [UC-CONT-003](delivery.
    upstream `origin/main`, точный origin и самостоятельный `.git` primary.
    Не использовать reset/force и не делать независимый initial commit.
 
-5. **Создать Windows-клон командой из чата.** AI подготавливает короткий готовый
+5. **Создать Windows-клон командой из чата.** Только после проверенного
+   Docker `main` ИИ подготавливает короткий готовый
    блок для Windows PowerShell 5.1 по
    [UC-CONT-025](host-operations.md#uc-cont-025), подставляя реальные URL, имя
    и ожидаемый SHA. Владелец запускает его на Windows. Основное действие —
@@ -84,34 +103,30 @@ GitHub-действия ИИ выполняются по [UC-CONT-003](delivery.
    Этот owner-run bootstrap не разрешает AI прямой сетевой Git из Docker.
 
    После clone проверить canonical `origin`, checkout `main`, HEAD = согласованный
-   GitHub SHA, upstream `origin/main` и чистый status. Если remote успел измениться,
+   GitHub SHA, upstream `origin/main` и чистый status; выдать понятный
+   PASS/STOP и фактический Windows path. До ответа владельца считать
+   Windows состояние `PENDING`, а не подтверждённым. Если remote успел измениться,
    сначала сверить новый main, а не сбрасывать clone к прежнему SHA. При повторном
    запуске существующий clone проверить по [UC-CONT-005](delivery.md#uc-cont-005),
    не клонировать поверх него. Указать путь владельцу для выбора в Mirror;
    не предполагать автоматическую регистрацию папки в UI. Windows task worktrees
    не создавать. Clone не запускает приложение, сборку или deployment.
 
-6. **Начать обычную работу.** Убедиться, что Docker `main` чистый и соответствует
-   текущему GitHub main; создать зарегистрированный task worktree через
-   `workspace.create_task` по [UC-CONT-019](worktrees.md#uc-cont-019) с точным base.
-   Все проектные файлы, импорт существующего source, edit/test/stage/commit —
-   только там. В первом изменении оформить полезный README с назначением,
-   запуском/проверками и ссылкой на главный Fortis registry, подходящий
-   `.gitignore` и единственный `docs/BACKLOG-IMPROVEMENTS.md`. README направляет
-   к обязательным UC-CONT-002/003; локальные UC/AGENTS добавлять по реальной
-   потребности, не копировать общий регламент. Лицензия — по решению владельца.
+### После bootstrap — отдельно начать разработку
 
-7. **Доставить первое изменение и продолжить.** Применить
-   [UC-CONT-002](delivery.md#uc-cont-002): commit/publish task через Gateway,
-   PR, применимые проверки точного SHA, owner merge в GitHub UI, обновление
-   Docker main и guarded получение принятого main в Windows. Отсутствие
-   настроенного CI не выдавать за зелёный CI; выбор проверок —
-   [UC-CONT-016](orientation.md#uc-cont-016), чтение Actions —
-   [UC-CONT-004](delivery.md#uc-cont-004), развитие сценариев настройки CI —
-   [backlog](../BACKLOG-IMPROVEMENTS.md#future-ci-github-actions-и-сценарии-настройки).
-   Завершённый task убрать по шагу 6 UC-CONT-002 либо указать причину сохранения.
-   Следующая задача начинает работу в новом/своём worktree, оба primary остаются
-   чистыми на принятом `main`.
+**Не создавать первый task worktree и PR автоматически.** Когда появится
+порученная задача, сначала сверить чистый Docker `main` с текущим GitHub
+`main`, затем создать `/workspace/repo/Worktrees/<repo>/<task>`
+через зарегистрированный `workspace.create_task` по
+[UC-CONT-019](worktrees.md#uc-cont-019). Все project source,
+edit/test/stage/commit — только в task worktree. В первом изменении
+при необходимости дополнить README, `.gitignore` и единственный
+`docs/BACKLOG-IMPROVEMENTS.md`; лицензию выбирает владелец.
+Дальнейший publish/PR/применимые exact-SHA CI/owner GitHub UI merge,
+обновление Docker и Windows main и cleanup идут по
+[UC-CONT-002](delivery.md#uc-cont-002). Отсутствующий CI
+не выдавать за успешный. Ни первый task, ни CI, ни PR не являются
+условием завершения создания репозитория.
 
 ### Остановиться и сверить состояние
 
@@ -125,12 +140,17 @@ bootstrap продолжать с проверенной фазы без нов�
 При передаче незавершённой работы указать достигнутую фазу, не объявлять весь
 сценарий выполненным.
 
-**Готово:** проверены owner/repo/visibility и origin; Docker и Windows имеют одну
-начальную историю, чистый `main` и ожидаемый SHA. Известны Windows path,
-Gateway scope и путь task worktree; первое изменение прошло обычный PR workflow,
-принятый SHA получен в Docker/Windows, завершённый worktree убран либо указан
-конкретный повод сохранения. Следующая задача следует обычному workflow.
-Source sync, CI и работа приложения подтверждаются раздельно.
+**Готово:** проверены owner/repo/visibility и канонический origin,
+GitHub доступен через Gateway, Docker имеет самостоятельный Git primary
+с чистым `main` и ожидаемым GitHub SHA; каталог
+`/workspace/repo/Worktrees/<repo>` создан и **пуст**.
+ИИ выдал готовую Windows PowerShell-команду с настоящими URL, путём и SHA.
+После её выполнения владельцем отдельно подтверждены Windows `origin`,
+чистый `main`, SHA, upstream и путь клона для Mirror.
+Если Windows ещё не проверен, сообщить `DOCKER_READY / WINDOWS_PENDING`,
+не объявлять весь сценарий завершённым. Готовность будущих task worktrees
+не означает создание worktree или PR. Source sync, CI и работа приложения
+подтверждаются раздельно.
 
 [native]: https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/NATIVE-WORKTREE-GATEWAY-2026-11-06.md
 [credentials]: https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/credential-lifecycle.md#uc-gw-004
