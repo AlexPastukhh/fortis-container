@@ -1,8 +1,9 @@
-# Docker → GitHub → Actions → Windows
+# Docker → GitHub → Actions → Windows (при необходимости)
 
 ## UC-CONT-002
 
-**Цель:** доставить проверенное изменение из Docker в Windows main.
+**Цель:** доставить проверенное изменение из Docker через GitHub/CI/owner merge;
+обновить Windows main, если Windows — получатель этих исходников.
 
 **Как:**
 
@@ -25,10 +26,17 @@
    primary. Условия доказательства merge и параметры принадлежат
    [native contract][native], а не этому общему UC. Старый `workspace.update_main`
    требует Gateway merge receipt и не подходит после UI merge; не создавать
-   фиктивную ASK. Для нового client/API — [UC-GW-003][api-change]. При
-   `UNCERTAIN` сначала reconcile того же UUID, без слепого повтора эффекта.
-5. [UC-CONT-005](#uc-cont-005): получить этот merged main в Windows. Source pull
-   не заменяет image build/deploy или перезапуск приложения.
+   фиктивную ASK. Для нового client/API — [UC-GW-003][api-change].
+   При `UNCERTAIN` сначала прочитать исходную заявку/события/worker
+   через [UC-GW-009][incidents] и независимо проверить доказательства эффекта;
+   не повторять действие. `reconcile` — отдельная операция по контракту,
+   не обязательный read-only просмотр заявки.
+5. **Если проекту требуется обновлённый Windows clone**, применить
+   [UC-CONT-005](#uc-cont-005) через Mirror. Если пользователь не просил
+   Windows-исходники и нет конкретного Windows consumer/test/deploy,
+   зафиксировать «Windows sync: не требуется» и не запускать Mirror
+   ради формального совпадения SHA. Pull исходников не собирает image
+   и не обновляет запущенное приложение.
 6. Завершить свою задачу очисткой выбранного task worktree: сверить repo,
    task и фактический HEAD, убедиться, что работа закончена и source path не
    нужен deployment/recovery records или другой активной задаче. По
@@ -40,7 +48,11 @@
    не обходить отказ через force/reset/clean. Это не массовая очистка других
    задач, remote branches или Docker volumes.
 
-**Готово:** PR/CI/merge и Docker/Windows SHA проверены раздельно; необходимое
+**Готово:** PR/CI/merge и Docker main подтверждены по точным SHA;
+для требуемой Windows-синхронизации Mirror уже показал проверенный
+`EXECUTED`/readback либо Windows явно не входил в задачу.
+Не запрашивать дополнительную PowerShell-команду, скриншот или
+ручное сообщение SHA после успешного Mirror readback. Необходимое
 развёртывание прошло [UC-CONT-012](operations.md#uc-cont-012), если оно было целью.
 Task worktree удалён с подтверждённым receipt либо указан конкретный повод
 его сохранить; завершённые задачи не остаются висеть без причины.
@@ -56,7 +68,9 @@ native операции и политика — [native contract][native].
 `fortis_approvals.workflow.client.default_client()`
 и его typed GitHub methods; клиент передаёт machine grant по TLS в Gateway,
 а GitHub credential остаётся в Gateway. Стабильный requestId, target и SHA
-сохраняются для retry/status. ALLOW выполняется в пределах поручения, ASK
+сохраняются для status/evidence и разрешённого контрактом повторного опроса.
+При `UNCERTAIN` не создавать новый UUID ради повтора эффекта и не путать
+polling с повторным push/commit. ALLOW выполняется в пределах поручения, ASK
 сразу создаёт PENDING и ожидает решения в портале; DENY не обходится.
 Исключение для **маршрута публикации**: ИИ не вызывает `merge_pull_request` и не
 создаёт соответствующую ASK; после PR/CI владелец сливает через GitHub UI по
@@ -83,6 +97,16 @@ GitHub API. Не использовать GitHub connector, старый credent
 из чата — [UC-CONT-027](repositories.md#uc-cont-027). Это отдельный owner-run
 bootstrap, не доступ ИИ к Windows credentials или прямому Git из Docker.
 
+**Диагностика HTTP 403:** не объявлять проблемой GitHub token без фактов.
+Определить endpoint, операцию, стадию и безопасный error code:
+`WORKFLOW_DENIED` — обобщённый отказ самого Gateway (валидация,
+preflight, policy, SHA/состояние, actor и др.), а `GITHUB_HTTP_403`
+— зафиксированный upstream HTTP status; даже последний требует проверки
+конкретного permission/context. `403` на `/v1/git/artifact` до создания
+action/ASK не лечится подтверждением Owner Portal. При неизвестном исходе
+читать прежний UUID по [UC-GW-009][incidents], проверить receipts и фактические
+Git refs, не менять PAT и не повторять push/commit без подтверждения исхода.
+
 **Готово:** получен проверенный typed result/receipt нужного действия; токен не
 попал в Repo/payload/log. Политики не переписываются в этом сценарии: [native][native].
 
@@ -103,7 +127,8 @@ Sonar/analysis/PR binding дополнительно проверяется по
 
 ## UC-CONT-005
 
-**Цель:** обновить Windows primary clone до одобренного merged main.
+**Цель:** по запросу или реальной потребности обновить Windows primary
+clone до одобренного merged main; получить подтверждение из самого Mirror.
 
 **Как:** открыть Mirror, выбрать точный repo и проверить фактические Windows
 branch/HEAD/origin/dirty status, GitHub main и направление ancestry. Выбранная
@@ -113,8 +138,15 @@ branch/HEAD/origin/dirty status, GitHub main и направление ancestry.
 проверка FETCH_HEAD и fast-forward. При расхождении, dirty, unknown или неверном
 origin остановиться без reset/stash. CLI-эквивалент должен сохранять те же проверки.
 
-**Готово:** Windows main readback равен ожидаемому SHA и остаётся чистым.
-Подробная UI/CLI процедура и фактические ограничения GUI — [Mirror workflow][mirror].
+**Готово:** Mirror подтверждает `Pull Windows` как `EXECUTED` и
+показывает Windows `main` readback = проверенному GitHub `main` SHA,
+либо сообщает конкретный STOP/unknown. Mirror сам сверяет SHA, branch,
+origin и clean: **после успешного Mirror readback не давать владельцу отдельную
+команду на «подтверждение SHA», не требовать копировать SHA в чат**.
+Если результат неясен, использовать `Проверить результат`/receipt и
+read-only сверку Mirror, не повторять Pull вслепую. Если Windows не нужен,
+этот UC пропускается — проверенный Docker/GitHub цикл уже завершён.
+Подробная UI/CLI процедура и ограничения GUI — [Mirror workflow][mirror].
 Не использовать GUI Stage/Commit/Push как будто он уже выбирает Docker task worktree.
 
 ## UC-CONT-018
@@ -130,9 +162,11 @@ origin остановиться без reset/stash. CLI-эквивалент д�
 проверить `github.list_repositories(owner)`, разрешения **текущего токена** для
 нужного repo, `GET repository` у Gateway, `main`/owner, canonical Git origin,
 существующие `/workspace/repo/Repos/<repo>` и `Worktrees/<repo>` и действующую
-политику конкретной операции. Если token не имеет доступа (`403`/not listed) —
-не пытаться добавить второй список или обойти через PAT/GitHub connector; нужен
-отдельный owner-reviewed scope/credential change. Если local worktree или repo
+политику конкретной операции. Если достоверно установлено отсутствие upstream token scope —
+не обходить через PAT/GitHub connector: требуется owner-reviewed
+scope/credential change. Сам по себе `403` либо отсутствие repo в списке
+не доказывает причину; сначала разделить Gateway DENY/preflight, конкретный
+target и ответ реального GitHub (UC-CONT-003). Если local worktree или repo
 отсутствует, это **другой** prerequisite, не автоматическая публикация. При
 legacy `dynamicRepositories=false` прежний single-repo scope сохраняется,
 и расширение требует принятого source/config + rollout. Не выдавать ALLOW всем
@@ -150,3 +184,5 @@ not found` сам по себе не доказывает причину.
 [api-change]: https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/integrations.md#uc-gw-003
 [guide]: https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/GATEWAY-AGENT-GUIDE.md
 [analysis]: https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/ANALYSIS-REVIEW-CONTRACT.md
+
+[incidents]: https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/incidents.md#uc-gw-009
