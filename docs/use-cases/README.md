@@ -26,7 +26,7 @@
 | Ситуация | Выбрать |
 | --- | --- |
 | Контекст, один/несколько/новый repo или работа без repo | [UC-CONT-001](orientation.md#uc-cont-001) |
-| Создать repo с нуля: Docker Git → GitHub → Windows clone → первая задача | [UC-CONT-027](repositories.md#uc-cont-027) |
+| Новый repo: владелец даёт GitHub URL → Docker Git и пустой task root → Windows clone | [UC-CONT-027](repositories.md#uc-cont-027) |
 | Сквозное изменение GitHub/CI/Windows | [UC-CONT-002](delivery.md#uc-cont-002), [UC-CONT-003](delivery.md#uc-cont-003) |
 | Изменение Docker / backup / retire & cleanup | [UC-CONT-021](docker.md#uc-cont-021), [UC-CONT-022](docker.md#uc-cont-022), [UC-CONT-023](docker.md#uc-cont-023) |
 | Fortis Repo image / Repo1+Repo2 Guards / owner-run Windows | [UC-CONT-026](docker.md#uc-cont-026), [UC-CONT-025](host-operations.md#uc-cont-025) |
@@ -101,7 +101,7 @@ repo; `PREPARED` — создан в отдельном task worktree, но ещ
 | UC-CONT-024 | Создать или улучшить Use Case | [orientation](orientation.md#uc-cont-024) |
 | UC-CONT-025 | Owner-only Windows/host action unavailable in Docker | [host operations](host-operations.md#uc-cont-025) |
 | UC-CONT-026 | Fortis Repo image + both Repo Guards | [docker](docker.md#uc-cont-026) |
-| UC-CONT-027 | Новый Git repo, GitHub remote, Windows clone и первая задача | [repositories](repositories.md#uc-cont-027) |
+| UC-CONT-027 | GitHub URL владельца, Docker primary, пустой task root и Windows clone | [repositories](repositories.md#uc-cont-027) |
 
 [Совместимость старых ID](legacy-aliases.md) сохраняет старые якоря без копии
 процедур. Детальные Gateway/Windows сценарии — в их собственных реестрах.
