@@ -50,6 +50,7 @@ repo; `PREPARED` — создан в отдельном task worktree, но ещ
 | `docke-windows-mirror` | [Mirror use cases](https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/use-cases/README.md) | main / [публикация PR #4](https://github.com/AlexPastukhh/docke-windows-mirror/pull/4) |
 | `tunnel` | [Tunnel use cases](https://github.com/AlexPastukhh/tunnel/blob/main/docs/use-cases/README.md) | main / [публикация PR #2](https://github.com/AlexPastukhh/tunnel/pull/2) |
 | `script-control-center` | [Script Center use cases](https://github.com/AlexPastukhh/script-control-center/blob/main/docs/use-cases/README.md) | ACTIVE — принят в `main` |
+| `feed_and_search_and_bank_and_brain` — Action System | [Action System use cases](https://github.com/AlexPastukhh/feed_and_search_and_bank_and_brain/blob/task/action-system-usecases-20261109/docs/use-cases/README.md) | PREPARED — отдельная task-ветка; до merge не считать действующим `main` |
 | `obs-planning-docs` — repository | [Planning repository registry](https://github.com/AlexPastukhh/obs-planning-docs/blob/main/planning/use-case-registry.md) | ACTIVE |
 | `obs-planning-docs` — OBS — session | [local registry](https://github.com/AlexPastukhh/obs-planning-docs/blob/main/planning/session/use-case-registry.md) | ACTIVE |
 | `obs-planning-docs` — OBS — documentation | [local registry](https://github.com/AlexPastukhh/obs-planning-docs/blob/main/planning/documentation/use-case-registry.md) | ACTIVE |
