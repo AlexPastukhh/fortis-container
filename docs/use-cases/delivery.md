@@ -97,15 +97,34 @@ GitHub API. Не использовать GitHub connector, старый credent
 из чата — [UC-CONT-027](repositories.md#uc-cont-027). Это отдельный owner-run
 bootstrap, не доступ ИИ к Windows credentials или прямому Git из Docker.
 
-**Диагностика HTTP 403:** не объявлять проблемой GitHub token без фактов.
-Определить endpoint, операцию, стадию и безопасный error code:
-`WORKFLOW_DENIED` — обобщённый отказ самого Gateway (валидация,
-preflight, policy, SHA/состояние, actor и др.), а `GITHUB_HTTP_403`
-— зафиксированный upstream HTTP status; даже последний требует проверки
-конкретного permission/context. `403` на `/v1/git/artifact` до создания
-action/ASK не лечится подтверждением Owner Portal. При неизвестном исходе
-читать прежний UUID по [UC-GW-009][incidents], проверить receipts и фактические
-Git refs, не менять PAT и не повторять push/commit без подтверждения исхода.
+**Диагностика HTTP 403 и повторная проверка:** `403` не является
+доказательством постоянной потери GitHub permission/token scope. В Fortis
+наблюдались кратковременные отказы: **после отказа снова проверить ту же
+capability/операцию в актуальном контексте**, а не сразу менять credentials,
+policy или создавать обходной маршрут. Сначала записать endpoint, typed
+операцию, actor, target, стадию, исходный UUID и безопасный error code;
+повторно проверить live capabilities, разрешённое READ и текущий GitHub/Repo
+state. `WORKFLOW_DENIED` — обобщённый отказ Gateway (validation, preflight,
+actor/policy, SHA/state и др.), а `GITHUB_HTTP_403` — upstream HTTP status;
+оба требуют диагностики, а не автоматического вывода «нужен новый PAT».
+
+**Критическая граница:** повторная **проверка** не равна повторной **мутации**.
+При read-only запросе допустима ограниченная повторная попытка того же typed
+READ после сверки авторизации/контекста; повторный `403` или доказанный
+DENY/scope mismatch — STOP. Если попытка могла создать effect (create_task,
+push, PR, merge, update_main или внешний write), **сначала проверить исходный
+requestId/status/details, receipt, точный SHA, branch/PR/main и локальный
+worktree** по [UC-GW-009][incidents]. Если достигнуто нужное состояние —
+не повторять действие, даже если последний клиент вернул `403` или `STALE`.
+Если исход неизвестен, не создавать новый UUID, не отправлять push/commit
+заново и не считать `NOT_FOUND` достаточным доказательством отсутствия
+внешнего эффекта. Вновь отправлять действие можно только если его
+**неисполнение подтверждено**, причина отказа устранена и контракт допускает
+повтор с сохранёнными preconditions/immutable identity. `403` при загрузке
+`/v1/git/artifact` до action/ASK не лечится Owner Portal; сверять bundle
+identity, remote branch и Gateway admission. **DENY не обходить** даже если
+через некоторое время другая операция проходит.
+
 
 **Готово:** получен проверенный typed result/receipt нужного действия; токен не
 попал в Repo/payload/log. Политики не переписываются в этом сценарии: [native][native].
