@@ -2,7 +2,7 @@
 releaseImpact:
   schemaVersion: 1
   classification: deployment
-  reason: "A shared Feedbrain application image change affects multiple compose services."
+  reason: "An Alembic migration changes the shared Feedbrain application image and requires database migration."
   targets:
     - id: api
       actions: [image-rebuild]

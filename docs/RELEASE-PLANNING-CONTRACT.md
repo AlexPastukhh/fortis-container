@@ -52,22 +52,26 @@ No GitHub write, deployment or privileged action is authorized by this design fi
 3. Cross-repository references use **`{repository, target}`**; intra-repository references
    use the same shape. Resolve them against the selected repository's pinned catalog
    revision. Missing, cyclic or unverified dependencies block batch admission.
-4. PR `classification: deployment` requires at least one target; `no-deployment`
+4. `noDeploymentPaths` is a reviewed **explicit allowlist** of repository file globs
+   that do not affect build or runtime targets. CI must fail closed on unmatched files;
+   a source-input match takes precedence over a no-deployment match. Never infer
+   documentation-only impact from filename alone without catalog coverage.
+5. PR `classification: deployment` requires at least one target; `no-deployment`
    requires an empty target list and a specific reason; `unknown` requires review.
    `unknown` must never be silently downgraded to `no-deployment`.
-5. PR `targets[].id` references the current catalog of that PR's repository.
+6. PR `targets[].id` references the current catalog of that PR's repository.
    Each target has its **own** required `actions`. Shared build units must be built
    once per source/artifact identity, even if several targets use them.
-6. Action values describe impact, not permission to deploy. `migration-required`
+7. Action values describe impact, not permission to deploy. `migration-required`
    may coexist with `image-rebuild`. Reasons, verification and dependency entries
    are mandatory (empty dependency arrays are valid).
-7. CI must evaluate the **exact PR HEAD**, changed file set and catalog from the
+8. CI must evaluate the **exact PR HEAD**, changed file set and catalog from the
    proposed revision. New build/deploy units require an accompanying catalog change.
    Privileged label/project updates must not execute untrusted PR code.
-8. One merged `main` SHA includes all of its merged changes. Release Batch selection
+9. One merged `main` SHA includes all of its merged changes. Release Batch selection
    cannot omit code from that SHA. A requested subset requires a separately approved
    source-selection strategy.
-9. Project fields and labels are projections. A release manifest describes a proposed
+10. Project fields and labels are projections. A release manifest describes a proposed
    batch; only target-specific protected evidence and independent runtime readback
    support `Deployed`. `UNCERTAIN` is a STOP, not automatic retry.
 
@@ -100,7 +104,28 @@ acceptance were not established by the inventory.
   `RELEASE_WORKFLOW_READY` is reserved for tested catalog, PR, CI, rules and queue.
   Neither is inferred from this design document.
 
-**Next implementation gate:** add one shared YAML + JSON Schema validator with
+**Validator source candidate:** `tools/release/validate.py` enforces schema plus
+local catalog/impact invariants, with tests in `tests/test_release_validator*.py` and
+`tools/release/requirements.txt`. It is not yet enrolled into PR checks of the five projects.
+The optional new `release-schema-ci.yml` is a source candidate until its workflow
+change is owner-approved, merged and observed at exact PR HEAD.
+
+### Validator invocation (source candidate)
+
+The validator is **read-only**. After installing `tools/release/requirements.txt`,
+run `python3 tools/release/validate.py catalog --repo-root . --repository <repo>`
+in a trusted checkout with an enrolled `release/targets.yaml`.
+
+For impact checks use `impact` and the same repo flags, plus
+`--pr-body <body.txt> --changed-files-json <changed.json>
+--expected-head-sha <full-40-character-PR-head-SHA>`.
+The JSON file must be the **complete** changed-path list from trusted PR metadata,
+not an unverified user-edited subset. The validator compares the checkout's
+actual Git HEAD with the expected SHA. CI must supply exact-head checkout and
+a trusted changed-file inventory; source validation does not discover those
+GitHub facts by itself. `unknown` and unmatched changed paths fail closed.
+
+**Next implementation gate:** verify one shared YAML + JSON Schema validator with
 positive/negative tests, wire it to a pilot PR without privileged untrusted-code
 execution, then review and onboard the five catalogs one at a time. Future scope
 belongs in the repository's single `docs/BACKLOG-IMPROVEMENTS.md`; avoid separate

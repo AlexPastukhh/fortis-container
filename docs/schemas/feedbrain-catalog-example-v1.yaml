@@ -43,3 +43,6 @@ targets:
       environments: [local]
       services: [migrate]
     verification: [migration-exit-zero]
+noDeploymentPaths:
+  - README.md
+  - docs/**
