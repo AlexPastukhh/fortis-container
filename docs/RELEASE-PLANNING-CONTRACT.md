@@ -1,11 +1,16 @@
 # Release Planning — cross-repository source contract v1
 
-**Status: V1 source contract accepted; cross-repository CI adapter proposed.**
-The shared schema and validator have been owner-merged. The first-wave five
-catalogs are present in their accepted source `main`. This does **not**
-mean any release-impact required check, labels, GitHub Project, Release Batch
-planner or Deployment publisher is active. Those must be separately reviewed,
-installed and proven with exact-head CI results.
+**Status (2026-11-11): V1 source/catalog contract and shared exact-head PR CI
+accepted in the five enrolled projects; label/queue automation NOT active.**
+The shared validator was separated into the public,
+version-pinned [fortis-release-impact-action](https://github.com/AlexPastukhh/fortis-release-impact-action)
+(`8c9abefdfbe4699aae97b9363a2a66c596680e62`). Owner-merged
+CI wrappers in `tunnel`, `docke-windows-mirror`, `fortis-approvals`,
+`feed_and_search_and_bank_and_brain` and `rd-graphs` each passed both
+the exact-head shared Release Impact and profile CI checks. This **does not**
+prove GitHub branch-rule enforcement or that automated Labels, a GitHub
+Project, Release Batch planning, GitHub Deployments or runtime releases
+are installed. Those remain separate owner-reviewed gates.
 
 **Scope:** multi-repository release planning. The generic Fortis workflow remains owned by
 [UC-CONT-002/003](use-cases/delivery.md); Gateway operation policy and releases are owned by
@@ -94,8 +99,12 @@ acceptance were not established by the inventory.
 
 ## Ownership and adoption
 
-- `fortis-container`: one cross-repo schema and validator, release coordination use case,
-  onboarding route through [UC-CONT-018](use-cases/delivery.md#uc-cont-018).
+- `fortis-container`: normative cross-repo release contract, schema authority,
+  release-coordination Use Cases and onboarding through
+  [UC-CONT-018](use-cases/delivery.md#uc-cont-018). The separately reviewed
+  public `fortis-release-impact-action` publishes the **single executable**
+  validator and versioned v1 schema snapshot for both public and private callers.
+  Do not independently maintain two divergent validator implementations.
 - Each project: one catalog, existing CI augmented rather than overwritten,
   real build/deployment rules and test instructions owned in its repository.
 - `fortis-approvals`: typed GitHub and new Project/Deployment operations only after
@@ -107,11 +116,13 @@ acceptance were not established by the inventory.
   `RELEASE_WORKFLOW_READY` is reserved for tested catalog, PR, CI, rules and queue.
   Neither is inferred from this design document.
 
-**Accepted source:** `tools/release/validate.py` implements catalog and impact
-schema/semantic checks. `release-schema-ci.yml` already runs its tests. The
-**new** shared composite action `.github/actions/release-impact-v1/action.yml`
-plus `tools/release/ci_entry.py` is a source candidate awaiting its own
-owner-approved PR/CI/Merge. It is **not yet installed or enforced** across projects.
+**Accepted source:** source schemas and `tools/release/validate.py` were
+initially accepted in `fortis-container` (`6bde4c84b9625719bc7f87b1397758636d6c85c2`).
+The public, reviewed composite action now owns the one reusable executable
+implementation. The legacy private composite action remains a pinned
+historical compatibility artifact, **not** the current caller reference.
+Future schema changes must be reviewed at the normative owner first and
+released as an immutable new public-action version with compatibility tests.
 
 ### Validator invocation (source candidate)
 
@@ -128,68 +139,103 @@ actual Git HEAD with the expected SHA. CI must supply exact-head checkout and
 a trusted changed-file inventory; source validation does not discover those
 GitHub facts by itself. `unknown` and unmatched changed paths fail closed.
 
-### Read-only GitHub Actions integration (new source candidate)
+### Accepted read-only exact-head CI integration
 
-The common action at `.github/actions/release-impact-v1/action.yml` performs
-the same schema and semantic validation using `tools/release/ci_entry.py`.
-It reads only the runner-provided `GITHUB_EVENT_PATH`, `GITHUB_REPOSITORY`,
-the exact checked-out PR HEAD, `release/targets.yaml`, and Git objects.
-It verifies same-repository PR provenance, the base/head commit identities,
-the full `merge-base..HEAD` changed-file set, and the bounded `releaseImpact`
-YAML block in the PR body. Missing/unmatched paths, wrong SHA, unknown impact,
-unsafe YAML, invalid catalog references and missing affected targets **fail**.
-It does not use a PAT, GitHub API credential, privileged PR event, label write,
-Project write, deployment call or arbitrary PR-provided changed-path list.
+All five enrolled repositories use the same reviewed immutable action:
 
-After acceptance, an individual project may call the **same** version-pinned
-action with a minimal workflow, without copying the validator source:
+`AlexPastukhh/fortis-release-impact-action@8c9abefdfbe4699aae97b9363a2a66c596680e62`
 
-```yaml
-name: Fortis Release Impact
-on:
-  pull_request:
-    types: [opened, synchronize, reopened, edited, ready_for_review]
-permissions:
-  contents: read
-jobs:
-  release-impact:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - uses: AlexPastukhh/fortis-container/.github/actions/release-impact-v1@PINNED_ACCEPTED_COMMIT_SHA
-```
+Their `.github/workflows/release-impact.yml` wrappers check out exact
+same-repository PR HEAD with full Git history and `persist-credentials: false`,
+run the shared validator under `permissions: contents: read` and **preserve**
+project-specific CI. The action verifies a non-draft PR to `main`, the
+event/checkout SHA agreement and full local Git merge-base diff, parses the
+catalog and bounded PR metadata and fails closed for unknown source paths.
+The action itself performs no write. Source CI passing is **not** proof that
+GitHub branch protection made the check required at the time of merge.
 
-**Not copy/paste-ready until the actual full accepted SHA is substituted.**
-For private repositories, GitHub's **Actions > General > Access** in the
-`fortis-container` repository must explicitly permit use by other private
-repositories owned by the same account; this requires an owner decision and
-has outside-collaborator visibility implications. A normal caller-repo
-`GITHUB_TOKEN` cannot simply check out any other private repository.
-The composite-action sharing path uses GitHub's own scoped distribution.
-First verify this private-action setting and exact-head CI on **one** pilot;
-only then roll the short wrapper out to other first-wave projects.
-The first-wave rollout may legitimately fail until those GitHub settings
-are accepted and tested; don't record `RELEASE_WORKFLOW_READY` early.
+The initial public implementation passed 30/30 GitHub CI tests and ran as
+part of green RDG #7, proving public-to-public action access. Later the
+private callers were migrated through owner-merged PRs: Tunnel #6,
+Mirror #17, Approvals #69 and FeedBrain #14; all shared and profile PR checks
+passed. No installation or Windows source update was authorized by those
+CI-only PRs.
 
-The caller source must be a same-repository, open non-draft PR targeting `main`.
-Fork PRs and uncertain source/provenance are blocked pending a separately
-reviewed contract. After the pilot, configure the exact stable
-`release-impact` check as required in each supported repository's
-GitHub branch rules (owner-managed). Green source CI alone is not evidence
-that the required check was enforced at merge.
+### V1 Release Labels — normative projection contract (next stage)
 
-**Next implementation gate:** accept central composite action and prove one exact-head caller PR;
-then roll out small wrappers/branch rules across the five catalogs.
+Label data is derived from the **same** checked Release Impact, target
+catalog and exact PR HEAD. Labels do not express permission to release or
+evidence of an installed version. The executable pure projection candidate
+is in public action PR
+[Release Labels projection #2](https://github.com/AlexPastukhh/fortis-release-impact-action/pull/2).
+It is **not active** until owner Merge, subsequent security review of the
+publisher and actual end-to-end permission/readback checks.
 
+| Metadata | Projected GitHub PR labels |
+| --- | --- |
+| `classification: no-deployment`, zero targets | `release:no-deployment` |
+| `classification: deployment`, declared target `id` | `build:<target-id>` for each declared target |
+| Target action `image-rebuild` | `release:image-rebuild` |
+| Target action `config-deploy` | `release:config-deploy` |
+| Target action `windows-update` | `release:windows-update` |
+| Target action `package-build` | `release:package-build` |
+| Target action `migration-required` | `release:migration-required` |
+| Target action `unknown` | `release:review-required` (never an approval) |
+| Entire PR `classification: unknown` | Release Impact gate **fails**; no implicit `no-deployment` |
 
-positive/negative tests, wire it to a pilot PR without privileged untrusted-code
-execution, then review and onboard the five catalogs one at a time. Future scope
-belongs in the repository's single `docs/BACKLOG-IMPROVEMENTS.md`; avoid separate
-roadmap copies and never call an unimplemented step active.
+Use stable, sorted, unique, bounded label names (including GitHub's
+50-character name limit). Catalog structure and affected targets must be
+checked first; extra deliberately declared targets remain in the label
+projection conservatively. New sources and catalogs must fail closed on
+unclassified paths. The **managed** namespaces are `build:` and `release:`;
+preserve all unrelated human labels. A future updater must handle stale
+managed labels idempotently without silently discarding manual safety review.
+
+**Privileged publication boundary:** PR-controlled workflows/artifacts or
+green statuses alone must never authorize GitHub writes; an attacker could
+change a workflow in their PR. A separate default-branch trusted publisher
+must independently verify current PR SHA, body, catalog, complete diff and
+validator result before issuing limited label mutations. It must not execute
+untrusted PR code or hand privileged credentials to untrusted inputs.
+Prefer a separately reviewed `workflow_run`-based privilege boundary, with
+explicit GitHub permissions and independent revalidation, rather than
+turning the unprivileged PR validator into a write-capable job. For public
+repos, GitHub's new `pull_request_target` policy must also be considered.
+Any failed provenance, race, missing label capability or uncertain write
+means **STOP**, not a synthetic `PASS` or permission bypass.
+
+### Fortis Release Planning — GitHub Projects queue (not yet created)
+
+The project will be a **planning view** of PRs and Releases, not the
+source of truth for accepted code, runtime state or installed SHAs. The
+initial set of enrolled sources is the five repositories above. Each merged
+PR is eligible for queue consideration; a `release:no-deployment` PR must
+not create a false rebuild/deployment requirement.
+
+Suggested fields: Repository, PR, Source SHA, Build Targets, Release Impact,
+Release Status, Batch, Dependencies, Environment, Verification/Evidence.
+Use views for new merged changes, awaiting release, blocked/review-required,
+batch planning and verified deployments. The operational unit for runtime
+tracking remains `Repository + PR + Build Target + Environment` because
+one PR may affect multiple independently deployed targets.
+
+GitHub Projects' built-in **Auto-add** can filter `is:pr is:merged`
+per repository, but has GitHub-plan-dependent rule limits (e.g. five for
+GitHub Pro, one for Free); it does **not** backfill preexisting PRs.
+Do not assume the owner account's entitlements or declare historical items
+imported without readback. If rules are insufficient, design a minimal
+typed Gateway Projects adapter under UC-GW-003, not an AI direct GraphQL
+write or a second release database. No such typed operation is currently
+accepted and verified through the Fortis Gateway. The owner must approve
+Project setup and access separately.
+
+Automated GitHub label/Project metadata does not mean `Deployed`. Only
+specific runtime protected release records and independent live verification
+can confirm installed versions; GitHub Deployment follows those receipts.
+
+**Next security/owner gates:** review/merge the read-only public Label
+Projection PR; independently review/implement a trusted publisher;
+pilot label assignment + stale-HEAD and permissions-negative tests on one
+repository; verify all five; configure the owner's GitHub Project and auto-add
+within verified plan limits; only then build Release Batch and Deployment
+interfaces. None of these steps authorizes Production.
