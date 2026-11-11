@@ -108,6 +108,8 @@ Before changing any item:
 
 ## Future: CI, GitHub Actions и сценарии настройки
 
+**Release workflow V1 / NOT IMPLEMENTED:** adopt the [shared source format](RELEASE-PLANNING-CONTRACT.md) for the five selected repositories (`tunnel`, `docke-windows-mirror`, `rd-graphs`, `fortis-approvals`, `feed_and_search_and_bank_and_brain`). Implement one reusable safe YAML/JSON-Schema validator and negative tests, PR Release Impact enforcement, per-repo catalog onboarding, labels and the common Projects queue. Then separately review typed Gateway Project/Deployment API, batching and live-evidence registration. Extend UC-CONT-018/002/027; register new UC-CONT-028 **only when accepted**. Existing CI and Gateway/Windows security contracts remain owners of their own behavior.
+
 **PLANNED:** подробнее разобрать модель CI/GitHub Actions и оформить повторяемый
 путь создания и изменения CI для нового или существующего репозитория.
 

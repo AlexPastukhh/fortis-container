@@ -1,0 +1,18 @@
+# Example only; PR-specific impact must be checked against exact HEAD.
+releaseImpact:
+  schemaVersion: 1
+  classification: deployment
+  reason: "A shared Feedbrain application image change affects multiple compose services."
+  targets:
+    - id: api
+      actions: [image-rebuild]
+    - id: worker
+      actions: [image-rebuild]
+    - id: action-worker
+      actions: [image-rebuild]
+    - id: migrate
+      actions: [image-rebuild, migration-required]
+  dependencies:
+    pullRequests: []
+    targets: []
+  verification: [source-tests, compose-migration-check, health-readiness]
