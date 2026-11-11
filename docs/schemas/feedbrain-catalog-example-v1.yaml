@@ -1,0 +1,45 @@
+# Example from the inspected Docker Compose topology. Not a deployed or approved project catalog.
+schemaVersion: 1
+repository: feed_and_search_and_bank_and_brain
+buildUnits:
+  - id: feedbrain-app
+    artifactType: docker-image
+    recipe: Dockerfile
+    inputs:
+      - Dockerfile
+      - pyproject.toml
+      - src/**
+      - alembic/**
+targets:
+  - id: api
+    buildUnit: feedbrain-app
+    deployment:
+      kind: docker-compose-service
+      procedure: docs/DEVELOPMENT.md
+      environments: [local]
+      services: [api]
+    verification: [health-readiness]
+  - id: worker
+    buildUnit: feedbrain-app
+    deployment:
+      kind: docker-compose-service
+      procedure: docs/DEVELOPMENT.md
+      environments: [local]
+      services: [worker]
+    verification: [worker-running]
+  - id: action-worker
+    buildUnit: feedbrain-app
+    deployment:
+      kind: docker-compose-service
+      procedure: docs/DEVELOPMENT.md
+      environments: [local]
+      services: [action-worker]
+    verification: [action-worker-running]
+  - id: migrate
+    buildUnit: feedbrain-app
+    deployment:
+      kind: docker-compose-service
+      procedure: docs/DEVELOPMENT.md
+      environments: [local]
+      services: [migrate]
+    verification: [migration-exit-zero]
