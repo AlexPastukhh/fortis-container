@@ -1,8 +1,11 @@
 # Release Planning — cross-repository source contract v1
 
-**Status: DESIGN / source candidate.** These schemas define the first shared format; no CI validator,
-automatic labels, GitHub Project, Release Batch planner or Deployment publisher is deployed by this
-document. Acceptance requires the normal task PR/CI/owner merge and separate onboarding tests.
+**Status: V1 source contract accepted; cross-repository CI adapter proposed.**
+The shared schema and validator have been owner-merged. The first-wave five
+catalogs are present in their accepted source `main`. This does **not**
+mean any release-impact required check, labels, GitHub Project, Release Batch
+planner or Deployment publisher is active. Those must be separately reviewed,
+installed and proven with exact-head CI results.
 
 **Scope:** multi-repository release planning. The generic Fortis workflow remains owned by
 [UC-CONT-002/003](use-cases/delivery.md); Gateway operation policy and releases are owned by
@@ -104,11 +107,11 @@ acceptance were not established by the inventory.
   `RELEASE_WORKFLOW_READY` is reserved for tested catalog, PR, CI, rules and queue.
   Neither is inferred from this design document.
 
-**Validator source candidate:** `tools/release/validate.py` enforces schema plus
-local catalog/impact invariants, with tests in `tests/test_release_validator*.py` and
-`tools/release/requirements.txt`. It is not yet enrolled into PR checks of the five projects.
-The optional new `release-schema-ci.yml` is a source candidate until its workflow
-change is owner-approved, merged and observed at exact PR HEAD.
+**Accepted source:** `tools/release/validate.py` implements catalog and impact
+schema/semantic checks. `release-schema-ci.yml` already runs its tests. The
+**new** shared composite action `.github/actions/release-impact-v1/action.yml`
+plus `tools/release/ci_entry.py` is a source candidate awaiting its own
+owner-approved PR/CI/Merge. It is **not yet installed or enforced** across projects.
 
 ### Validator invocation (source candidate)
 
@@ -125,7 +128,67 @@ actual Git HEAD with the expected SHA. CI must supply exact-head checkout and
 a trusted changed-file inventory; source validation does not discover those
 GitHub facts by itself. `unknown` and unmatched changed paths fail closed.
 
-**Next implementation gate:** verify one shared YAML + JSON Schema validator with
+### Read-only GitHub Actions integration (new source candidate)
+
+The common action at `.github/actions/release-impact-v1/action.yml` performs
+the same schema and semantic validation using `tools/release/ci_entry.py`.
+It reads only the runner-provided `GITHUB_EVENT_PATH`, `GITHUB_REPOSITORY`,
+the exact checked-out PR HEAD, `release/targets.yaml`, and Git objects.
+It verifies same-repository PR provenance, the base/head commit identities,
+the full `merge-base..HEAD` changed-file set, and the bounded `releaseImpact`
+YAML block in the PR body. Missing/unmatched paths, wrong SHA, unknown impact,
+unsafe YAML, invalid catalog references and missing affected targets **fail**.
+It does not use a PAT, GitHub API credential, privileged PR event, label write,
+Project write, deployment call or arbitrary PR-provided changed-path list.
+
+After acceptance, an individual project may call the **same** version-pinned
+action with a minimal workflow, without copying the validator source:
+
+```yaml
+name: Fortis Release Impact
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+permissions:
+  contents: read
+jobs:
+  release-impact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: AlexPastukhh/fortis-container/.github/actions/release-impact-v1@PINNED_ACCEPTED_COMMIT_SHA
+```
+
+**Not copy/paste-ready until the actual full accepted SHA is substituted.**
+For private repositories, GitHub's **Actions > General > Access** in the
+`fortis-container` repository must explicitly permit use by other private
+repositories owned by the same account; this requires an owner decision and
+has outside-collaborator visibility implications. A normal caller-repo
+`GITHUB_TOKEN` cannot simply check out any other private repository.
+The composite-action sharing path uses GitHub's own scoped distribution.
+First verify this private-action setting and exact-head CI on **one** pilot;
+only then roll the short wrapper out to other first-wave projects.
+The first-wave rollout may legitimately fail until those GitHub settings
+are accepted and tested; don't record `RELEASE_WORKFLOW_READY` early.
+
+The caller source must be a same-repository, open non-draft PR targeting `main`.
+Fork PRs and uncertain source/provenance are blocked pending a separately
+reviewed contract. After the pilot, configure the exact stable
+`release-impact` check as required in each supported repository's
+GitHub branch rules (owner-managed). Green source CI alone is not evidence
+that the required check was enforced at merge.
+
+**Next implementation gate:** accept central composite action and prove one exact-head caller PR;
+then roll out small wrappers/branch rules across the five catalogs.
+
+
 positive/negative tests, wire it to a pilot PR without privileged untrusted-code
 execution, then review and onboard the five catalogs one at a time. Future scope
 belongs in the repository's single `docs/BACKLOG-IMPROVEMENTS.md`; avoid separate
