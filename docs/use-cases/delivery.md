@@ -13,14 +13,33 @@
 2. Изменить source, выполнить [проверки](orientation.md#uc-cont-016), stage/commit
    выбранных файлов. Опубликовать настоящие Git-коммиты выбранной task-ветки
    через [UC-CONT-003](#uc-cont-003), сохранив SHA и preconditions.
-3. Создать обычный PR через typed Gateway, если draft не нужен. Политика создания
-   PR берётся из действующего контракта; [UC-CONT-007](gateway.md#uc-cont-007)
+3. **До создания PR в проекте с принятым Release Impact CI** прочитать
+   [единый Release Planning Contract](../RELEASE-PLANNING-CONTRACT.md#canonical-source-formats),
+   каталог проекта `release/targets.yaml` и действующую схему/пример. По
+   полному diff к merge-base и точному HEAD выбрать реальные затронутые
+   targets и их actions; в **body PR** передать ровно один YAML-блок
+   `releaseImpact` между `<!-- fortis-release-impact:start -->` и
+   `<!-- fortis-release-impact:end -->` в fenced `yaml`. Указать
+   `schemaVersion: 1`, `classification`, обоснование, targets,
+   dependencies и verification. Шаблон GitHub PR **не заполняет body**
+   при typed Gateway `create_pull_request`: ИИ обязан передать блок сам.
+   `no-deployment` допустим только при подтверждённых каталогом
+   неразвёртываемых изменениях; при затронутом Windows-контроллере
+   проверять Windows target/`windows-update`, не маскировать его как docs-only.
+   Затем создать обычный PR через typed Gateway, если draft не нужен.
+   Политика создания PR берётся из действующего контракта;
+   [UC-CONT-007](gateway.md#uc-cont-007)
    исключает предварительное устное разрешение на штатный ALLOW/ASK для **создания PR**.
    Передать владельцу ссылку GitHub на PR, точный HEAD SHA и статус CI. **Не
    отправлять от имени ИИ ASK на `github.merge_pull_request`**: наличие такого
    ASK — запрет свободного машинного merge, а не обязательный удобный способ
    публикации. Владелец самостоятельно просматривает и нажимает Merge в GitHub.
-4. [UC-CONT-004](#uc-cont-004): проверить обязательные CI для точного PR HEAD.
+4. [UC-CONT-004](#uc-cont-004): проверить обязательные CI для точного PR HEAD,
+   включая **Source CI и Fortis Release Impact**, если они приняты в проекте.
+   Если Release Impact CI сообщает `PR: one release-impact block required`,
+   исправить **body того же PR** через разрешённую typed Gateway-операцию
+   и проверить новую попытку CI; не обходить проверку, не подменять
+   классификацию на `no-deployment` и не просить owner merge при красном CI.
    После owner GitHub UI merge проверить PR/head/merge и текущий remote `main`,
    затем вызвать typed **`workspace.update_main_from_pr`** для чистого Docker
    primary. Условия доказательства merge и параметры принадлежат
@@ -135,7 +154,12 @@ identity, remote branch и Gateway admission. **DENY не обходить** д�
 
 **Как:** через GitHub-клиент получить workflow runs и сопоставить repo, workflow,
 event, HEAD SHA, attempt и завершение. Ожидание отличать от failure/cancelled и
-success. Проверить требуемый workflow, не выбирать просто последний зелёный run.
+success. Проверить **все обязательные** для проекта workflows и завершение
+каждого required job на актуальной попытке, а не выбирать старый зелёный run.
+Для принятого Release Impact CI ошибки отсутствующего/невалидного body,
+неверных targets или неохваченных diff-файлов исправлять в исходном PR
+по [Release Planning Contract](../RELEASE-PLANNING-CONTRACT.md), не снижая
+проверки и не считая метки доказательством успешного CI.
 Логи/jobs/annotations/artifacts читать только поддержанными typed операциями.
 Дополнительный [analysis profile][analysis] требует отдельной конфигурации;
 наличие его клиента в source не означает доступность в live Gateway.

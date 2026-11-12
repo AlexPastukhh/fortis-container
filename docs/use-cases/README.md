@@ -31,6 +31,7 @@
 | Контекст, один/несколько/новый repo или работа без repo | [UC-CONT-001](orientation.md#uc-cont-001) |
 | Новый repo: владелец даёт GitHub URL → Docker Git и пустой task root → Windows clone | [UC-CONT-027](repositories.md#uc-cont-027) |
 | Сквозное изменение GitHub/CI/Windows | [UC-CONT-002](delivery.md#uc-cont-002), [UC-CONT-003](delivery.md#uc-cont-003) |
+| **Перед созданием PR: обязательный Release Impact в body** | [UC-CONT-002](delivery.md#uc-cont-002) → [единый формат/схема и пример](../RELEASE-PLANNING-CONTRACT.md#canonical-source-formats); отсутствие блока ломает Release Impact CI |
 | Изменение Docker / backup / retire & cleanup | [UC-CONT-021](docker.md#uc-cont-021), [UC-CONT-022](docker.md#uc-cont-022), [UC-CONT-023](docker.md#uc-cont-023) |
 | Fortis Repo image / Repo1+Repo2 Guards / owner-run Windows | [UC-CONT-026](docker.md#uc-cont-026), [UC-CONT-025](host-operations.md#uc-cont-025) |
 | Новый UC / документация DRY и карта исходников | [UC-CONT-024](orientation.md#uc-cont-024), [UC-CONT-017](orientation.md#uc-cont-017) |
