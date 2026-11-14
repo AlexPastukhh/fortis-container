@@ -46,10 +46,12 @@
    [native contract][native], а не этому общему UC. Старый `workspace.update_main`
    требует Gateway merge receipt и не подходит после UI merge; не создавать
    фиктивную ASK. Для нового client/API — [UC-GW-003][api-change].
-   При `UNCERTAIN` сначала прочитать исходную заявку/события/worker
-   через [UC-GW-009][incidents] и независимо проверить доказательства эффекта;
-   не повторять действие. `reconcile` — отдельная операция по контракту,
-   не обязательный read-only просмотр заявки.
+   При `UNCERTAIN`, timeout или `403` сначала проверить исходный UUID и
+   фактический результат по [UC-CONT-003](#uc-cont-003) и
+   [UC-GW-009][incidents]. Достигнутый результат не повторять; при
+   недостигнутом результате применять только операционно-безопасный
+   ограниченный повтор с новыми проверками SHA и действующей авторизацией.
+   `reconcile` — отдельная операция, не read-only просмотр заявки.
 5. **Если проекту требуется обновлённый Windows clone**, применить
    [UC-CONT-005](#uc-cont-005) через Mirror. Если пользователь не просил
    Windows-исходники и нет конкретного Windows consumer/test/deploy,
@@ -88,8 +90,10 @@ native операции и политика — [native contract][native].
 и его typed GitHub methods; клиент передаёт machine grant по TLS в Gateway,
 а GitHub credential остаётся в Gateway. Стабильный requestId, target и SHA
 сохраняются для status/evidence и разрешённого контрактом повторного опроса.
-При `UNCERTAIN` не создавать новый UUID ради повтора эффекта и не путать
-polling с повторным push/commit. ALLOW выполняется в пределах поручения, ASK
+При `UNCERTAIN` не переисполнять исходный UUID и не путать polling
+с новым push/commit. Новое штатное обращение допустимо только после
+readback, новых предусловий и проверки безопасности операции ниже. ALLOW
+выполняется в пределах поручения, ASK
 сразу создаёт PENDING и ожидает решения в портале; DENY не обходится.
 Исключение для **маршрута публикации**: ИИ не вызывает `merge_pull_request` и не
 создаёт соответствующую ASK; после PR/CI владелец сливает через GitHub UI по
@@ -116,33 +120,87 @@ GitHub API. Не использовать GitHub connector, старый credent
 из чата — [UC-CONT-027](repositories.md#uc-cont-027). Это отдельный owner-run
 bootstrap, не доступ ИИ к Windows credentials или прямому Git из Docker.
 
-**Диагностика HTTP 403 и повторная проверка:** `403` не является
-доказательством постоянной потери GitHub permission/token scope. В Fortis
-наблюдались кратковременные отказы: **после отказа снова проверить ту же
-capability/операцию в актуальном контексте**, а не сразу менять credentials,
-policy или создавать обходной маршрут. Сначала записать endpoint, typed
-операцию, actor, target, стадию, исходный UUID и безопасный error code;
-повторно проверить live capabilities, разрешённое READ и текущий GitHub/Repo
-state. `WORKFLOW_DENIED` — обобщённый отказ Gateway (validation, preflight,
-actor/policy, SHA/state и др.), а `GITHUB_HTTP_403` — upstream HTTP status;
-оба требуют диагностики, а не автоматического вывода «нужен новый PAT».
+**HTTP 403, timeout, `UNCERTAIN`: сначала результат, затем действие.**
+Не считать единичный `403` постоянной потерей token scope и не менять PAT,
+policy или маршрут доступа наугад. Зафиксировать исходный UUID, endpoint,
+typed operation, actor, repo, SHA и безопасные `stage/code`. Проверить
+`status/details` и receipt через [UC-GW-009][incidents], затем разрешённым
+Gateway READ — фактический GitHub/Repo state. `WORKFLOW_DENIED` — общий отказ
+Gateway (policy, validation, stale preflight и др.); `GITHUB_HTTP_403` —
+ответ upstream. Явный `DENY` или доказанная нехватка прав означает **STOP**,
+не повторить WRITE другим credential или инструментом. При временном
+read-only `403` допустимы до трёх проверок с короткой паузой и сверкой
+capabilities; не принимать удачный GET за разрешение на запрещённый WRITE.
 
-**Критическая граница:** повторная **проверка** не равна повторной **мутации**.
-При read-only запросе допустима ограниченная повторная попытка того же typed
-READ после сверки авторизации/контекста; повторный `403` или доказанный
-DENY/scope mismatch — STOP. Если попытка могла создать effect (create_task,
-push, PR, merge, update_main или внешний write), **сначала проверить исходный
-requestId/status/details, receipt, точный SHA, branch/PR/main и локальный
-worktree** по [UC-GW-009][incidents]. Если достигнуто нужное состояние —
-не повторять действие, даже если последний клиент вернул `403` или `STALE`.
-Если исход неизвестен, не создавать новый UUID, не отправлять push/commit
-заново и не считать `NOT_FOUND` достаточным доказательством отсутствия
-внешнего эффекта. Вновь отправлять действие можно только если его
-**неисполнение подтверждено**, причина отказа устранена и контракт допускает
-повтор с сохранёнными preconditions/immutable identity. `403` при загрузке
-`/v1/git/artifact` до action/ASK не лечится Owner Portal; сверять bundle
-identity, remote branch и Gateway admission. **DENY не обходить** даже если
-через некоторое время другая операция проходит.
+**Защита Fortis и восстановление.** Core связывает UUID с immutable
+fingerprint, worker — с durable journal, GitHub-адаптер — с receipt.
+Завершённый UUID Fortis самостоятельно **не исполняет позже заново**; повтор
+`status/details/inspect` — чтение, а не повтор POST. При потерянном HTTP-ответе
+уже переданный GitHub запрос всё же может завершиться без Fortis receipt;
+поэтому сверять фактическую цель, а не ждать абстрактного «окончания сети».
+Агент не запускает старый claim/`resume` ради нового эффекта и не выдаёт
+успешное конечное состояние за receipt старого UUID.
+
+**Быстрый readback по операции (через typed `default_client().github`).**
+Для branch/commit/push — `list_branches(repo)` и точный SHA; для PR —
+`list_pull_requests(repo,state='all')` по head/base с
+`get_pull_request(repo,number)`; для merge — `get_pull_request` с
+`merged=True`, HEAD и GitHub `main`; для локального `update_main_from_pr`
+— `git rev-parse HEAD`, `git status --porcelain`, Git reflog и worker
+journal в разрешённом Repo-контексте. По возможности инспектор UC-GW-009
+делает эти READ автоматически. Если цель уже достигнута, **не повторять**.
+Если цель не достигнута, оригинальный local worker имеет durable `FAILED`
+(не `CLAIMED`), Git/readback и preconditions однозначны, либо конкретная
+GitHub операция защищена уникальной branch/ref identity и SHA/CAS,
+допускается **новое штатное обращение** после новой live проверки политики,
+прав/предусловий: максимум **три попытки суммарно**, считая исходную, с
+короткой паузой и readback после каждой. Новый requestId — новая операция и
+при `ASK` новое решение owner; старую запись/receipt не переписывать.
+Если задача выполняется другим actor, действующая авторизация остаётся
+обязательной. При `CLAIMED`, изменённых SHA, неоднозначном CREATE без
+идентификатора или реальном DENY — **STOP** и конкретные evidence, не обход.
+
+**Issue: экспресс-поиск дубликатов (включая закрытые).** Для Fortis visual
+review основной ключ — `runId`, записанный в начале body как
+`<!-- fortis-visual-review:RUN_ID -->`. Проверить `list_issues(repo,
+state='all',page=...,per_page=30)` — его `items[*].runIdMarker`, а найденные
+номера подтвердить `get_issue(repo,number)`, сравнив полный body и runId.
+Пример — только Gateway READ, не отдельный GitHub token:
+
+```python
+from fortis_approvals.workflow.client import default_client
+c = default_client()
+run_id = 'ТОЧНЫЙ_RUN_ID_ИСХОДНОЙ_ЗАЯВКИ'  # заменить исходным runId
+hits = []
+for page in range(1, 11):
+    response = c.github.list_issues('visual-workspace', state='all',
+                                    page=page, per_page=30)
+    hits += [i['number'] for i in response['items']
+             if i['runIdMarker'] == run_id]  # исходный стабильный runId
+    if not response['hasNextPage']:
+        break
+else:
+    raise RuntimeError('ISSUE_INVENTORY_INCOMPLETE')
+issues = [c.github.get_issue('visual-workspace', n)['issue'] for n in hits]
+# Сопоставить runIdMarker, title, body и URLs; >1 — кандидаты в дубликаты.
+```
+
+Для обычного Issue без Fortis-маркера сначала отфильтровать свежие
+`list_issues(...,state='all')` по точному title/времени, затем сравнить
+`get_issue(...)` body по характерной строке или идентификатору задачи;
+одинаковый title сам по себе недостаточен. Если найдено два — указать оба
+URL и один канонический, не удалять автоматически. Если страницы не покрыты,
+GET недоступен или результат неоднозначен — явно отметить неполноту.
+Не тратить время на повторные тяжёлые поиски без нового evidence.
+
+**Граница:** повторная проверка не равна повторной мутации. Нет
+универсальной гарантии GitHub exactly-once для любых двух разных POST/UUID:
+особенно для Issue, комментариев и запуска workflow. Не утверждать
+невыполнение исходного UUID только из отсутствия receipt/объекта в
+одном списке. Действовать по конкретным предусловиям операции и
+[UC-GW-009][incidents]; без них — STOP, а не слепой повтор.
+`403` при `/v1/git/artifact` до создания action/ASK требует проверки
+bundle identity, remote branch и Gateway admission, а не Owner Portal.
 
 
 **Готово:** получен проверенный typed result/receipt нужного действия; токен не
