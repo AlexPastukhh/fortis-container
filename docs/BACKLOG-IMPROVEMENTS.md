@@ -106,12 +106,250 @@ Before changing any item:
 5. Obtain explicit owner approval for runtime, credential or Windows changes.
 6. Update this document and the current-state evidence after acceptance.
 
+## Fortis Release Planning / CD Queue
+
+**Fortis Release Planning / CD Queue — CURRENT ROADMAP (решения 2026-11-14).**
+Нормативный источник правил классификации, `release/targets.yaml` и Release Impact:
+[Release Planning Contract](RELEASE-PLANNING-CONTRACT.md).
+Исполняемый код вычисления Release Labels и read-only admission:
+[fortis-release-impact-action](https://github.com/AlexPastukhh/fortis-release-impact-action).
+Gateway-контракт изменения labels:
+[UC-GW-011](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/integrations.md#uc-gw-011).
+Этот раздел — **единственный живой план** дальнейших работ, не отдельный новый нормативный контракт, не release receipt и не разрешение на runtime-изменения.
+
+### Принятый продуктовый результат
+
+После owner merge PR в `main` Fortis должен показать, **какие CD-действия ожидаются**,
+для каких `repository / target / environment`, на каком source SHA и по каким
+изменениям. После защищённого применения и независимой проверки Fortis должен
+отразить **что действительно установлено**. Пользователь на Windows сможет читать
+общие опубликованные GitHub-данные напрямую через GitHub REST API с подходящей
+аутентификацией; ИИ продолжает обращаться к GitHub **только через Fortis Gateway**
+с разрешёнными typed READ. Собственная **Fortis Release Board** отображает те
+же данные; GitHub Projects не нужен и **исключён из текущего плана**.
+
+Объект учёта — не только репозиторий: **repository + deployment target +
+environment + desired source/artifact identity**. Репозиторий — агрегированное
+представление очереди. Один репозиторий может содержать несколько targets;
+несколько targets могут использовать один build unit/image. PR и merge — входные
+события и ссылки на изменения, но не отдельная единица физической установки:
+один проверенный deployment может покрыть несколько merged PR. Queue и Board
+должны также группировать по repo, action, status и release batch.
+
+### Текущие факты и граница готовности (read-only 2026-11-14)
+
+- **Уже принято в source**: общий Release Impact v1, каталоги targets в пяти
+  enrolled проектах, точный PR HEAD/full merge-base diff, вычисление
+  `release:*` / `build:*` labels, read-only admission с обязательными
+  `Source CI` и `Fortis Release Impact`, полный latest attempt/jobs,
+  Gateway snapshots, trusted preview и необязательный owner-ASK sender.
+  В `fortis-release-impact-action/main` это commit
+  `27bdc57c160fb5535b624003b88122d0169fe079` (PR #8).
+- **Live Gateway READ проверен**: `get_pr_release_impact_evidence`,
+  `list_repository_labels`, `list_pr_labels`,
+  `get_pr_release_label_context`. Release Labels mutations
+  `create_release_label`, `add_pr_release_labels`,
+  `remove_pr_release_label` доступны с `policy=ASK`,
+  `unknownEffect=STOP`, `automaticPublisher=NOT_ACTIVE`,
+  `scope=registered-open-same-repo-task-PR-only`. Это не автоматический
+  publisher и не deployment-сервис.
+- **Готовый пилот, ещё без записи**: открытый, не слитый
+  [fortis-approvals PR #76](https://github.com/AlexPastukhh/fortis-approvals/pull/76),
+  HEAD `217af4744bb927062bb987c5ef0e5361b70816c5`,
+  docs-only, существующие labels `[]`, предлагаемая
+  `release:no-deployment` уже определена в repository labels. Повторный
+  `prepare_owner_label_ask(...)` 2026-11-14 вернул
+  `PREPARED_OWNER_ASK_ONLY`: Source CI run `43241792280`, attempt 1,
+  jobs `offline-tests`/`audit-projections` successful; Release Impact
+  run `43241792742`, attempt 1, job `release-impact` successful.
+  `autoSubmit=false`, `writeEnabled=false`. **ASK не отправлен; GitHub
+  label не изменён.** Нужен новый explicit owner GO перед одним ASK;
+  затем отдельный owner WebAuthn в Portal.
+- **Не готово**: подтверждённая первая label write, durable UUID/receipt
+  reconciliation для label publisher, автоматическая публикация labels,
+  post-merge CD queue, typed Gateway GitHub Deployments READ/WRITE,
+  verified deployment publisher и своя Release Board. CI success и
+  `release:no-deployment` не являются доказательством runtime deployment.
+  Ни merge PR, ни source commit в Gateway сами не обновляют production.
+
+### Предлагаемые источники и потоки данных (DESIGN; не live capability)
+
+1. **Планируемое:** PR metadata/merge evidence и проверенный Release Impact;
+   каталог `release/targets.yaml`; точный Git SHA и полный набор изменённых
+   путей; требуемые actions/build units; обязательные CI. Нормативная
+   классификация остаётся у Release Planning Contract и одного pinned
+   validator, а не дублируется в Gateway/Board.
+2. **Публикуемая CD-проекция:** предложено использовать GitHub **Deployments
+   API + deployment statuses** (например `queued`, `in_progress`,
+   `success`, `failure`) с явной версионированной схемой метаданных для
+   `repository, target, environment, desiredSha, buildUnit, actions,
+   linkedPRs, immutableOperationId`. Точный способ кодировать target
+   (environment naming / payload), поддерживаемый набор states, права
+   API и поведение GitHub deployment events требуют отдельного прототипа
+   и review. `queued` — ожидаемая доставка, а не уже начатое применение;
+   `success` — только после подтверждённой установки. Не создавать
+   deployment на каждый PR автоматически без стратегии объединения
+   изменений/versions. При новом `main` SHA старый `success` не покрывает
+   новый desired version автоматически.
+3. **Фактически применённое:** защищённые Fortis deployment receipts +
+   independent target/environment readback (source SHA, image/package digest,
+   actual installed identity, verification evidence). Сначала исследовать,
+   достаточны ли уже существующие records; Windows controller не менять,
+   не запускать `Check/Apply/Return/Backup/Promote` в рамках планирования.
+   Если record недостаточен, отдельно согласовать минимальное дополнение
+   соответствующего controller/contract. Никакого GitHub PAT внутри
+   контроллера или недоверенного PR.
+4. **Publication boundary:** отдельный trusted Deployment Publisher
+   преобразует подтверждённую защищённую квитанцию в узкую typed
+   GitHub-операцию через Fortis Gateway. Публикация в GitHub может
+   отставать от реального состояния. Ошибка публикации НЕ делает успешное
+   применение неуспешным; discrepancy становится `UNKNOWN/RECONCILE`
+   с оригинальным UUID и без повторения deployment.
+5. **Чтение:** собственная Fortis Release Board получает опубликованные
+   GitHub Deployments/statuses через GitHub API (Windows/operator) или
+   будущие Gateway typed READ (AI); она read-only по отношению к источнику
+   доказательств. Для полной наблюдаемости показывать provenance,
+   freshness, pending/blocked/unknown, а не выдавать отсутствие записи
+   GitHub за подтверждение `NOT_DEPLOYED`. Никакой обязательной GitHub
+   Projects-доски и отдельной базы на старте.
+
+### Очередь и семантика статусов — требования к проектированию
+
+- **PLANNED/QUEUED:** принятое изменение требует CD, точный desired
+  target/environment/version известен; ещё нет соответствующей подтверждённой
+  успешной установки. Если evidence неполно — `UNKNOWN`, не безусловное
+  `QUEUED`.
+- **IN_PROGRESS:** есть проверенное событие начала действия; оно не доказывает
+  достижение нужной версии.
+- **APPLIED/DEPLOYED (verified):** установлен именно desired
+  source/artifact target/environment и существует допустимый protected
+  receipt + независимый readback; GitHub `success` — опубликованное
+  представление этого факта.
+- **FAILED:** доказанная ошибка конкретной попытки; новая попытка — отдельная
+  авторизованная операция, не автоматический retry неизвестного эффекта.
+- **UNKNOWN / NEEDS_RECONCILIATION:** stale/отсутствующие records, потерянный
+  GitHub ACK, SHA race, `UNCERTAIN`, неполный readback либо расхождение
+  desired/actual. Это блокирует ложный `success` и слепой retry.
+- **NO_DEPLOYMENT:** изменения не требуют CD по проверенному контракту и не
+  создают фиктивный queued deployment; это не статус установки.
+- При нескольких PR и последовательных main SHA использовать
+  immutable provenance, lineage и supersession. Обеспечить readback
+  относительно конкретной версии, а не «последнего зелёного» статуса
+  target. GitHub deployment status timeline — не готовая агрегированная
+  очередь; правила выбора **актуального** состояния реализуются отдельно.
+
+### Порядок реализации и критерии выхода (последовательно, без shortcuts)
+
+**P1 — Завершить один Release Labels owner-ASK пилот (NEXT).**
+После свежего exact-HEAD/diff/body/labels/CI/policy preflight запросить
+**отдельный owner GO на отправку одного ASK** для
+`release:no-deployment` к PR #76. Заранее сохранить один canonical UUID
+и причину; штатный `submit_one_owner_label_ask(...,
+operator_confirmed=True)`, без autoapprove и повторных UUID. Владелец
+решает в Owner Portal через WebAuthn. Пилот PASS только если original
+Gateway UUID/audit/receipt подтверждают завершённый эффект, а независимый
+GitHub readback подтверждает точный PR HEAD и одну добавленную метку
+при сохранении всех остальных. PR #76 не сливать ради пилота.
+При ошибке/403/`UNCERTAIN` — диагностика исходного UUID по UC-GW-009;
+никаких обходов Gateway.
+
+**P2 — Надёжное source-only UUID/receipt reconciliation.**
+Отдельный тестируемый PR: durable pre-submit intent journal, стабильный UUID,
+immutable expected SHA/body/labels fingerprints, request/details/audit/receipt
+lookup, bounded independent GitHub readback, явные исходы
+`CONFIRMED_APPLIED` / `CONFIRMED_NOT_APPLIED` / `UNKNOWN_STOP`.
+Негативные тесты для lost ACK, stale PR, partial jobs, unknown effect,
+duplicate requests и ошибочных receipts. Никаких новых полномочий
+и privileged PR workflow.
+
+**P3 — Trusted Release Label Publisher.**
+Отдельное security/owner review для principal, scheduler/trigger,
+exact-HEAD data-only recomputation, обоих mandatory CI, безопасного
+reconciliation managed labels и ограниченных Gateway writes. На первом
+этапе ASK остаётся допустимым обязательным контролем. Автоматическое
+вычисление не является автоматическим разрешением изменения.
+Запрет GitHub credentials и привилегированных вызовов в
+недоверенном `pull_request` workflow. Проверить разные action classes,
+несколько targets, сохранность human labels и races.
+
+**P4 — Проект CD Queue / GitHub Deployments API contract.**
+Выбрать минимальную identity-схему для target/environment/desired version,
+read pagination, lifecycle statuses и merged-PR lineage; проверить GitHub
+Deployments semantics и event-trigger safety (запись планового состояния
+не должна самопроизвольно запускать CD). Добавить типизированные Gateway
+READ, затем отдельно ASK/owner-reviewed WRITE с receipt и reconciliation;
+права и live rollout только по UC-GW-003/005. Read-only агрегатор должен
+строить repo/target/action/env views и отделять known pending от unknown.
+Сначала dry-run и контрактные тесты, затем controlled pilot.
+
+**P5 — Post-merge queue publication.**
+После достоверного owner-merged GitHub `main` и полного release impact
+зафиксировать desired CD target/version; поместить его в GitHub CD
+projection через bounded publisher, а `no-deployment` исключать.
+Предотвращать duplicate/superseded entries при нескольких PR,
+одинаковых build units и новых main SHA. Независимый readback доказывает
+только сохранение записи в GitHub, не фактическое развёртывание.
+
+**P6 — Verified deployment-to-GitHub publication.**
+Исследовать готовые receipts каждого контроллера; при необходимости
+предложить ограниченное дополнение в отдельном scope. Publisher читает
+и проверяет исходный protected receipt, actual target/environment state,
+связывает его с desired deployment identity и только тогда публикует
+`success` через Gateway. Проверить failed/unknown/rollback,
+lost status ACK, поздний receipt, несоответствие SHA и несколько targets.
+Любое Production/Windows изменение — отдельный owner-approved проект,
+не часть текущего Release Labels пилота.
+
+**P7 — Fortis Release Board (собственный UI; GitHub Projects НЕ нужен).**
+Read-only board со списком repository/target/environment/desired source,
+required actions, confirmed actual state, linked PRs, latest GitHub
+deployment/status, provenance/freshness и исходом reconciliation.
+Фильтры: `repositories awaiting CD`, `targets awaiting CD`,
+action (`image-rebuild`, `config-deploy`, `windows-update`,
+`package-build`, `migration-required`), environment, queued,
+in-progress, failed, unknown и confirmed. Windows direct GitHub READ
+и AI through Gateway typed READ должны давать сопоставимые результаты
+с явным указанием недостаточности evidence. Доска не должна сама
+назначать `success` или исполнять CD.
+
+**P8 — Release Batch (после работающей очереди).**
+Группировка накопившихся merged changes по source SHA, targets,
+shared build units, dependencies и environment; один batch может
+включать несколько PR, но не может опустить изменения уже принятого
+`main` без отдельно согласованной стратегии выбора source.
+План/билд/установка/проверка — разные статусы. Фактическое применение
+остаётся у соответствующих отдельно утверждённых контроллеров.
+
+### Непереходимые границы
+
+- Никаких GitHub Projects в текущей архитектуре: собственная Board потребляет
+  Gateway/GitHub API; GitHub — публично читаемая или авторизованная
+  **проекция** CD, protected receipts/readback — доказательства установки.
+- Никаких прямых GitHub REST/PAT/Git push вызовов от ИИ, даже если
+  операторский Windows-клиент может читать GitHub API напрямую.
+- Release Labels и GitHub Deployments не дают разрешения на Production.
+  Source merge, успешный CI, staged build, owner ASK и
+  проверенный deployment — отдельные факты.
+- Не менять Windows Mirror, `Manage-Integrations.ps1`, Windows controller
+  и Production Gateway ради pilot P1. Scope других чатов не затрагивать.
+- Любые `UNCERTAIN`, потерянный ACK, 403/timeout на effect path —
+  **STOP + оригинальный UUID + independent readback**, без нового UUID
+  и слепых повторов. Выдавать `DEPLOYED` при недостаточных доказательствах
+  запрещено.
+- Этот roadmap — **план**, а не доказательство наличия возможностей P3–P8
+  в live Gateway. Изменять release contract, capability grants, deployment
+  controller и runtime только отдельными проверяемыми owner-reviewed этапами.
+
+**Следующая конкретная задача:** P1 — после explicit owner GO один
+Gateway owner-ASK на PR #76, затем owner WebAuthn и независимая проверка
+receipt/PR labels. P2 начинать только после результата пилота или его
+документированного STOP/incident investigation.
+
 ## Future: CI, GitHub Actions и сценарии настройки
 
-**Release workflow V1 / PARTIALLY IMPLEMENTED:** [shared format](RELEASE-PLANNING-CONTRACT.md), JSON Schemas, common offline validator and `release-schema-ci.yml` are owner-merged, with five source catalogs on `main`. **Not yet active:** shared cross-repo PR gate (new `.github/actions/release-impact-v1/` and `tools/release/ci_entry.py` source candidate), the necessary private GitHub Actions sharing access, pilot and per-repo wrappers/required checks, automatic Labels, Projects queue, typed Gateway Project/Deployment API, Release Batches, live deployment evidence. Validate and merge shared composite action first, owner-enable private action sharing if acceptable, then pilot exact-head PR checks; preserve existing project CI. Extend UC-CONT-018/002/027 only for accepted behavior, register UC-CONT-028 when ready. Existing Gateway/Windows security contracts remain authoritative.
-
-**PLANNED:** подробнее разобрать модель CI/GitHub Actions и оформить повторяемый
-путь создания и изменения CI для нового или существующего репозитория.
+**PLANNED:** подробнее разобрать модель CI/GitHub Actions
+и оформить повторяемый путь настройки CI для нового или существующего
+репозитория. Это самостоятельная задача, не prerequisite P1.
 
 - Определить минимальные проверки по стеку и риску: что выполняется локально,
   что в Actions, какие нужны runners/dependencies/cache/artifacts и когда
