@@ -144,6 +144,21 @@ bootstrap, не доступ ИИ к Windows credentials или прямому G
 reconcile и совместимость старого Gateway принадлежат [native contract][native].
 Это source-возможность клиента, а не заявление о развёрнутом Gateway image.
 
+Первый вызов поддержанной команды не требует ручного UUID. Для push + PR
+использовать `client.git_delivery.submit(...)`: он возвращает один parent
+`intentId`, а push/PR продолжаются теми же координаторами. После сбоя или
+восстановления соединения достаточно `client.intents.retry(intentId)`;
+в CLI — `python3 -B -m fortis_approvals.workflow.client retry --intent-id INTENT_ID`,
+без stdin. Бюджеты дочерних этапов сохраняются; завершённый push не повторяется
+при продолжении PR. Ответ содержит фактические UUID, историю и `nextAction`.
+После подтверждённого `EXECUTED` недоступный receipt READ даёт `WAITING` /
+`RETRY_READ`: продолжение дочитывает исходный результат и не делает новый WRITE.
+Для неизвестного исхода по-прежнему возможна безопасная новая попытка.
+Общего deadline интента нет; обязательный backoff не сбрасывается повтором.
+При новой capability клиент сам делает адресные READ ветки и пары head/base,
+со старым Gateway использует полные списки. Проверки ниже нужны для ручного
+расследования и legacy-клиента; штатный координатор не надо дублировать вручную.
+
 **HTTP 403, HTTP 429, HTTP 500, timeout, `UNCERTAIN`: сначала результат, затем действие.**
 HTTP `500`, как timeout или потерянный ответ, сам по себе не доказывает,
 что WRITE не выполнился, и не означает `DENY`. Для него действует тот же
@@ -159,9 +174,11 @@ typed operation, actor, repo, SHA и безопасные `stage/code`. Пров
 Gateway READ — фактический GitHub/Repo state. `WORKFLOW_DENIED` — общий отказ
 Gateway (policy, validation, stale preflight и др.); `GITHUB_HTTP_403` —
 ответ upstream. Явный `DENY` или доказанная нехватка прав означает **STOP**,
-не повторить WRITE другим credential или инструментом. При временном
-read-only `403` допустимы до трёх проверок с короткой паузой и сверкой
-capabilities; не принимать удачный GET за разрешение на запрещённый WRITE.
+не повторить WRITE другим credential или инструментом. READ-повторы `403`
+допустимы только при распознанном throttling/backoff, с учётом обязательной
+паузы; обычный `403` не является таким признаком. После исправления
+конфигурации явное продолжение заново проверяет условия и авторизацию;
+удачный GET не означает разрешение на запрещённый WRITE.
 
 **Главное после ошибки — решить, можно ли безопасно продолжать задачу.**
 Порядок решения: **(1)** readback фактического целевого состояния;
@@ -188,8 +205,10 @@ fingerprint, worker — с durable journal, GitHub-адаптер — с receipt
 успешное конечное состояние за receipt старого UUID.
 
 **Быстрый readback по операции (через typed `default_client().github`).**
-Для branch/commit/push — `list_branches(repo)` и точный SHA; для PR —
-`list_pull_requests(repo,state='all')` по head/base с
+При поддержке `githubTargetReads` для branch/commit/push — `get_branch`,
+для PR — полный адресный `find_pull_requests` по той же паре head/base;
+без capability — `list_branches(repo)` и `list_pull_requests(repo,state='all')`.
+Для найденного PR дополнительно использовать
 `get_pull_request(repo,number)`; для merge — `get_pull_request` с
 `merged=True`, HEAD и GitHub `main`; для локального `update_main_from_pr`
 — `git rev-parse HEAD`, `git status --porcelain`, Git reflog и worker
@@ -211,7 +230,8 @@ GitHub операция защищена уникальной branch/ref identit
 `OUTCOME_UNCONFIRMED`, отсутствие receipt и `retryAuthorization=NONE`
 означают, что инспектор не вправе автоматически переисполнить *старый UUID*;
 это **не вечный запрет создать нужный PR новой авторизованной заявкой**.
-Проверить через полный `list_pull_requests(repo,state='all')` и
+Проверить через полный поиск той же пары head/base (при новой capability —
+`find_pull_requests`, иначе `list_pull_requests(repo,state='all')`) и
 `get_pull_request` все PR по **той же** паре `head/base`, точному
 `head SHA`, включая закрытые и уже merged. Если требуемый PR найден —
 использовать его, не создавать второй. Если PR не найден при полной
