@@ -2,6 +2,18 @@
 
 **Status:** ACTIVE BACKLOG. Завершённые этапы отмечаются отдельно с evidence; будущие пункты **не разрешают** выполнять runtime operations без owner review. Это единственный backlog репозитория. Исторические source/plan записи здесь не являются текущим live state.
 
+## Mirror unified API — P0 review (2026-11-15)
+
+UC-CONT-003 содержит узкое **activation-gated proposal**, не разрешение
+делегировать GitHub через произвольный собственный API. Owner security review
+[MIRROR_API_CONTRACT_V1][mirror-unified-p0], согласование UC-GW-012 и source PR
+предшествуют P1; до owner acceptance новый путь не включать. Отдельно принять
+model B signing/verification boundary и сохранить обычный native GitHub
+workflow Repo. Live READ/ASK, Windows/Gateway releases и port/DB rollback
+подтверждаются владельцами проектов; source contract не заменяет эти gates.
+
+[mirror-unified-p0]: https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/MIRROR_API_CONTRACT_V1.md
+
 ## Priority group A — tool isolation, credentials and Git
 
 These three topics belong next to each other because they share the same trust boundary.

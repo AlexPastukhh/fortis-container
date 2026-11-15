@@ -122,6 +122,24 @@ readback, новых предусловий и проверки безопасн
 GitHub API. Не использовать GitHub connector, старый credential helper,
 прямые сетевые Git-команды или сторонний API-клиент вместо Gateway.
 
+**Делегированный Mirror API — узкий P0 proposal, activation gated.** После
+owner security review [единого Mirror contract][mirror-unified] и принятия
+versioned provider допускается только маршрут
+`Repo AI → typed Gateway mirror operation → Windows Mirror Core` для
+закрытых Mirror READ и guarded Windows main Pull с ASK. Mirror выбирает
+фиксированные Windows Git/gh операции и использует Windows owner-managed
+авторизацию; ИИ не получает credential, команду, URL, path/ref или shell.
+До принятия contract, отдельного owner release и fresh live catalog/READ
+новый делегированный маршрут **не разрешён**; прежний strict READ v1 сохраняется.
+AI Pull требует отдельно принятой model B/dispatch proof и live ASK acceptance;
+Bearer или UUID сами по себе не разрешение. Metadata fetch — не pure READ,
+для AI остаётся DENY до отдельного review. Нативные GitHub branch/commit/PR/
+publish в Repo по-прежнему только через существующий typed Gateway workflow.
+Этот узкий scope не распространяется на другие собственные API, GitHub
+push/merge/settings, произвольные Windows-команды или Owner Shell.
+
+[mirror-unified]: https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/MIRROR_API_CONTRACT_V1.md
+
 Первичный Windows `git clone` нового repo выполняет владелец по готовой команде
 из чата — [UC-CONT-027](repositories.md#uc-cont-027). Это отдельный owner-run
 bootstrap, не доступ ИИ к Windows credentials или прямому Git из Docker.
