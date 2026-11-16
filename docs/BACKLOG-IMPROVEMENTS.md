@@ -329,6 +329,10 @@ reconciliation managed labels и ограниченных Gateway writes. На �
 недоверенном `pull_request` workflow. Проверить разные action classes,
 несколько targets, сохранность human labels и races.
 
+Конкретный проект для review: [fortis-approvals PR #104](https://github.com/AlexPastukhh/fortis-approvals/pull/104),
+`DESIGN_REVIEW_CANDIDATE`. P3 остаётся открытым; merge проекта не активирует
+principal, grants, worker или trigger.
+
 **P4 — Проект CD Queue / GitHub Deployments API contract.**
 Выбрать минимальную identity-схему для target/environment/desired version,
 read pagination, lifecycle statuses и merged-PR lineage; проверить GitHub
@@ -400,12 +404,13 @@ shared build units, dependencies и environment; один batch может
   в live Gateway. Изменять release contract, capability grants, deployment
   controller и runtime только отдельными проверяемыми owner-reviewed этапами.
 
-**Следующая конкретная задача:** P3 — security/owner review trusted Release
-Label Publisher по критериям выше: конкретный source-only проект principal,
-trigger/isolation и scope/policy с использованием принятого intent coordinator
-и полного exact-head/CI preflight. ASK допустим на первом этапе; выдача новых
-полномочий, подключение trigger и runtime activation требуют отдельных
-owner-reviewed шагов. GitHub Deployments остаётся этапом P4.
+**Следующая конкретная задача:** P3 — security/owner review проекта выше:
+решения D1–D7 и границы source-срезов P3.2/P3.3. После принятия — узкий
+Gateway/client profile и dispatch guards, затем trusted one-shot runner с
+принятым intent coordinator. Начальный пилот: только `fortis-approvals`,
+один PR/одна операция и обязательный ASK. Выдача новых полномочий, worker
+isolation/credentials и runtime activation остаются отдельными owner-reviewed
+шагами; GitHub Deployments — этап P4.
 
 ## Future: CI, GitHub Actions и сценарии настройки
 
