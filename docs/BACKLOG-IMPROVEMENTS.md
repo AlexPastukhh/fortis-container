@@ -148,7 +148,7 @@ environment + desired source/artifact identity**. Репозиторий — а�
 один проверенный deployment может покрыть несколько merged PR. Queue и Board
 должны также группировать по repo, action, status и release batch.
 
-### Текущие факты и граница готовности (read-only 2026-11-14)
+### Текущие факты и граница готовности (P1 проверен 2026-11-16)
 
 - **Уже принято в source**: общий Release Impact v1, каталоги targets в пяти
   enrolled проектах, точный PR HEAD/full merge-base diff, вычисление
@@ -165,24 +165,34 @@ environment + desired source/artifact identity**. Репозиторий — а�
   `unknownEffect=STOP`, `automaticPublisher=NOT_ACTIVE`,
   `scope=registered-open-same-repo-task-PR-only`. Это не автоматический
   publisher и не deployment-сервис.
-- **Готовый пилот, ещё без записи**: открытый, не слитый
-  [fortis-approvals PR #76](https://github.com/AlexPastukhh/fortis-approvals/pull/76),
-  HEAD `217af4744bb927062bb987c5ef0e5361b70816c5`,
-  docs-only, существующие labels `[]`, предлагаемая
-  `release:no-deployment` уже определена в repository labels. Повторный
-  `prepare_owner_label_ask(...)` 2026-11-14 вернул
-  `PREPARED_OWNER_ASK_ONLY`: Source CI run `43241792280`, attempt 1,
-  jobs `offline-tests`/`audit-projections` successful; Release Impact
-  run `43241792742`, attempt 1, job `release-impact` successful.
-  `autoSubmit=false`, `writeEnabled=false`. **ASK не отправлен; GitHub
-  label не изменён.** Нужен новый explicit owner GO перед одним ASK;
-  затем отдельный owner WebAuthn в Portal.
-- **Не готово**: подтверждённая первая label write, durable UUID/receipt
-  reconciliation для label publisher, автоматическая публикация labels,
-  post-merge CD queue, typed Gateway GitHub Deployments READ/WRITE,
-  verified deployment publisher и своя Release Board. CI success и
-  `release:no-deployment` не являются доказательством runtime deployment.
-  Ни merge PR, ни source commit в Gateway сами не обновляют production.
+- **P1 PASS — live pilot проверен 2026-11-16**: на
+  [fortis-approvals PR #76](https://github.com/AlexPastukhh/fortis-approvals/pull/76)
+  при точном HEAD `217af4744bb927062bb987c5ef0e5361b70816c5` и исходных
+  labels `[]` независимо пересчитан `release:no-deployment`.
+  Source CI `43241792280`, attempt 1, jobs `offline-tests` / `audit-projections`,
+  и Release Impact `43241792742`, attempt 1, job `release-impact`, успешны.
+  Одна ASK `ac487c24-600e-4bae-a878-5c655bce2025` получила owner WebAuthn
+  approval и Core `EXECUTED`; полная история `PENDING → APPROVED → DISPATCHED
+  → EXECUTED` и original-UUID-bound GitHub receipt проверены. Независимый
+  readback подтвердил прежний HEAD и ровно `release:no-deployment`.
+- **Завершение source workflow после пилота**: владелец слил PR #76 через
+  GitHub UI. Merge/main `60686553d49f6bd94baffc36f1ccf63c6d8d8f2e` принят в
+  чистый Docker main через `workspace.update_main_from_pr`, request
+  `22600bee-e184-4f1a-9b85-1ac75e5cef87`, `EXECUTED`. Защищённая очистка
+  pilot worktree, его локальной task-ветки и регистрации подтверждена request
+  `7a09c5f0-a396-40b2-bee4-a823f14fbd5a`, `EXECUTED`, и локальным readback.
+  Windows sync для этого docs-only пилота не требовался.
+- **Обнаруженный gap P2**: inspector ошибочно требовал соседние глобальные
+  audit IDs внутри одной заявки. Полнота P1 audit отдельно проверена
+  по страницам; исправление и отрицательные регрессии опубликованы в
+  [fortis-approvals PR #101](https://github.com/AlexPastukhh/fortis-approvals/pull/101).
+  Это source review, а не утверждение об установленном Gateway image.
+- **Не готово**: полное закрытие P2 для label-specific recovery/reconciliation,
+  автоматический label publisher, post-merge CD queue, typed Gateway
+  GitHub Deployments READ/WRITE, verified deployment publisher и Release Board.
+  Принятый Repo intent coordinator уже ведёт durable journal и историю
+  попыток; P2 должен использовать его и проверить недостающие label cases.
+  Метка и успешный CI не являются доказательством runtime deployment.
 
 ### Предлагаемые источники и потоки данных (DESIGN; не live capability)
 
@@ -252,27 +262,25 @@ environment + desired source/artifact identity**. Репозиторий — а�
 
 ### Порядок реализации и критерии выхода (последовательно, без shortcuts)
 
-**P1 — Завершить один Release Labels owner-ASK пилот (NEXT).**
-После свежего exact-HEAD/diff/body/labels/CI/policy preflight запросить
-**отдельный owner GO на отправку одного ASK** для
-`release:no-deployment` к PR #76. Заранее сохранить один canonical UUID
-и причину; штатный `submit_one_owner_label_ask(...,
-operator_confirmed=True)`, без autoapprove и повторных UUID. Владелец
-решает в Owner Portal через WebAuthn. Пилот PASS только если original
-Gateway UUID/audit/receipt подтверждают завершённый эффект, а независимый
-GitHub readback подтверждает точный PR HEAD и одну добавленную метку
-при сохранении всех остальных. PR #76 не сливать ради пилота.
-При ошибке/403/`UNCERTAIN` — диагностика исходного UUID по UC-GW-009;
-никаких обходов Gateway.
+**P1 — Release Labels owner-ASK пилот (DONE, PASS 2026-11-16).**
+Выполнены свежий exact-HEAD/diff/body/labels/CI/policy preflight, одна ASK,
+owner WebAuthn, проверка original UUID/audit/receipt и независимый GitHub
+readback. Результат и закрытие worktree зафиксированы выше. Владелец слил
+PR #76 после подтверждения пилота; P1 не требуется повторять.
 
-**P2 — Надёжное source-only UUID/receipt reconciliation.**
-Отдельный тестируемый PR: durable pre-submit intent journal, стабильный UUID,
+**P2 — Надёжное source-only UUID/receipt reconciliation (NEXT).**
+Использовать уже принятый
+[Repo intent coordinator](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/NATIVE-WORKTREE-GATEWAY-2026-11-06.md#automatic-read-retries-and-intent-continuation-repo-source),
+сохраняя один logical intentId и immutable requestId каждой попытки.
+Не создавать второй параллельный журнал или publisher authority.
+Первый scoped PR #101 исправляет полноту audit при перемежающихся событиях
+разных заявок. Затем проверить label-specific pre-submit journal,
 immutable expected SHA/body/labels fingerprints, request/details/audit/receipt
-lookup, bounded independent GitHub readback, явные исходы
+lookup и bounded independent GitHub readback с исходами
 `CONFIRMED_APPLIED` / `CONFIRMED_NOT_APPLIED` / `UNKNOWN_STOP`.
-Негативные тесты для lost ACK, stale PR, partial jobs, unknown effect,
-duplicate requests и ошибочных receipts. Никаких новых полномочий
-и privileged PR workflow.
+Негативные тесты: lost ACK, stale PR, partial jobs, unknown effect,
+duplicate requests и ошибочные receipts. Никаких новых полномочий
+и privileged PR workflow; P2 пока не объявлен завершённым.
 
 **P3 — Trusted Release Label Publisher.**
 Отдельное security/owner review для principal, scheduler/trigger,
@@ -344,18 +352,21 @@ shared build units, dependencies и environment; один batch может
   проверенный deployment — отдельные факты.
 - Не менять Windows Mirror, `Manage-Integrations.ps1`, Windows controller
   и Production Gateway ради pilot P1. Scope других чатов не затрагивать.
-- Любые `UNCERTAIN`, потерянный ACK, 403/timeout на effect path —
-  **STOP + оригинальный UUID + independent readback**, без нового UUID
-  и слепых повторов. Выдавать `DEPLOYED` при недостаточных доказательствах
-  запрещено.
+- При `UNCERTAIN`, потерянном ACK или 403/timeout на effect path сначала
+  сохранить исходные UUID и выполнить independent readback. Продолжение
+  определяется [UC-CONT-003](use-cases/delivery.md#uc-cont-003) и
+  [UC-GW-009](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/incidents.md#uc-gw-009):
+  старый UUID не переисполнять; новая попытка допускается только с новыми
+  проверками безопасности, предусловий и действующей авторизацией.
+  Выдавать `DEPLOYED` при недостаточных доказательствах запрещено.
 - Этот roadmap — **план**, а не доказательство наличия возможностей P3–P8
   в live Gateway. Изменять release contract, capability grants, deployment
   controller и runtime только отдельными проверяемыми owner-reviewed этапами.
 
-**Следующая конкретная задача:** P1 — после explicit owner GO один
-Gateway owner-ASK на PR #76, затем owner WebAuthn и независимая проверка
-receipt/PR labels. P2 начинать только после результата пилота или его
-документированного STOP/incident investigation.
+**Следующая конкретная задача:** P2 — review/CI/owner merge scoped
+исправления inspector в PR #101, затем label-specific recovery/reconciliation
+и отрицательные тесты на базе существующего intent coordinator. Publisher
+и GitHub Deployments остаются последующими отдельными этапами P3–P6.
 
 ## Future: CI, GitHub Actions и сценарии настройки
 
