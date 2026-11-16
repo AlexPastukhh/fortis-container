@@ -148,15 +148,16 @@ environment + desired source/artifact identity**. Репозиторий — а�
 один проверенный deployment может покрыть несколько merged PR. Queue и Board
 должны также группировать по repo, action, status и release batch.
 
-### Текущие факты и граница готовности (P1 проверен 2026-11-16)
+### Текущие факты и граница готовности (P1 / P2 source проверены 2026-11-16)
 
 - **Уже принято в source**: общий Release Impact v1, каталоги targets в пяти
   enrolled проектах, точный PR HEAD/full merge-base diff, вычисление
   `release:*` / `build:*` labels, read-only admission с обязательными
   `Source CI` и `Fortis Release Impact`, полный latest attempt/jobs,
   Gateway snapshots, trusted preview и необязательный owner-ASK sender.
-  В `fortis-release-impact-action/main` это commit
-  `27bdc57c160fb5535b624003b88122d0169fe079` (PR #8).
+  Базовый Release Labels/admission source принят commit
+  `27bdc57c160fb5535b624003b88122d0169fe079` (PR #8); актуальное
+  завершение P2 зафиксировано ниже. P2 не менял pinned SHA CI callers.
 - **Live Gateway READ проверен**: `get_pr_release_impact_evidence`,
   `list_repository_labels`, `list_pr_labels`,
   `get_pr_release_label_context`. Release Labels mutations
@@ -182,16 +183,52 @@ environment + desired source/artifact identity**. Репозиторий — а�
   pilot worktree, его локальной task-ветки и регистрации подтверждена request
   `7a09c5f0-a396-40b2-bee4-a823f14fbd5a`, `EXECUTED`, и локальным readback.
   Windows sync для этого docs-only пилота не требовался.
-- **Обнаруженный gap P2**: inspector ошибочно требовал соседние глобальные
-  audit IDs внутри одной заявки. Полнота P1 audit отдельно проверена
-  по страницам; исправление и отрицательные регрессии опубликованы в
-  [fortis-approvals PR #101](https://github.com/AlexPastukhh/fortis-approvals/pull/101).
-  Это source review, а не утверждение об установленном Gateway image.
-- **Не готово**: полное закрытие P2 для label-specific recovery/reconciliation,
-  автоматический label publisher, post-merge CD queue, typed Gateway
-  GitHub Deployments READ/WRITE, verified deployment publisher и Release Board.
-  Принятый Repo intent coordinator уже ведёт durable journal и историю
-  попыток; P2 должен использовать его и проверить недостающие label cases.
+- **P2 PASS — source-only, проверен 2026-11-16**: исправление global audit IDs
+  принято в [fortis-approvals PR #101](https://github.com/AlexPastukhh/fortis-approvals/pull/101).
+  [PR #102](https://github.com/AlexPastukhh/fortis-approvals/pull/102) добавил
+  проверку полного label receipt против исходного fingerprint и независимый
+  bounded typed readback с `releaseLabelReconciliation`:
+  `CONFIRMED_APPLIED` / `CONFIRMED_NOT_APPLIED` / `UNKNOWN_STOP`.
+  Принятый Repo intent coordinator сохраняет один logical intentId, immutable
+  requestId каждой попытки и durable pre-submit journal; второй журнал и
+  новые полномочия не создавались.
+- **P2 caller и отрицательные проверки**:
+  [fortis-release-impact-action PR #9](https://github.com/AlexPastukhh/fortis-release-impact-action/pull/9)
+  сохраняет original intent, все attempt UUID, действительный owner requestId
+  и связь позднего receipt с его исходной попыткой. Проверены lost ACK, restart,
+  duplicate pending, недоступный/ошибочный receipt, stale fingerprints,
+  partial/latest CI jobs, сохранность human labels и concurrent readback.
+  `writeConfirmed=false` и `automaticRetryAllowed=false` у caller;
+  read-only inspector оставляет `retryAuthorization=NONE`.
+- **P2 validation и owner acceptance**: владелец слил PR #102 и #9 через
+  GitHub UI после успешного exact-head CI. В approvals прошёл полный source
+  набор **961 тест / 84 группы**, включая **22 label-specific теста**;
+  Source CI `43894815633`, attempt 1, jobs `offline-tests` / `audit-projections`,
+  и Release Impact `43894815823`, attempt 1, job `release-impact`, успешны.
+  В action прошли **127 offline тестов** и CI `43893103057`, attempt 1,
+  job `validator-tests`. Принятые main имеют тот же tree, что проверенные PR
+  HEAD `891013644527a41c389394f559c13895574bcdc4` и
+  `f8816df1fe08195728b95d02ba8d468cd02c4278` соответственно.
+- **P2 source workflow завершён**: чистые Docker main синхронизированы:
+  approvals `c52736aec5861c67b7ce2b2a58304a821cf8e413`, request
+  `3760e181-91c9-4e6d-a730-aa7f926d8687`; action
+  `6627da85cab34dec75333676ec6215de8e0130ff`, request
+  `7dadcdf6-8687-42c8-b77c-c6a54b4dea30`.
+  Защищённые `cleanup_task` requests
+  `a1953267-6da8-4a17-85e5-7f61df172dc2` и
+  `e297c3b3-8f0f-4ab5-8d9f-0d061d74d9ee` удалили только
+  завершённые P2 worktrees, их локальные ветки и регистрации. Все четыре
+  receipts `EXECUTED`; независимый readback подтвердил SHA, чистоту main
+  и отсутствие этих task-объектов.
+- **Граница P2**: принятый Repo source повторно подтвердил original P1 Core
+  receipt/audit как `CONFIRMED_EXECUTED`. При отключённом provider readback
+  текущая label-проекция остаётся `UNKNOWN_STOP`; знание исходного исполнения
+  не теряется и разрешение на повтор не появляется. Это не новый Gateway
+  outcome resolver и не доказательство установленного image.
+- **Не готово**: автоматический label publisher, post-merge CD queue,
+  typed Gateway GitHub Deployments READ/WRITE, verified deployment publisher
+  и Release Board. Live label policy остаётся `ASK`,
+  `automaticPublisher=NOT_ACTIVE`; P2 не активировал runtime или publisher.
   Метка и успешный CI не являются доказательством runtime deployment.
 
 ### Предлагаемые источники и потоки данных (DESIGN; не live capability)
@@ -268,19 +305,19 @@ owner WebAuthn, проверка original UUID/audit/receipt и независи
 readback. Результат и закрытие worktree зафиксированы выше. Владелец слил
 PR #76 после подтверждения пилота; P1 не требуется повторять.
 
-**P2 — Надёжное source-only UUID/receipt reconciliation (NEXT).**
-Использовать уже принятый
-[Repo intent coordinator](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/NATIVE-WORKTREE-GATEWAY-2026-11-06.md#automatic-read-retries-and-intent-continuation-repo-source),
-сохраняя один logical intentId и immutable requestId каждой попытки.
-Не создавать второй параллельный журнал или publisher authority.
-Первый scoped PR #101 исправляет полноту audit при перемежающихся событиях
-разных заявок. Затем проверить label-specific pre-submit journal,
-immutable expected SHA/body/labels fingerprints, request/details/audit/receipt
-lookup и bounded independent GitHub readback с исходами
+**P2 — Надёжное source-only UUID/receipt reconciliation (DONE, PASS_SOURCE_ONLY 2026-11-16).**
+Использован уже принятый
+[Repo intent coordinator](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/NATIVE-WORKTREE-GATEWAY-2026-11-06.md#automatic-read-retries-and-intent-continuation-repo-source):
+один logical intentId, immutable requestId каждой попытки, durable pre-submit
+journal и fingerprint binding. PR #101 / #102 и action PR #9 приняты владельцем;
+label-specific request/details/audit/receipt lookup и bounded independent
+GitHub readback проверены с исходами
 `CONFIRMED_APPLIED` / `CONFIRMED_NOT_APPLIED` / `UNKNOWN_STOP`.
-Негативные тесты: lost ACK, stale PR, partial jobs, unknown effect,
-duplicate requests и ошибочные receipts. Никаких новых полномочий
-и privileged PR workflow; P2 пока не объявлен завершённым.
+Отрицательные проверки покрывают lost ACK, stale PR, partial/latest jobs,
+unknown effect, duplicate pending и ошибочные receipts. Exact-head CI,
+post-merge source update и cleanup подтверждены выше. Новый журнал,
+publisher authority и privileged PR workflow не создавались; runtime gate
+этим source-этапом не проходился.
 
 **P3 — Trusted Release Label Publisher.**
 Отдельное security/owner review для principal, scheduler/trigger,
@@ -363,10 +400,12 @@ shared build units, dependencies и environment; один batch может
   в live Gateway. Изменять release contract, capability grants, deployment
   controller и runtime только отдельными проверяемыми owner-reviewed этапами.
 
-**Следующая конкретная задача:** P2 — review/CI/owner merge scoped
-исправления inspector в PR #101, затем label-specific recovery/reconciliation
-и отрицательные тесты на базе существующего intent coordinator. Publisher
-и GitHub Deployments остаются последующими отдельными этапами P3–P6.
+**Следующая конкретная задача:** P3 — security/owner review trusted Release
+Label Publisher по критериям выше: конкретный source-only проект principal,
+trigger/isolation и scope/policy с использованием принятого intent coordinator
+и полного exact-head/CI preflight. ASK допустим на первом этапе; выдача новых
+полномочий, подключение trigger и runtime activation требуют отдельных
+owner-reviewed шагов. GitHub Deployments остаётся этапом P4.
 
 ## Future: CI, GitHub Actions и сценарии настройки
 
