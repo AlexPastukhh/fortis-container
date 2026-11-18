@@ -37,7 +37,7 @@
 | Новый UC / документация DRY и карта исходников | [UC-CONT-024](orientation.md#uc-cont-024), [UC-CONT-017](orientation.md#uc-cont-017) |
 | Gateway/Sonar/credentials/Primary | [Gateway registry](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/README.md) |
 | Mirror/Windows/UI/API | [Mirror registry](https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/use-cases/README.md) |
-| Windows PowerShell Executor: Machine ASK, receipt, recover | [Executor UC proposal PR #4](https://github.com/AlexPastukhh/fortis-powershell-executor/pull/4) · [Script Center UC proposal PR #21](https://github.com/AlexPastukhh/script-control-center/pull/21) |
+| Windows PowerShell Executor: Machine ASK, receipt, recover | [Executor UC-PSE-001/002/003](https://github.com/AlexPastukhh/fortis-powershell-executor/blob/main/docs/use-cases/README.md) · [Script Center UC-SCC-003/004](https://github.com/AlexPastukhh/script-control-center/blob/main/docs/use-cases/README.md) |
 
 ## Каталог локальных реестров
 
@@ -52,10 +52,10 @@ repo; `PREPARED` — создан в отдельном task worktree, но ещ
 | Репозиторий / область | Реестр / owner | Статус |
 | --- | --- | --- |
 | `fortis-approvals` | [Gateway use cases](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/README.md) | ACTIVE — принятый реестр в `main` |
-| `fortis-powershell-executor` | [Executor use cases](https://github.com/AlexPastukhh/fortis-powershell-executor/blob/main/docs/use-cases/README.md) / [публикация PR #4](https://github.com/AlexPastukhh/fortis-powershell-executor/pull/4) | PREPARED — новый реестр в task worktree, до owner merge ссылка main не является принятым источником |
+| `fortis-powershell-executor` | [Executor use cases](https://github.com/AlexPastukhh/fortis-powershell-executor/blob/main/docs/use-cases/README.md) | ACTIVE — принят в `main` ([PR #4](https://github.com/AlexPastukhh/fortis-powershell-executor/pull/4)) |
 | `docke-windows-mirror` | [Mirror use cases](https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/use-cases/README.md) | main / [публикация PR #4](https://github.com/AlexPastukhh/docke-windows-mirror/pull/4) |
 | `tunnel` | [Tunnel use cases](https://github.com/AlexPastukhh/tunnel/blob/main/docs/use-cases/README.md) | main / [публикация PR #2](https://github.com/AlexPastukhh/tunnel/pull/2) |
-| `script-control-center` | [Script Center use cases](https://github.com/AlexPastukhh/script-control-center/blob/main/docs/use-cases/README.md) | ACTIVE — прежний индекс в `main`; Executor UC-SCC-003/004 подготовлены в [PR #21](https://github.com/AlexPastukhh/script-control-center/pull/21) |
+| `script-control-center` | [Script Center use cases](https://github.com/AlexPastukhh/script-control-center/blob/main/docs/use-cases/README.md) | ACTIVE — включая Executor UC-SCC-003/004 в `main` ([PR #21](https://github.com/AlexPastukhh/script-control-center/pull/21)) |
 | `feed_and_search_and_bank_and_brain` — Action System | [Action System use cases](https://github.com/AlexPastukhh/feed_and_search_and_bank_and_brain/blob/main/docs/use-cases/README.md) | ACTIVE — принят в `main` (PR #1) |
 | `obs-planning-docs` — repository | [Planning repository registry](https://github.com/AlexPastukhh/obs-planning-docs/blob/main/planning/use-case-registry.md) | ACTIVE |
 | `obs-planning-docs` — OBS — session | [local registry](https://github.com/AlexPastukhh/obs-planning-docs/blob/main/planning/session/use-case-registry.md) | ACTIVE |
