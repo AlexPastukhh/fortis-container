@@ -30,6 +30,8 @@ These three topics belong next to each other because they share the same trust b
 
 #### Optional host PowerShell and container-control bridge (PLANNED)
 
+**Различать с принятым Machine ASK V1:** Windows Executor теперь имеет отдельный активированный owner-approved ASK-only путь и проверенные Get-Date/Reject E2E. Нижеследующее исследование относится к **другому**, ограниченному OS/container-control broker с отдельными ACL/JEA/WDAC/security gates. Наличие Machine ASK не делает произвольный shell безопасным и не даёт ИИ Docker host control.
+
 The normal execution path remains inside the existing Repo container. Investigate a separately brokered, least-privilege path for the occasional task that genuinely needs the Windows host or needs to rebuild/manage the agent's own container. Do not expose an unrestricted host shell as the shortcut.
 
 - Compare a dedicated non-admin Windows service account plus NTFS ACLs, PowerShell JEA, Constrained Language Mode, WDAC/AppLocker and a small typed-operation broker. Protected owner directories and secrets must deny the AI identity both read and write access; verify inherited ACLs, traversal, junctions/reparse points and alternate paths.
@@ -445,31 +447,28 @@ isolation/credentials и runtime activation остаются отдельным�
 - Before **any** Fortis Repo container runtime change, require read-only previews of **both** Repo1 and Repo2 Guards against the proposed effective mounts/networks/identity/resource settings (and account for shared Qwen). `tunnel/runtime/windows-repo/current/launchers/shared/FortisContainerPolicy.ps1` is the only shared policy owner. Reconnect is a separate owner operation after checks.
 - General host-only actions should follow `UC-CONT-025`; Fortis Repo image and Guard review is `UC-CONT-026`. Keep owner commands short, deterministic, reviewable, and fail closed. Do not grant AI generic Windows shell/Docker API or edit protected runtime records.
 
+<a id="api-onboarding-workflow"></a>
+
 ## Future: автоматизация изменений Gateway integrations
 
-**PLANNED / оценить целесообразность:** сократить повторяемые ручные действия
-при подключении и изменении API через Gateway:
+**PLANNED / OWNER-REVIEWED DESIGN REQUIRED (2026-11-18).** Общая программа Fortis/Repo и владельца: подключение следующего API должно выглядеть как **мастер с проверяемыми шагами** для владельца и typed `propose/inspect` workflow для ИИ, а не как ручное переписывание инструкций. Это backlog общего процесса и Repo ergonomics, **не** второй Gateway policy store/approval UI или новый deploy controller. Технические задачи и owner Portal UI принадлежат [Gateway backlog](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/BACKLOG-IMPROVEMENTS.md#api-onboarding-program). Исторический Workfile P0 (`Workfiles/fortis-api-onboarding-priority-20261110/PLAN.md`) от 10 ноября не переносится дословно: Action Core и Machine ASK продвинулись; для Action Core есть план/hand-off 17 ноября.
 
-- **Новый API/provider** — собственный или сторонний:
-  переиспользовать существующий scaffold, оценить генерацию связанного каркаса
-  schemas, adapters, typed client и проверок по
-  [UC-GW-002](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/integrations.md#uc-gw-002).
-- **Новый токен/credential для Gateway:** оценить единый guarded путь подготовки
-  конфигурации, проверки необходимых scopes и проверки доступа по
-  [UC-GW-004](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/credential-lifecycle.md#uc-gw-004).
-  Ввод и хранение секрета остаются на стороне владельца/Gateway, без передачи в Repo или чат.
-- **Добавление или изменение доступных методов существующего API** — своего
-  или стороннего, например Sonar: оценить согласованное обновление schemas, routes, handlers,
-  клиентских методов, policy и проверок совместимости по
-  [UC-GW-003](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/integrations.md#uc-gw-003),
-  с учётом различий native и extension операций.
+**Что уже работает:** зарегистрированные typed Gateway providers/машинные actor scopes, owner ASK/WebAuthn, Core audit/receipts, provider scaffold/config/CLI, существующий `Manage-Integrations.ps1`, отдельные UC-GW-002/003/004/012. Наш Windows Executor положительный и Reject E2E доказывают **конкретный ASK-only route**, не установку произвольного API одним кликом. Сейчас **нет** owner UI управления всеми provider operations и ASK/ALLOW; machine catalog показывает только разрешённые данному actor операции.
 
-Предпочтительный результат — короткий детерминированный plan/preflight:
-что уже поддержано, что меняется в source/config/credentials, нужен ли image
-build/deploy, какие точные команды должен выполнить владелец вне контейнера
-и как проверить live результат. Сначала переиспользовать существующие helpers;
-не пересобирать image без необходимости и не расширять права автоматически.
-Этот пункт принадлежит контейнерному backlog как улучшение общего процесса;
-реализация Gateway остаётся в `fortis-approvals`. Процедуры и контракты по ссылкам
-не дублировать здесь; при выделении конкретной разработки перенести её
-в backlog репозитория-владельца со ссылкой отсюда.
+### Общий user journey — последовательность, которую позже автоматизировать
+
+1. **Выбрать направление и контракт:** Fortis → существующий upstream через [UC-GW-002](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/integrations.md#uc-gw-002), own Windows/Docker READ через [UC-GW-012](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/own-api.md#uc-gw-012), добавить native/extension метод через [UC-GW-003](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/integrations.md#uc-gw-003). Новый AI/machine client → Gateway — **другой** [UC-CONT-008](use-cases/authorization.md#uc-cont-008); по прежнему без конкретного consumer DEFERRED.
+2. **Собрать входной пакет:** service/owner/environment, проверяемые по источнику и версии docs/OpenAPI как недоверенные данные, fixed origin/transport/CA, метод и expected response, READ/WRITE risk, actor/target/scopes, receipt/readback/preconditions и безопасный test target. Только публичные aliases, секреты вводит owner локально ([UC-GW-004](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/credential-lifecycle.md#uc-gw-004)).
+3. **Получить детерминированный dry-run:** что поддерживается из trusted source, `SUPPORTED_AS_IS / NEEDS_TRUSTED_TRANSPORT / INSUFFICIENT_SPEC / UNSAFE_WRITE`, точный diff provider/source/config/permissions/credential aliases, необходимые Windows/Docker/CA/ACL работы, CI/Release Impact, rollback, независимые acceptance checks. Генерация — в зарегистрированном task worktree; URL/spec не становятся исполняемым plugin/HTTP proxy.
+4. **Подготовить source и ревью:** reusable scaffold, schemas/routes/typed client and negative fixtures; [UC-CONT-002/003](use-cases/delivery.md#uc-cont-002) для task → commit → exact-SHA PR/CI → owner merge. Применение прав `ASK/ALLOW/DENY` и секретов не выполняется Repo workflow: ИИ может предложить точный diff, **владелец** выбирает, подтверждает WebAuthn и выполняет отдельную installation/activation по UC-GW-005.
+5. **Проверить live и сохранить handoff:** source/merged/deployed/upstream-ready/live-verified — разные milestones. Gateway catalog, negative actor/target/auth, одноразовый READ; effect отдельно с immutable preview/owner ASK, bound receipt, uncertain без replay. Отсутствие проверяемого upstream proof → STOP/NOT_VERIFIED, а не «подключено».
+6. **После пилотов — UI и AI assistant:** единый read-only экран inventory (полный только для owner; actor-scoped для ИИ), просмотр всех providers/операций/версий/actor/target/effective policy, owner-only изменения `ASK/ALLOW/DENY` с fresh WebAuthn на exact change и проверкой stale/race. Мастер «Добавить API» использует те же шаги, что и typed AI proposal, но не выдаёт ИИ прав на policy/secret/grant/release. UI должен различать native и extensions, а не вызывать один generic arbitrary endpoint.
+
+### Очередь именно контейнера (не дублировать Gateway реализацию)
+
+- [ ] **P0 (общий workflow):** один короткий entrypoint/шаблон intake и report, ссылки на UC, детерминированный staged plan, STOP/UNKNOWN, terminal vs resumable status; reuse текущих helpers и отдельные SOURCE/IMAGE/LIVE markers. Для пилота сначала Action Core READ с его собственными owner network/release gates, затем **второй независимый API** для доказательства переносимости. Без них не обещать «универсальный installer».
+- [ ] **P1 (Repo-side assistant):** typed read-only discovery собственных capabilities + source fixtures; proposal на provider/operation/policy и проверяемый exact diff/PR, без прямого редактирования grants/owner config и credential bytes. Отдельно спроектировать resume оригинального UUID при ASK/UNKNOWN без повторной команды.
+- [ ] **P2 (owner UX integration):** навигационная точка к Gateway Owner Portal providers/policies и к wizard; сохранить единый owner UI, без второй машины approval/политики. Проверить interoperability ChatGPT/Qwen в рамках их actor grants; не считать разные UI источником новых прав.
+- [ ] **Границы безопасности и тесты:** никакого прямого provider token, host Docker socket, arbitrary Windows shell/HTTP, небезопасного privileged workflow; fail-closed default DENY, owner ASK на спорные операции, secrets только protected owner/Gateway. Негативные schema/transport/policy, provenance/rollback, in-flight UNCERTAIN и readback обязательны до автоматизации активации.
+
+**Owner of record:** `fortis-container` — только общий Repo intake, orchestration ergonomics, ссылки/состояния; `fortis-approvals` — provider registry, owner-only inventory/Portal/WebAuthn policy UI, contracts, effects/release. Существующие UC-CONT-007/008 и UC-GW-002/003/004/005/012 остаются нормативными; этот план **не делает** будущие функции доступными. Не запускать runtime/credential update из документационного изменения.
