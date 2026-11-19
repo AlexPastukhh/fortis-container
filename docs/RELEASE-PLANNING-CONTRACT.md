@@ -1,7 +1,11 @@
 # Release Planning — cross-repository source contract v1
 
-**Status (2026-11-11): V1 source/catalog contract and shared exact-head PR CI
-accepted in the five enrolled projects; label/queue automation NOT active.**
+**Historical source acceptance (2026-11-11):** V1 catalog and exact-head
+PR CI accepted in five enrolled projects. As of 2026-11-19 a separate,
+owner-invoked P3.4 Label Publisher passed one live ASK/WebAuthn/receipt pilot;
+the CI action itself remains read-only. The current milestone and CD Queue
+roadmap are owned by [Fortis Release Planning / CD Queue](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
+No unattended label publisher, deployment queue or release service is implied.
 The shared validator was separated into the public,
 version-pinned [fortis-release-impact-action](https://github.com/AlexPastukhh/fortis-release-impact-action)
 (`8c9abefdfbe4699aae97b9363a2a66c596680e62`). Owner-merged
@@ -161,15 +165,17 @@ Mirror #17, Approvals #69 and FeedBrain #14; all shared and profile PR checks
 passed. No installation or Windows source update was authorized by those
 CI-only PRs.
 
-### V1 Release Labels — normative projection contract (next stage)
+### V1 Release Labels — normative projection contract
 
 Label data is derived from the **same** checked Release Impact, target
 catalog and exact PR HEAD. Labels do not express permission to release or
-evidence of an installed version. The executable pure projection candidate
-is in public action PR
-[Release Labels projection #2](https://github.com/AlexPastukhh/fortis-release-impact-action/pull/2).
-It is **not active** until owner Merge, subsequent security review of the
-publisher and actual end-to-end permission/readback checks.
+evidence of an installed version. The executable pure projection is implemented in the independently pinned
+[fortis-release-impact-action](https://github.com/AlexPastukhh/fortis-release-impact-action).
+The original source proposal in [PR #2](https://github.com/AlexPastukhh/fortis-release-impact-action/pull/2)
+is historical. A separate trusted one-shot Gateway Publisher passed a
+bounded live ASK/WebAuthn/add-label/receipt pilot on 2026-11-19; it did
+not activate unattended publication or deployment. Runtime acceptance
+belongs to the Gateway current-state evidence, not this normative contract.
 
 | Metadata | Projected GitHub PR labels |
 | --- | --- |
@@ -204,38 +210,25 @@ repos, GitHub's new `pull_request_target` policy must also be considered.
 Any failed provenance, race, missing label capability or uncertain write
 means **STOP**, not a synthetic `PASS` or permission bypass.
 
-### Fortis Release Planning — GitHub Projects queue (not yet created)
+### Post-merge CD Queue and Fortis Release Board
 
-The project will be a **planning view** of PRs and Releases, not the
-source of truth for accepted code, runtime state or installed SHAs. The
-initial set of enrolled sources is the five repositories above. Each merged
-PR is eligible for queue consideration; a `release:no-deployment` PR must
-not create a false rebuild/deployment requirement.
+The accepted architecture uses a **Fortis Release Board**, not GitHub
+Projects. This section specifies only normative identities and evidence
+boundaries; sequence, status and open work are owned by the
+[single current roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
 
-Suggested fields: Repository, PR, Source SHA, Build Targets, Release Impact,
-Release Status, Batch, Dependencies, Environment, Verification/Evidence.
-Use views for new merged changes, awaiting release, blocked/review-required,
-batch planning and verified deployments. The operational unit for runtime
-tracking remains `Repository + PR + Build Target + Environment` because
-one PR may affect multiple independently deployed targets.
+The desired deployment identity is `repository + deployment target +
+environment + desired source/artifact identity`. A repository is an
+aggregate view, not a unit of physical installation. Multiple merged PRs
+may be covered by one exact `main` SHA and one verified deployment,
+subject to the source-selection rule above. Shared build units are built
+once for a given artifact identity; deployed state is tracked separately
+for every target and environment.
 
-GitHub Projects' built-in **Auto-add** can filter `is:pr is:merged`
-per repository, but has GitHub-plan-dependent rule limits (e.g. five for
-GitHub Pro, one for Free); it does **not** backfill preexisting PRs.
-Do not assume the owner account's entitlements or declare historical items
-imported without readback. If rules are insufficient, design a minimal
-typed Gateway Projects adapter under UC-GW-003, not an AI direct GraphQL
-write or a second release database. No such typed operation is currently
-accepted and verified through the Fortis Gateway. The owner must approve
-Project setup and access separately.
-
-Automated GitHub label/Project metadata does not mean `Deployed`. Only
-specific runtime protected release records and independent live verification
-can confirm installed versions; GitHub Deployment follows those receipts.
-
-**Next security/owner gates:** review/merge the read-only public Label
-Projection PR; independently review/implement a trusted publisher;
-pilot label assignment + stale-HEAD and permissions-negative tests on one
-repository; verify all five; configure the owner's GitHub Project and auto-add
-within verified plan limits; only then build Release Batch and Deployment
-interfaces. None of these steps authorizes Production.
+PR merge, Release Impact, labels and GitHub Deployment status are inputs
+or published projections, **not proof of installation**. Only target-specific
+protected controller receipts with independent live readback can establish
+`DEPLOYED`. Missing or conflicting evidence is `UNKNOWN`, never an
+implicit success, absence of deployment or authorization to retry.
+Planning/publication cannot trigger Production without separately reviewed
+owner authority. GitHub Projects is excluded from the current roadmap.

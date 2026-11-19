@@ -36,7 +36,7 @@ This is the topic index for the Fortis Container documentation set. The reposito
 
 ### Source, operations and planning
 
-- [Release planning schema v1 (design)](RELEASE-PLANNING-CONTRACT.md) — cross-repository build units, deployment targets and PR Release Impact; **not an installed CI/Project/Deployment service**.
+- [Release planning contract v1](RELEASE-PLANNING-CONTRACT.md) — normative cross-repository build units, deployment targets and PR Release Impact. Current Publisher/CD Queue milestones live only in the [single roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue); the contract is not a deployment service.
 - [Source map](SOURCE-MAP.md) — canonical source ownership, development copies, deployed copies and historical artifacts.
 - [Git and recovery](GIT-AND-RECOVERY.md) — shared credential boundaries, dated repository-state snapshots and recovery practices; ordinary project Worktree layout and delivery flow are owned by Mirror.
 - [Canonical Mirror workflow](https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/WORKFLOW.md) — ordinary project primary clones, Worktrees, GitHub Actions checks and Docker → GitHub → Windows handoff.

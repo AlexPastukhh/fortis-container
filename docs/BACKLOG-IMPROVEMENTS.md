@@ -150,7 +150,21 @@ environment + desired source/artifact identity**. Репозиторий — а�
 один проверенный deployment может покрыть несколько merged PR. Queue и Board
 должны также группировать по repo, action, status и release batch.
 
-### Текущие факты и граница готовности (P1 / P2 source проверены 2026-11-16)
+### Текущие факты и граница готовности
+
+**P3.4 owner live E2E — PASS (2026-11-19).** Отдельный one-shot Publisher
+`release-label-publisher-v1` прошёл изолированный owner-run `preview → request`,
+один ASK и WebAuthn для [approvals PR #118](https://github.com/AlexPastukhh/fortis-approvals/pull/118).
+Исходный request `ed0dce76-8402-4230-941e-a89b5639460d` завершён
+`EXECUTED`; проверены original UUID-bound receipt и независимое наличие
+`release:no-deployment` при неизменном PR HEAD
+`c6f6cf09cecf825c0d4c7595a2bdb153b129ce00`.
+Это доказательство *одного ручного добавления метки*, не автоматического
+Publisher, не удаления метки и не CD. Точная эксплуатационная граница —
+[Gateway current state](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/guides/FORTIS-APPROVALS-SECURE-DEVELOPMENT.md).
+Исторические P1/P2 evidence ниже сохраняются.
+
+### Исторические P1 / P2 source-факты (проверены 2026-11-16)
 
 - **Уже принято в source**: общий Release Impact v1, каталоги targets в пяти
   enrolled проектах, точный PR HEAD/full merge-base diff, вычисление
@@ -227,11 +241,12 @@ environment + desired source/artifact identity**. Репозиторий — а�
   текущая label-проекция остаётся `UNKNOWN_STOP`; знание исходного исполнения
   не теряется и разрешение на повтор не появляется. Это не новый Gateway
   outcome resolver и не доказательство установленного image.
-- **Не готово**: автоматический label publisher, post-merge CD queue,
-  typed Gateway GitHub Deployments READ/WRITE, verified deployment publisher
-  и Release Board. Live label policy остаётся `ASK`,
-  `automaticPublisher=NOT_ACTIVE`; P2 не активировал runtime или publisher.
-  Метка и успешный CI не являются доказательством runtime deployment.
+- **Граница на 2026-11-19:** one-shot Publisher прошёл отдельный owner
+  E2E после P2; unattended trigger/scheduler и автоматическое право на
+  изменение меток **не приняты**. Post-merge CD Queue, typed GitHub
+  Deployments READ/WRITE, verified deployment publisher, Release Board и
+  Release Batch **не реализованы**. Для Publisher label WRITE по-прежнему
+  действует `ASK`/WebAuthn. Метка и CI не являются deployment receipt.
 
 ### Предлагаемые источники и потоки данных (DESIGN; не live capability)
 
@@ -321,19 +336,16 @@ post-merge source update и cleanup подтверждены выше. Новы�
 publisher authority и privileged PR workflow не создавались; runtime gate
 этим source-этапом не проходился.
 
-**P3 — Trusted Release Label Publisher.**
-Отдельное security/owner review для principal, scheduler/trigger,
-exact-HEAD data-only recomputation, обоих mandatory CI, безопасного
-reconciliation managed labels и ограниченных Gateway writes. На первом
-этапе ASK остаётся допустимым обязательным контролем. Автоматическое
-вычисление не является автоматическим разрешением изменения.
-Запрет GitHub credentials и привилегированных вызовов в
-недоверенном `pull_request` workflow. Проверить разные action classes,
-несколько targets, сохранность human labels и races.
-
-Конкретный проект для review: [fortis-approvals PR #104](https://github.com/AlexPastukhh/fortis-approvals/pull/104),
-`DESIGN_REVIEW_CANDIDATE`. P3 остаётся открытым; merge проекта не активирует
-principal, grants, worker или trigger.
+**P3 — Trusted Release Label Publisher: one-shot pilot DONE, PASS 2026-11-19.**
+После принятия D1–D7, source и отдельной owner-controlled активации
+подтверждены isolated runner, ASK/WebAuthn и оригинальный receipt для
+одного добавления метки в approvals PR #118 (см. текущие факты выше).
+Исходный [security/owner review](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-LABEL-PUBLISHER-P3-REVIEW.md)
+остаётся контрактом, не повторять прошедший пилот.
+**Не принято:** unattended scheduler/webhook, обработка произвольных PR,
+массовая публикация, полноценный fault-injection/restart и live E2E удаления.
+Любое расширение триггера или scope требует отдельного owner review;
+P3 не является CD Queue или механизмом deployment.
 
 **P4 — Проект CD Queue / GitHub Deployments API contract.**
 Выбрать минимальную identity-схему для target/environment/desired version,
@@ -402,17 +414,17 @@ shared build units, dependencies и environment; один batch может
   старый UUID не переисполнять; новая попытка допускается только с новыми
   проверками безопасности, предусловий и действующей авторизацией.
   Выдавать `DEPLOYED` при недостаточных доказательствах запрещено.
-- Этот roadmap — **план**, а не доказательство наличия возможностей P3–P8
-  в live Gateway. Изменять release contract, capability grants, deployment
+- Этот roadmap — **план**, а не доказательство наличия возможностей P4–P8
+  в live Gateway; P3 one-shot E2E ограничен указанным пилотом. Изменять release contract, capability grants, deployment
   controller и runtime только отдельными проверяемыми owner-reviewed этапами.
 
-**Следующая конкретная задача:** P3 — security/owner review проекта выше:
-решения D1–D7 и границы source-срезов P3.2/P3.3. После принятия — узкий
-Gateway/client profile и dispatch guards, затем trusted one-shot runner с
-принятым intent coordinator. Начальный пилот: только `fortis-approvals`,
-один PR/одна операция и обязательный ASK. Выдача новых полномочий, worker
-isolation/credentials и runtime activation остаются отдельными owner-reviewed
-шагами; GitHub Deployments — этап P4.
+**Следующая конкретная задача:** P4 — спроектировать и проверить
+контракт post-merge CD Queue / GitHub Deployments: идентичности
+repository/target/environment/desired source и artifact, merged-PR lineage,
+состояния/пагинацию, read-only проекцию и безопасность событий.
+До реализации проверить реальные GitHub Deployments API и отсутствие
+непреднамеренного CD-триггера. Запись очереди, runtime release и полномочия
+владельца требуют отдельного review; P3.4 не повторять.
 
 ## Future: CI, GitHub Actions и сценарии настройки
 
