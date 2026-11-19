@@ -232,3 +232,163 @@ protected controller receipts with independent live readback can establish
 implicit success, absence of deployment or authorization to retry.
 Planning/publication cannot trigger Production without separately reviewed
 owner authority. GitHub Projects is excluded from the current roadmap.
+
+
+### P4 — CD Queue / GitHub Deployments API (design candidate, not live)
+
+This section owns the proposed **data/API contract**. It does not register Gateway
+operations, issue grants, create a queue, or permit an external write. Delivery
+milestones and unaccepted work remain solely in the [roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
+GitHub's [Deployments REST API](https://docs.github.com/en/rest/deployments/deployments)
+and [status API](https://docs.github.com/en/rest/deployments/statuses) define the
+provider wire semantics; Fortis owns the stricter interpretation below.
+
+#### Identities and catalog binding
+
+- **Queue subject:** canonical GitHub \`owner/repository\`, exact catalog target
+  \`id\`, and one environment admitted by that target's *pinned*
+  \`release/targets.yaml\` revision. Build units are not deployment subjects.
+- **Desired version:** immutable \`desiredSourceSha\` (40-hex merged/accepted
+  repository \`main\`), catalog SHA, required target actions and artifact
+  identity: \`buildUnit\` + content-addressed image/package digest when available.
+  Before a build, \`artifactDigest=null\` means **not verified/built**, never
+  a wildcard matching the installed artifact. A source-only target binds an
+  owner-verifiable source/installation manifest identity instead of an image.
+- **Actual version:** per-target/per-environment source SHA **and** installed
+  artifact/manifest identity, observed timestamp, controller identity, protected
+  immutable original receipt ID/hash, and independent target-specific readback.
+  \`actual=null\` means unknown, not absent. A GitHub deployment/status/CI or
+  Docker image existing in a registry alone cannot fill this field.
+- **Logical version key:** \`{repository,target,environment,desiredSourceSha,
+  catalogSha,artifactIdentity}\`; the stable \`projectionId\` is a digest of the
+  canonical key. Build pending versus materialized digest are different known
+  identity stages; never rewrite an old GitHub deployment's immutable payload
+  to change the target version. \`operationId\` identifies the individual
+  publisher attempt/receipt, *not* the physical deployment or the identity key.
+- **Shared build unit:** the same source/digest may serve several targets, but
+  each target/environment gets its own actual state, dependencies and receipt.
+  Cross-repository dependencies remain \`{repository,target}\` resolved against
+  explicitly pinned catalog revisions; missing, cyclic or drifted graph blocks
+  admission, not silently dropped edges. A future batch can group by the shared
+  build identity without converting one build receipt to multiple deploy receipts.
+
+#### Merged PR lineage and supersession
+
+A lineage row binds repository, PR number, original PR HEAD, verified Release
+Impact/body and catalog revision, actual GitHub merge commit and merge time,
+and proof that the selected merged \`main\` contains the change. Prefer trusted
+merged-PR/commit association plus compare/ancestry readback over current editable
+PR labels or bodies. Existing Gateway \`get_pull_request\` projects \`merged\`
+but not the merge commit/time: it is **insufficient by itself**. Incomplete
+pagination, incomplete changed paths, missing historical validation or ambiguous
+squash/rebase ancestry is \`UNKNOWN\`, not an invented PR association.
+
+A newer desired \`main\` SHA **supersedes** an older queued desired version only
+when ancestry, catalog scope and target coverage are proven. Supersession
+preserves the older immutable entry and receipts; it does not retroactively
+mark the newer version DEPLOYED or erase a FAILED/UNKNOWN attempt. A single
+deployment can cover multiple merged PRs but necessarily contains the complete
+chosen source SHA, not a selectively omitted subset. The current installed
+version may legitimately be older than the newest desired version.
+
+#### Fortis status calculation (per identity, not the latest GitHub status)
+
+| Fortis state | Sufficient evidence / effect |
+| --- | --- |
+| \`QUEUED\` | Desired target/version and complete lineage/dependencies are verified; independent fresh actual/readback proves a different installed version, no unconfirmed in-flight attempt. Planning only. |
+| \`BLOCKED\` | Known unmet dependency, required prerequisite, policy or owner gate, with no ambiguous effect; preserve the specific blocking reason. |
+| \`IN_PROGRESS\` | Protected controller record proves an actual authorized attempt started for **this exact identity**; a GitHub \`in_progress\` status alone is insufficient. |
+| \`DEPLOYED\` | Immutable original controller receipt **and** independent fresh live readback match this target, environment, source and artifact identity. |
+| \`FAILED\` | A protected receipt proves an error of the identified attempt; it does not prove that an older installed version is gone. Retry requires a separate authorized attempt. |
+| \`UNKNOWN\` | Missing/stale/conflicting receipt or readback, ambiguous lineage/ancestry, unconfirmed ACK, \`UNCERTAIN\`/active claim or identity mismatch. Never silently map to \`QUEUED\`, \`FAILED\` or \`DEPLOYED\`. |
+
+\`NO_DEPLOYMENT\` is an exact-head, validated impact classification and creates
+**no** deployment identity. \`SUPERSEDED\` is a relation between immutable
+desired versions, not proof of a deployment result. A target can expose both
+its *latest desired* and *last confirmed actual*, with an explicit evidence
+freshness/completeness flag. Unknown effect takes precedence over a nominally
+queued or blocked action for that same identity.
+
+#### GitHub projection mapping and event safety
+
+- A future reviewed publisher uses \`POST /repos/{owner}/{repo}/deployments\`
+  with \`ref=desiredSourceSha\`, explicit \`auto_merge=false\`, explicit
+  \`task=fortis-cd-projection\`, \`transient_environment=false\` and a bounded
+  \`payload\`. **Never omit \`auto_merge\`**: GitHub defaults it to \`true\` and
+  may create a merge commit instead of a deployment. Do not use
+  \`required_contexts=[]\` to bypass release admission. GitHub 202 (auto-merge)
+  is not a created-deployment receipt; require HTTP 201 plus independent GET.
+- Use an owner-reviewed, collision-free *target-scoped* GitHub environment
+  mapping, proposed \`fortis-cd/<target>/<environment>\` for catalog-safe slugs
+  with a bounded total length. Payload repeats the actual environment and
+  target. Never conflate \`production\` across several targets, or silently
+  reuse a human/Actions-managed environment. Source tests and an isolated
+  owner-reviewed GitHub pilot must confirm naming/visibility before WRITE.
+- Proposed bounded \`payload\` v1: \`schemaVersion=1\`,
+  \`kind=fortis-cd-projection\`, \`repository\`, \`target\`, \`environment\`,
+  \`desiredSourceSha\`, \`catalogSha\`, \`buildUnit\` (nullable),
+  \`artifactDigest\` (nullable), \`actions\`, \`linkedPRs\`,
+  \`projectionId\`, \`operationId\`. If complete lineage exceeds the accepted
+  bound, STOP; never silently truncate or execute payload instructions.
+  Validate exact GitHub response SHA, environment, task and payload binding.
+- A planned \`QUEUED\` may project GitHub \`queued\`; verified start projects
+  \`in_progress\`, protected failed attempt \`failure\`, verified installed
+  state \`success\`. \`BLOCKED\` and \`UNKNOWN\` are Fortis overlay states,
+  **not** false GitHub \`failure\` or \`success\`. \`inactive\` is not
+  supersession. On success set \`auto_inactive=false\` to prevent GitHub
+  auto-inactivation of earlier same-environment deployments. Statuses append
+  to history; never rewrite source of truth to follow GitHub display state.
+- **STOP on event risk:** GitHub emits \`deployment\` and
+  \`deployment_status\` events on creation; Actions workflows/webhooks/apps
+  can react and execute CD. A custom task name, environment namespace,
+  \`queued\` state, ASK or \`auto_merge=false\` does **not** suppress events.
+  Until owner-reviewed inventory/deny-by-default checks cover all consumers
+  and repo/environment scopes, allow read-only preview **only**, no GitHub
+  Deployment/status POST even as a harmless test. P4 does not activate P5/P6.
+- GitHub retains previous deployment statuses only **90 days** (most recent
+  current state remains). Historical original protected receipts, not GitHub
+  status-list retention, own the audit trail. GitHub status publication can
+  lag controller truth; lost ACK cannot trigger a repeated deployment.
+
+#### Proposed typed Gateway READ and separately gated WRITE
+
+**READ first**, using the existing authenticated \`github\` typed broker and
+strict route catalogue: \`list_deployments(repo, page, perPage, filters)\`,
+\`get_deployment(repo, deploymentId)\`,
+\`list_deployment_statuses(repo, deploymentId, page, perPage)\`, and
+\`get_deployment_status(repo, deploymentId, statusId)\`. The adapter must expose
+only bounded typed projections (IDs, 40-hex SHA, task/environment, safe
+versioned payload fields, timestamps, state, origin/readback links), never raw
+provider objects/URLs/token. A separate bounded merged-PR evidence READ is
+needed for merge SHA/time and full validated lineage. Unknown namespace,
+foreign repo, malformed identity/payload, missing status or unexpected
+provider response fails closed or surfaces \`UNKNOWN\`, never absence of work.
+
+Follow GitHub \`page/per_page\` (maximum 100; prefer bounded 30), explicit
+\`hasNextPage\` and a page/row budget, with no claim of an atomic snapshot.
+Recheck head/catalog/merge SHA and selected deployment IDs after pagination;
+an incomplete/changed enumeration is \`UNKNOWN\`. Group by repo, target,
+environment, actions and desired identity **only after** validating the full
+filtered inventory. Current Gateway capability list has no Deployments
+operation; source presence must not be reported as live availability.
+
+**WRITE is a different owner-reviewed operation and release**, via
+[UC-GW-003](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/integrations.md#uc-gw-003)
+and [UC-GW-005](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/releases.md#uc-gw-005).
+Propose distinct \`github.create_cd_projection\` and
+\`github.append_cd_status\` with exact repo/target/environment/desired
+fingerprint, immutable requestId, frozen preview, explicit \`ASK\`/WebAuthn,
+scoped GitHub Deployments WRITE credential and trusted Publisher actor;
+no default ALLOW, no arbitrary POST method/URL/status/task, no deploy command.
+For \`success\`, Gateway additionally requires protected original controller
+receipt and fresh independent installed readback, not a client assertion.
+Preserve original UUID and worker evidence; on lost ACK/timeout/UNCERTAIN
+read original result and independently enumerate matching projectionId/status
+before contemplating another authorized publication. Never replay the
+**physical install** as a consequence of publication uncertainty.
+
+**P4 acceptance boundary:** validated READ DTO/pagination/identity tests and
+negative event/policy/receipt/race tests in \`fortis-approvals\`, exact-head CI
+and owner-reviewed isolated pilot before any WRITE; explicit capability
+readback after a separate owner runtime release. A successful design-only PR
+is **SOURCE-CANDIDATE**, not Gateway READ/WRITE acceptance or installed queue.
