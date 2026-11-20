@@ -91,9 +91,7 @@ Next milestones before P5 is live:
 - Bind release target/environment onto component/resource graph with
   reviewed target identifiers and exact catalog versions; verify dependency
   closure and installed technical evidence independently.
-- Implement source-only durable **desired** records and append-only lineage,
-  idempotency/CAS and explicit supersession semantics separately from the
-  already accepted offline restriction snapshot store.
+- The [offline desired journal](RELEASE-REGISTRY-P5-DESIRED-STORE.md) now exercises candidate-only durable records, CAS and supersession; trusted ingestion and actual state remain unimplemented.
 - Owner review and explicit runtime placement/grants/backup/restore before
   installation; manual `REPORTED_COMPLETE` belongs to P6, not this stage.
 
