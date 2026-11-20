@@ -23,6 +23,13 @@ P6 adds a narrowly authorized `REPORTED_COMPLETE` owner statement event;
 P7 displays these records; P8 groups manual release batches.
 Automatic CD and a universal installed-state collector are post-V1.
 
+**Component-aware parallel-work coordination (P5 extension):** model only
+[active release constraints](RELEASE-REGISTRY-P5-COMPONENT-RESTRICTIONS.md)
+by component, shared resource and affected operation. Do not maintain an
+allowlist of normal work: no applicable restriction is **not permission**.
+Unknown effectful-work coverage needs review. Existing Gateway/owner gates
+remain independent, including during Gateway downtime.
+
 **Proposed source split:** `fortis-container` owns product constraints and
 shared Release Impact/catalog schemas; an independently reviewed Fortis
 Registry component owns state and audit, with typed brokered API integration
