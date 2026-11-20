@@ -29,6 +29,7 @@ by component, shared resource and affected operation. Do not maintain an
 allowlist of normal work: no applicable restriction is **not permission**.
 Unknown effectful-work coverage needs review. Existing Gateway/owner gates
 remain independent, including during Gateway downtime.
+The [offline durable restrictions candidate](RELEASE-REGISTRY-P5-DURABLE-CONSTRAINTS.md) persists only the component-coordination model for negative tests; it does **not** complete the canonical desired-release queue or install a Registry API.
 
 **Proposed source split:** `fortis-container` owns product constraints and
 shared Release Impact/catalog schemas; an independently reviewed Fortis
