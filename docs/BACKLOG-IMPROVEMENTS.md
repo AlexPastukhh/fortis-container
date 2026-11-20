@@ -122,7 +122,7 @@ Before changing any item:
 
 ## Fortis Release Planning / CD Queue
 
-**Fortis Release Planning / CD Queue — CURRENT ROADMAP (решения 2026-11-14).**
+**Fortis Release Planning / CD Queue — CURRENT ROADMAP (product decision 2026-11-20; P1–P4 history retained).**
 Нормативный источник правил классификации, `release/targets.yaml` и Release Impact:
 [Release Planning Contract](RELEASE-PLANNING-CONTRACT.md).
 Исполняемый код вычисления Release Labels и read-only admission:
@@ -135,12 +135,22 @@ Gateway-контракт изменения labels:
 
 После owner merge PR в `main` Fortis должен показать, **какие CD-действия ожидаются**,
 для каких `repository / target / environment`, на каком source SHA и по каким
-изменениям. После защищённого применения и независимой проверки Fortis должен
-отразить **что действительно установлено**. Пользователь на Windows сможет читать
-общие опубликованные GitHub-данные напрямую через GitHub REST API с подходящей
-аутентификацией; ИИ продолжает обращаться к GitHub **только через Fortis Gateway**
-с разрешёнными typed READ. Собственная **Fortis Release Board** отображает те
-же данные; GitHub Projects не нужен и **исключён из текущего плана**.
+изменениям. В **V1 релиз выполняется вручную владельцем** по существующему Use Case и
+reusable controller scripts. ИИ помогает пройти процедуру, а после сообщения
+владельца может **отдельной авторизованной операцией** отметить исходный релиз
+в собственном Fortis Registry. Ручная отметка — `REPORTED_COMPLETE`, а не
+проверенное `DEPLOYED`: последнее требует protected receipt и independent
+runtime readback. Не вводить в V1 новый исполнитель CD или универсальный
+сборщик всех controller receipts. Позднее CD автоматизирует запуск существующих
+контроллеров и технический readback, не заменяя их правила допуска.
+
+**Fortis Registry — канонический источник очереди и отметок V1.** GitHub
+Deployments/statuses остаются необязательной внешней проекцией/READ-интеграцией;
+их отсутствие или задержка не меняют локальную очередь. ИИ получает доступ к
+изменению Registry только через отдельный reviewed typed API с ограниченными
+правами, audit и проверяемыми предусловиями; текущей live write capability нет.
+Собственная **Fortis Release Board** показывает Registry; GitHub Projects
+исключён из текущего плана.
 
 Объект учёта — не только репозиторий: **repository + deployment target +
 environment + desired source/artifact identity**. Репозиторий — агрегированное
@@ -151,6 +161,16 @@ environment + desired source/artifact identity**. Репозиторий — а�
 должны также группировать по repo, action, status и release batch.
 
 ### Текущие факты и граница готовности
+
+**P4 Gateway Deployments READ — owner-reported RELEASE COMPLETE (2026-11-20).**
+Владелец сообщил о полном `Check → Apply → Backup → Promote` нового Primary,
+`running/healthy`, repository scope `fortis-approvals`, только четыре
+GitHub Deployments GET и disabled WRITE. Принят [PR #159](https://github.com/AlexPastukhh/fortis-approvals/pull/159)
+(merge SHA `585211b0240fd543b475d2196edc0bd4efb83951`), исправивший
+emergency UC-GW-013 Promote. Это owner runtime evidence, не результат
+самостоятельной проверки Windows Docker из этого task. Исторический old image
+отсутствовал; `DISASTER_RECOVERY_VERIFIED=NO` и retained rescue/history
+сохраняются. `P4 READ` НЕ разрешает CD Queue WRITE или повторный релиз.
 
 **P3.4 owner live E2E — PASS (2026-11-19).** Отдельный one-shot Publisher
 `release-label-publisher-v1` прошёл изолированный owner-run `preview → request`,
@@ -248,46 +268,38 @@ Publisher, не удаления метки и не CD. Точная экспл�
   Release Batch **не реализованы**. Для Publisher label WRITE по-прежнему
   действует `ASK`/WebAuthn. Метка и CI не являются deployment receipt.
 
-### Предлагаемые источники и потоки данных (DESIGN; не live capability)
+### Предлагаемые источники и потоки данных (Registry V1 — DESIGN; не live capability)
 
 1. **Планируемое:** PR metadata/merge evidence и проверенный Release Impact;
    каталог `release/targets.yaml`; точный Git SHA и полный набор изменённых
    путей; требуемые actions/build units; обязательные CI. Нормативная
    классификация остаётся у Release Planning Contract и одного pinned
    validator, а не дублируется в Gateway/Board.
-2. **Публикуемая CD-проекция:** предложено использовать GitHub **Deployments
-   API + deployment statuses** (например `queued`, `in_progress`,
-   `success`, `failure`) с явной версионированной схемой метаданных для
-   `repository, target, environment, desiredSha, buildUnit, actions,
-   linkedPRs, immutableOperationId`. Точный способ кодировать target
-   (environment naming / payload), поддерживаемый набор states, права
-   API и поведение GitHub deployment events требуют отдельного прототипа
-   и review. `queued` — ожидаемая доставка, а не уже начатое применение;
-   `success` — только после подтверждённой установки. Не создавать
-   deployment на каждый PR автоматически без стратегии объединения
-   изменений/versions. При новом `main` SHA старый `success` не покрывает
-   новый desired version автоматически.
-3. **Фактически применённое:** защищённые Fortis deployment receipts +
-   independent target/environment readback (source SHA, image/package digest,
-   actual installed identity, verification evidence). Сначала исследовать,
-   достаточны ли уже существующие records; Windows controller не менять,
-   не запускать `Check/Apply/Return/Backup/Promote` в рамках планирования.
-   Если record недостаточен, отдельно согласовать минимальное дополнение
-   соответствующего controller/contract. Никакого GitHub PAT внутри
-   контроллера или недоверенного PR.
-4. **Publication boundary:** отдельный trusted Deployment Publisher
-   преобразует подтверждённую защищённую квитанцию в узкую typed
-   GitHub-операцию через Fortis Gateway. Публикация в GitHub может
-   отставать от реального состояния. Ошибка публикации НЕ делает успешное
-   применение неуспешным; discrepancy становится `UNKNOWN/RECONCILE`
-   с оригинальным UUID и без повторения deployment.
-5. **Чтение:** собственная Fortis Release Board получает опубликованные
-   GitHub Deployments/statuses через GitHub API (Windows/operator) или
-   будущие Gateway typed READ (AI); она read-only по отношению к источнику
-   доказательств. Для полной наблюдаемости показывать provenance,
-   freshness, pending/blocked/unknown, а не выдавать отсутствие записи
-   GitHub за подтверждение `NOT_DEPLOYED`. Никакой обязательной GitHub
-   Projects-доски и отдельной базы на старте.
+2. **Canonical Fortis Registry (V1, proposed):** персистентная очередь по
+   точным `{repository,target,environment,desiredSourceSha,catalogSha}` с
+   source/artifact identity по доступности, PR lineage, actions, Use Case,
+   state и append-only history. После подтверждённого owner merge и validated
+   impact формируется *плановая* запись, не GitHub Deployment. При неоднозначном
+   merge/impact — `UNKNOWN/STOP`, не ложный `NO_DEPLOYMENT`. Путь хранения,
+   owner процесса и ACL/backup/transaction model ещё не приняты.
+3. **Manual release (V1):** владелец выполняет применимый UC и reusable scripts
+   в предусмотренной среде, например Gateway [UC-GW-005](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/releases.md#uc-gw-005)
+   с отдельными Check, Apply, live readback, Backup, Promote и host inspect.
+   Это не универсальная процедура для Windows/Mirror/Feedbrain. Ни Registry,
+   ни UI, ни ИИ сами не запускают Docker, Windows или GitHub Deployments POST.
+4. **Отметка результата (V1):** по конкретному поручению владельца ИИ вызывает
+   отдельный разрешённый typed Registry API: exact target/desired SHA,
+   оригинальная release/attempt identity, источник утверждения и append-only
+   event `REPORTED_COMPLETE`. Можно приложить ссылки на evidence, но отметка
+   **не подделывает** исходный controller receipt и не становится `VERIFIED`.
+   Если результат противоречив или target/SHA не установлен — STOP/UNKNOWN.
+5. **Внешняя GitHub-проекция (не обязательна в V1):** P4 четырёхоперационный
+   typed Deployments READ активирован только для `fortis-approvals`; будущие
+   Gateway WRITE/Publisher требуют отдельного security review, owner grants,
+   event consumer inventory и выпуска. GitHub events могут запускать CD;
+   запрещены тестовые POST до принятия event-safety gate. GitHub Deployment
+   не является контроллером установки, protected receipt или хранилищем
+   исходной очереди. Board V1 читает Fortis Registry, а не требует GitHub API.
 
 ### Очередь и семантика статусов — требования к проектированию
 
@@ -295,8 +307,11 @@ Publisher, не удаления метки и не CD. Точная экспл�
   target/environment/version известен; ещё нет соответствующей подтверждённой
   успешной установки. Если evidence неполно — `UNKNOWN`, не безусловное
   `QUEUED`.
-- **IN_PROGRESS:** есть проверенное событие начала действия; оно не доказывает
-  достижение нужной версии.
+- **IN_PROGRESS:** отдельное подтверждение начала ручного релиза; источник
+  отмечается, это не доказательство исполнения или результата.
+- **REPORTED_COMPLETE (V1):** владелец сообщил, что релиз завершён, ИИ
+  зафиксировал exact запись с происхождением события. Это *не* `DEPLOYED`;
+  Board явно показывает, что независимой technical verification может не быть.
 - **APPLIED/DEPLOYED (verified):** установлен именно desired
   source/artifact target/environment и существует допустимый protected
   receipt + независимый readback; GitHub `success` — опубликованное
@@ -347,59 +362,56 @@ publisher authority и privileged PR workflow не создавались; runti
 Любое расширение триггера или scope требует отдельного owner review;
 P3 не является CD Queue или механизмом deployment.
 
-**P4 — Проект CD Queue / GitHub Deployments API contract.**
-Выбрать минимальную identity-схему для target/environment/desired version,
-read pagination, lifecycle statuses и merged-PR lineage; проверить GitHub
-Deployments semantics и event-trigger safety (запись планового состояния
-не должна самопроизвольно запускать CD). Добавить типизированные Gateway
-READ, затем отдельно ASK/owner-reviewed WRITE с receipt и reconciliation;
-права и live rollout только по UC-GW-003/005. Read-only агрегатор должен
-строить repo/target/action/env views и отделять known pending от unknown.
-Сначала dry-run и контрактные тесты, затем controlled pilot.
+**P4 — GitHub Deployments READ: RELEASE COMPLETE (2026-11-20); остальная очередь не реализована.**
+В Gateway приняты четыре закрытых GET метода чтения Deployments/statuses для
+`fortis-approvals` с disabled WRITE. Не повторять P4 Check/Apply/Backup/Promote.
+P4 контракт идентичности target/env/source, pagination, lineage и event safety
+остаётся входом для Registry; старый план делать GitHub Deployments основным
+хранилищем очереди **заменён** текущим product decision. DR старого Gateway
+не доказан; исторические rollback-ресурсы не удалять.
 
-**P5 — Post-merge queue publication.**
-После достоверного owner-merged GitHub `main` и полного release impact
-зафиксировать desired CD target/version; поместить его в GitHub CD
-projection через bounded publisher, а `no-deployment` исключать.
-Предотвращать duplicate/superseded entries при нескольких PR,
-одинаковых build units и новых main SHA. Независимый readback доказывает
-только сохранение записи в GitHub, не фактическое развёртывание.
+**P5 — собственный Fortis Release Registry и post-merge planning (PLANNED).**
+После owner-confirmed merge в `main`, проверенных Release Impact/catalog и
+полного merged-PR lineage формировать desired release record на target и
+environment. Один desired SHA включает все накопленные PR; одинаковую
+версию не дублировать, supersession делать отдельной ссылкой с историей.
+Не требовать публикации GitHub Deployment и не запускать релиз. Спроектировать
+постоянное хранилище, owner/AI typed read/write policy, version/CAS,
+audit, recovery и тесты, прежде чем объявлять Registry доступным.
 
-**P6 — Verified deployment-to-GitHub publication.**
-Исследовать готовые receipts каждого контроллера; при необходимости
-предложить ограниченное дополнение в отдельном scope. Publisher читает
-и проверяет исходный protected receipt, actual target/environment state,
-связывает его с desired deployment identity и только тогда публикует
-`success` через Gateway. Проверить failed/unknown/rollback,
-lost status ACK, поздний receipt, несоответствие SHA и несколько targets.
-Любое Production/Windows изменение — отдельный owner-approved проект,
-не часть текущего Release Labels пилота.
+**P6 — manual release result marking (PLANNED, без автоматического CD).**
+Владелец вручную выполняет действующие Use Cases и reusable controllers.
+После точного сообщения владельца и проверки идентичности queued target/SHA
+ИИ через scoped Registry API записывает `REPORTED_COMPLETE` с происхождением,
+датой, связанной попыткой и доступными evidence. Переход в `VERIFIED`/
+`DEPLOYED` не допускается без independent receipt + live readback; они не
+обязательны для честной ручной *отметки*. Не создавать общий collector в V1.
+Failure/UNCERTAIN не разрешают повтор исходной физической установки.
 
-**P7 — Fortis Release Board (собственный UI; GitHub Projects НЕ нужен).**
-Read-only board со списком repository/target/environment/desired source,
-required actions, confirmed actual state, linked PRs, latest GitHub
-deployment/status, provenance/freshness и исходом reconciliation.
-Фильтры: `repositories awaiting CD`, `targets awaiting CD`,
-action (`image-rebuild`, `config-deploy`, `windows-update`,
-`package-build`, `migration-required`), environment, queued,
-in-progress, failed, unknown и confirmed. Windows direct GitHub READ
-и AI through Gateway typed READ должны давать сопоставимые результаты
-с явным указанием недостаточности evidence. Доска не должна сама
-назначать `success` или исполнять CD.
+**P7 — Fortis Release Board (PLANNED, own UI).**
+UI получает canonical Registry queue и history; фильтры repo/target/env,
+actions, desired SHA, merged PR, Use Case и состояния `QUEUED`,
+`REPORTED_COMPLETE`, `VERIFIED`, `BLOCKED`, `UNKNOWN` с видимой evidence class.
+Отсутствующая проверка не отображается как `DEPLOYED` или как отсутствие работы.
+Board не управляет Production. GitHub Projects не нужен; внешние GitHub
+Deployments могут дополнять UI, но не обязательны для V1.
 
-**P8 — Release Batch (после работающей очереди).**
-Группировка накопившихся merged changes по source SHA, targets,
-shared build units, dependencies и environment; один batch может
-включать несколько PR, но не может опустить изменения уже принятого
-`main` без отдельно согласованной стратегии выбора source.
-План/билд/установка/проверка — разные статусы. Фактическое применение
-остаётся у соответствующих отдельно утверждённых контроллеров.
+**P8 — Release Batch preparation (PLANNED, ручное выполнение).**
+Сгруппировать изменения по source, target, shared build unit и dependencies,
+выдать человеку план по конкретным существующим UC. Даже один batch с несколькими
+PR не может опускать изменения выбранного `main` SHA. Применение вручную;
+не запускать checked controllers из Registry или Board.
+
+**После V1 — отдельный CD automation project (НЕ АВТОРИЗОВАН).**
+Автоматизировать owner-reviewed запуск уже существующих контроллеров и
+получение их technical evidence с собственными gates и recovery, а не
+добавлять универсальный shell или обходить UC/approval.
 
 ### Непереходимые границы
 
-- Никаких GitHub Projects в текущей архитектуре: собственная Board потребляет
-  Gateway/GitHub API; GitHub — публично читаемая или авторизованная
-  **проекция** CD, protected receipts/readback — доказательства установки.
+- Никаких GitHub Projects в текущей архитектуре. Board V1 потребляет
+  Fortis Registry; GitHub Deployments — необязательная внешняя проекция.
+  Только protected receipts + independent readback доказывают `DEPLOYED`.
 - Никаких прямых GitHub REST/PAT/Git push вызовов от ИИ, даже если
   операторский Windows-клиент может читать GitHub API напрямую.
 - Release Labels и GitHub Deployments не дают разрешения на Production.
@@ -414,17 +426,17 @@ shared build units, dependencies и environment; один batch может
   старый UUID не переисполнять; новая попытка допускается только с новыми
   проверками безопасности, предусловий и действующей авторизацией.
   Выдавать `DEPLOYED` при недостаточных доказательствах запрещено.
-- Этот roadmap — **план**, а не доказательство наличия возможностей P4–P8
-  в live Gateway; P3 one-shot E2E ограничен указанным пилотом. Изменять release contract, capability grants, deployment
-  controller и runtime только отдельными проверяемыми owner-reviewed этапами.
+- Этот roadmap — **план** для Registry P5–P8, не доказательство их наличия
+  в live Fortis; P4 typed GitHub Deployments READ реально принят только
+  в указанном scope. P3 one-shot E2E ограничен пилотом. Менять release
+  contract, machine grants или runtime — только отдельным owner review.
 
-**Следующая конкретная задача:** P4 — спроектировать и проверить
-контракт post-merge CD Queue / GitHub Deployments: идентичности
-repository/target/environment/desired source и artifact, merged-PR lineage,
-состояния/пагинацию, read-only проекцию и безопасность событий.
-До реализации проверить реальные GitHub Deployments API и отсутствие
-непреднамеренного CD-триггера. Запись очереди, runtime release и полномочия
-владельца требуют отдельного review; P3.4 не повторять.
+**Следующая конкретная задача:** P5 source-only design самостоятельного
+Fortis Release Registry. Сначала зафиксировать пользовательские сценарии,
+storage/authority, статус `REPORTED_COMPLETE` отдельно от `DEPLOYED`,
+actor/policy, запись после owner merge, идемпотентность и history; затем тесты
+и reviewed PR/CI. Не запускать P4 повторно, не делать GitHub Deployment POST,
+не создавать production runner. [Handoff для нового чата](RELEASE-REGISTRY-V1-HANDOFF-2026-11-20.md).
 
 ## Future: CI, GitHub Actions и сценарии настройки
 

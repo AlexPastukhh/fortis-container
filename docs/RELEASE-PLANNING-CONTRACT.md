@@ -212,10 +212,19 @@ means **STOP**, not a synthetic `PASS` or permission bypass.
 
 ### Post-merge CD Queue and Fortis Release Board
 
-The accepted architecture uses a **Fortis Release Board**, not GitHub
-Projects. This section specifies only normative identities and evidence
-boundaries; sequence, status and open work are owned by the
+**V1 product decision (owner, 2026-11-20):** the canonical release queue and
+manual-result events belong to an independent, persistent **Fortis Registry**.
+GitHub Deployments/statuses are **optional external projections/READ inputs**, not
+the queue database, installation executor or mandatory dependency for Board.
+The accepted UI direction remains a **Fortis Release Board**, not GitHub Projects.
+The installation path is manual: owner follows the appropriate existing Use Case
+and reusable scripts. AI may mark a specific Registry record `REPORTED_COMPLETE`
+only through an independently reviewed, authorized typed API after the owner's
+report; this is not technical proof of deployment. Source/readback collector,
+CD runner, GitHub deployment WRITE and Registry write API are NOT deployed.
+Sequence and open work remain solely in the
 [single current roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
+[Exact handoff / open gates](RELEASE-REGISTRY-V1-HANDOFF-2026-11-20.md).
 
 The desired deployment identity is `repository + deployment target +
 environment + desired source/artifact identity`. A repository is an
@@ -228,16 +237,30 @@ for every target and environment.
 PR merge, Release Impact, labels and GitHub Deployment status are inputs
 or published projections, **not proof of installation**. Only target-specific
 protected controller receipts with independent live readback can establish
-`DEPLOYED`. Missing or conflicting evidence is `UNKNOWN`, never an
-implicit success, absence of deployment or authorization to retry.
+`DEPLOYED` / `VERIFIED`. A manually entered `REPORTED_COMPLETE` event records
+an operator's statement and available references, **not** an independently
+verified installed source/artifact. Missing or conflicting technical evidence
+is `UNKNOWN` for verified actual state, never an implicit deployment success,
+absence of installation or authorization to retry.
 Planning/publication cannot trigger Production without separately reviewed
 owner authority. GitHub Projects is excluded from the current roadmap.
 
 
-### P4 — CD Queue / GitHub Deployments API (design candidate, not live)
+### P4 — GitHub Deployments READ live; optional projection/WRITE design only
 
-This section owns the proposed **data/API contract**. It does not register Gateway
-operations, issue grants, create a queue, or permit an external write. Delivery
+**Owner-reported P4 RELEASE COMPLETE on 2026-11-20:** the four typed
+Deployments GET operations are enabled in the Primary Gateway for repository
+`fortis-approvals`, and `writeEnabled=false`. Owner reports Check/Apply,
+Backup/Promote and live typed READ acceptance. The accepted emergency Promote
+source fix was merged as [#159](https://github.com/AlexPastukhh/fortis-approvals/pull/159)
+(commit `585211b0240fd543b475d2196edc0bd4efb83951`). The missing historical
+image makes `DISASTER_RECOVERY_VERIFIED=NO`; do not infer verified rollback or
+rerun P4. This paragraph reports owner evidence; this docs change has not
+independently inspected the Windows Primary.
+
+This subsection retains the **GitHub wire/API contract for optional projection**.
+It does not register any Deployments WRITE operation, create the Fortis Registry
+or authorize a GitHub POST. Delivery
 milestones and unaccepted work remain solely in the [roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
 GitHub's [Deployments REST API](https://docs.github.com/en/rest/deployments/deployments)
 and [status API](https://docs.github.com/en/rest/deployments/statuses) define the
@@ -301,6 +324,8 @@ version may legitimately be older than the newest desired version.
 | \`DEPLOYED\` | Immutable original controller receipt **and** independent fresh live readback match this target, environment, source and artifact identity. |
 | \`FAILED\` | A protected receipt proves an error of the identified attempt; it does not prove that an older installed version is gone. Retry requires a separate authorized attempt. |
 | \`UNKNOWN\` | Missing/stale/conflicting receipt or readback, ambiguous lineage/ancestry, unconfirmed ACK, \`UNCERTAIN\`/active claim or identity mismatch. Never silently map to \`QUEUED\`, \`FAILED\` or \`DEPLOYED\`. |
+| \`REPORTED_COMPLETE\` (proposed V1 registry event) | Owner states that a specific manual UC release finished; AI registers original target/desired SHA, owner assertion and optional evidence references via scoped typed API. No independent installed proof is implied. |
+| \`PLANNED_UNVERIFIED\` (proposed V1 display) | Confirmed target/desired source from merge, but current installed state is not independently known. It is a planning item, not a verified mismatch or known-queued deployment. |
 
 \`NO_DEPLOYMENT\` is an exact-head, validated impact classification and creates
 **no** deployment identity. \`SUPERSEDED\` is a relation between immutable
@@ -308,6 +333,33 @@ desired versions, not proof of a deployment result. A target can expose both
 its *latest desired* and *last confirmed actual*, with an explicit evidence
 freshness/completeness flag. Unknown effect takes precedence over a nominally
 queued or blocked action for that same identity.
+
+#### Canonical Fortis Registry V1 (owner product decision; schema not yet accepted)
+
+- **Authoritative queue:** durable Fortis-owned records, not Deployment objects;
+  proposed logical key `{repository,target,environment,desiredSourceSha,catalogSha,
+  artifactIdentity}` with explicit `unknown/notBuilt` artifact semantics. An
+  immutable record can cover several owner-merged PRs after full validated
+  Release Impact, catalog revision and lineage readback. A changed desired SHA
+  links an immutable superseding record; no deletion/rewrite of earlier manual
+  outcomes. Do not treat `no-deployment` as a queued target.
+- **Manual installation:** record the relevant existing Use Case and approved
+  command family; e.g., Gateway [UC-GW-005](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/releases.md#uc-gw-005)
+  is `SelfTest → Check → Apply → live readback → Backup → Promote → host inspect`.
+  Owner executes this separately on Windows; other products have their own UC.
+  Nothing in a Registry or Release Board launches the script in V1.
+- **Manual result event:** typed actor-scoped write with exact record ID/revision,
+  target/environment/desired SHA, time, owner statement, original release/attempt
+  reference where known, evidence links and immutable audit. A manual note
+  cannot forge controller receipts, retroactively create `actual`, rewrite
+  historical events or set `VERIFIED/DEPLOYED`. Existing technical evidence,
+  when available, is labeled by its own verified evidence class.
+- **Security/unknowns:** define authoritative data owner, storage, ACL/backup,
+  CAS/idempotency, concurrent merges/annotations, actor policy, append-only audit,
+  stale SHA checks and negative/recovery tests **before** coding Registry.
+  If the entry cannot be bound to the intended source/target, STOP/UNKNOWN.
+  No installed write API exists today. CD automation and automatic receipt
+  collection are future separately owner-approved milestones.
 
 #### GitHub projection mapping and event safety
 
@@ -369,8 +421,9 @@ Follow GitHub \`page/per_page\` (maximum 100; prefer bounded 30), explicit
 Recheck head/catalog/merge SHA and selected deployment IDs after pagination;
 an incomplete/changed enumeration is \`UNKNOWN\`. Group by repo, target,
 environment, actions and desired identity **only after** validating the full
-filtered inventory. Current Gateway capability list has no Deployments
-operation; source presence must not be reported as live availability.
+filtered inventory. The P4 Primary has these four typed GET capabilities only in the owner's
+accepted `fortis-approvals` scope; no generic multi-repo READ and no
+Deployments WRITE should be inferred from source presence.
 
 **WRITE is a different owner-reviewed operation and release**, via
 [UC-GW-003](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/integrations.md#uc-gw-003)
@@ -387,8 +440,10 @@ read original result and independently enumerate matching projectionId/status
 before contemplating another authorized publication. Never replay the
 **physical install** as a consequence of publication uncertainty.
 
-**P4 acceptance boundary:** validated READ DTO/pagination/identity tests and
-negative event/policy/receipt/race tests in \`fortis-approvals\`, exact-head CI
-and owner-reviewed isolated pilot before any WRITE; explicit capability
-readback after a separate owner runtime release. A successful design-only PR
-is **SOURCE-CANDIDATE**, not Gateway READ/WRITE acceptance or installed queue.
+**Acceptance split:** the four P4 READ operations passed separate owner
+runtime activation as reported on 2026-11-20. This does **not** activate
+GitHub Deployments WRITE, a Fortis Registry, post-merge queue publication,
+Release Board or automatic CD. Any GitHub POST still requires new API contract,
+negative event/policy/receipt/race tests, exact-head CI, trusted Publisher,
+owner-reviewed consumers/webhooks and explicit runtime release. A design-only
+PR remains **SOURCE-CANDIDATE**, not a privileged write acceptance.
