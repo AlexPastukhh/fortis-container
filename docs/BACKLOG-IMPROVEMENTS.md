@@ -371,6 +371,7 @@ P4 контракт идентичности target/env/source, pagination, line
 не доказан; исторические rollback-ресурсы не удалять.
 
 **P5 — собственный Fortis Release Registry и post-merge planning (PLANNED).**
+[Source-only design candidate](RELEASE-REGISTRY-P5-DESIGN.md) proposes D1–D7 storage, authority, evidence and recovery choices; these are **not yet owner-accepted** and no Registry API is live.
 После owner-confirmed merge в `main`, проверенных Release Impact/catalog и
 полного merged-PR lineage формировать desired release record на target и
 environment. Один desired SHA включает все накопленные PR; одинаковую
