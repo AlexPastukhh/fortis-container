@@ -39,6 +39,8 @@ An input `snapshot` currently includes:
 | `environmentBindings` | Exact environment chosen for every affected target, not wildcard expansion |
 | `dependencyProofs` | Exact catalog/repository/target reference claims; no implication that dependencies are installed |
 
+The [post-merge evidence readiness assessment](RELEASE-REGISTRY-P5-POST-MERGE-EVIDENCE.md) explicitly blocks trusted ingestion from current Gateway projections.
+
 The pure candidate validates the pinned catalog structure using the accepted
 `tools/release/validate.py` JSON Schema implementation, the existing
 `validate_impact` semantic validator and extra graph/identity checks.
