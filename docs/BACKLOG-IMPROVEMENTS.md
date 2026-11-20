@@ -372,6 +372,7 @@ P4 контракт идентичности target/env/source, pagination, line
 
 **P5 — собственный Fortis Release Registry и post-merge planning (PLANNED).**
 [Source-only design candidate](RELEASE-REGISTRY-P5-DESIGN.md) proposes D1–D7 storage, authority, evidence and recovery choices; these are **not yet owner-accepted** and no Registry API is live.
+[Component/restriction-only coordination proposal](RELEASE-REGISTRY-P5-COMPONENT-RESTRICTIONS.md) adds a P5 parallel-work safety view: store affected component/resource/operation restrictions, not lists of allowed actions. Without complete trusted coverage, effectful work remains subject to review and existing UCs; no automated Gateway stop or release lock is installed.
 После owner-confirmed merge в `main`, проверенных Release Impact/catalog и
 полного merged-PR lineage формировать desired release record на target и
 environment. Один desired SHA включает все накопленные PR; одинаковую
