@@ -42,6 +42,7 @@ This is the topic index for the Fortis Container documentation set. The reposito
 - [P5 durable component restriction candidate](RELEASE-REGISTRY-P5-DURABLE-CONSTRAINTS.md) — offline SQLite CAS, immutable events, loss-of-ACK receipts and backup; NOT a live release policy or Registry API.
 - [P5 desired release preview candidate](RELEASE-REGISTRY-P5-DESIRED-PREVIEW.md) — deterministic offline target/environment plan from unverified claimed merge/CI/catalog evidence; no Registry ingestion.
 - [P5 durable desired candidates](RELEASE-REGISTRY-P5-DESIRED-STORE.md) — offline idempotent SQLite journal, immutable desired lineage and supersession; no trusted ingest API or installed state.
+- [P5 post-merge evidence readiness](RELEASE-REGISTRY-P5-POST-MERGE-EVIDENCE.md) — existing scoped Gateway READ gaps, fail-closed offline assessor and proposed owner-reviewed trusted collector contract.
 - [Source map](SOURCE-MAP.md) — canonical source ownership, development copies, deployed copies and historical artifacts.
 - [Git and recovery](GIT-AND-RECOVERY.md) — shared credential boundaries, dated repository-state snapshots and recovery practices; ordinary project Worktree layout and delivery flow are owned by Mirror.
 - [Canonical Mirror workflow](https://github.com/AlexPastukhh/docke-windows-mirror/blob/main/docs/WORKFLOW.md) — ordinary project primary clones, Worktrees, GitHub Actions checks and Docker → GitHub → Windows handoff.

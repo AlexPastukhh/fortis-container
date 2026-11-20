@@ -32,6 +32,7 @@ remain independent, including during Gateway downtime.
 The [offline durable restrictions candidate](RELEASE-REGISTRY-P5-DURABLE-CONSTRAINTS.md) persists only the component-coordination model for negative tests; it does **not** complete the canonical desired-release queue or install a Registry API.
 The [offline desired release preview](RELEASE-REGISTRY-P5-DESIRED-PREVIEW.md) separately derives unverified per-target candidate identities from claimed merge and catalog inputs; it never writes to the authoritative queue and needs a trusted collector.
 The [separate offline durable desired journal](RELEASE-REGISTRY-P5-DESIRED-STORE.md) persists only unverified candidate records and original-operation/supersession history, with no live or trusted API.
+The [post-merge evidence readiness contract](RELEASE-REGISTRY-P5-POST-MERGE-EVIDENCE.md) records why current typed READs are insufficient, without granting an additional actor or installing an endpoint.
 
 **Proposed source split:** `fortis-container` owns product constraints and
 shared Release Impact/catalog schemas; an independently reviewed Fortis

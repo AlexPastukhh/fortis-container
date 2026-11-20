@@ -376,6 +376,7 @@ P4 контракт идентичности target/env/source, pagination, line
 [P5 offline durable storage reference](RELEASE-REGISTRY-P5-DURABLE-CONSTRAINTS.md) exercises versioned restriction snapshots, SQLite CAS, original-operation receipts, clearance references and backup with source tests. This is **not** a live service, deployed DB, trusted collector or full desired-release queue.
 [P5 offline desired-record preview](RELEASE-REGISTRY-P5-DESIRED-PREVIEW.md) adds a deterministic, untrusted fixture-only release plan per target/environment and combined PR lineage. The required typed merge/catalog evidence collector and durable desired queue remain **unimplemented**.
 [P5 durable desired candidate journal](RELEASE-REGISTRY-P5-DESIRED-STORE.md) now stores that offline plan with CAS, original-operation receipts and append-only supersession. These remain **unverified candidate rows**, not a trusted or deployed canonical queue.
+[P5 post-merge evidence readiness](RELEASE-REGISTRY-P5-POST-MERGE-EVIDENCE.md) adds an offline fail-closed gap assessor and future typed collector proposal. Current scoped READs, including open-PR-only impact evidence, are **not** sufficient for authorized ingestion.
 После owner-confirmed merge в `main`, проверенных Release Impact/catalog и
 полного merged-PR lineage формировать desired release record на target и
 environment. Один desired SHA включает все накопленные PR; одинаковую
