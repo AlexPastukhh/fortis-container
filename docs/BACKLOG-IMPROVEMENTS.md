@@ -375,6 +375,7 @@ P4 контракт идентичности target/env/source, pagination, line
 [Component/restriction-only coordination proposal](RELEASE-REGISTRY-P5-COMPONENT-RESTRICTIONS.md) adds a P5 parallel-work safety view: store affected component/resource/operation restrictions, not lists of allowed actions. Without complete trusted coverage, effectful work remains subject to review and existing UCs; no automated Gateway stop or release lock is installed.
 [P5 offline durable storage reference](RELEASE-REGISTRY-P5-DURABLE-CONSTRAINTS.md) exercises versioned restriction snapshots, SQLite CAS, original-operation receipts, clearance references and backup with source tests. This is **not** a live service, deployed DB, trusted collector or full desired-release queue.
 [P5 offline desired-record preview](RELEASE-REGISTRY-P5-DESIRED-PREVIEW.md) adds a deterministic, untrusted fixture-only release plan per target/environment and combined PR lineage. The required typed merge/catalog evidence collector and durable desired queue remain **unimplemented**.
+[P5 durable desired candidate journal](RELEASE-REGISTRY-P5-DESIRED-STORE.md) now stores that offline plan with CAS, original-operation receipts and append-only supersession. These remain **unverified candidate rows**, not a trusted or deployed canonical queue.
 После owner-confirmed merge в `main`, проверенных Release Impact/catalog и
 полного merged-PR lineage формировать desired release record на target и
 environment. Один desired SHA включает все накопленные PR; одинаковую
