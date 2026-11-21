@@ -254,6 +254,106 @@ acceptance; a documentation/source merge is not the first live release.
 No initial record, credential, volume, deployment or live scope is
 created by this decision.
 
+##### Registry-specific review cutoff and CI policy (proposed alternative, 2026-11-21)
+
+**Owner source decision required.** The existing GitHub READ surface and
+retained observations do not prove the complete historical effective
+branch protection, bypass rules, or every PR-body edit at merge time.
+Repeated current-state reads or green CI cannot close that gap.
+For the forward-only pilot, propose an independent, stricter Registry
+intake policy instead of reconstructing GitHub's historical merge
+authorization. GitHub's own protection and the manual owner UI merge
+remain unchanged. This alternative must be expressly accepted before
+it replaces the full provider-historical proof prerequisite.
+
+**Normative review cutoff:** the exact original retained v2 bundle and
+the protected Core ASK execution for that bundle define the release
+planning input. The owner must review the exact impact, catalog, paths,
+base/head, and completed check identities before manually merging the
+same reviewed head into main. The immutable approved bundle is the
+authoritative Registry planning text; later PR text is not a source of
+release instructions. A known body/CI/policy drift before merge requires
+fresh capture and owner review, not reinterpretation of the old approval.
+A changed post-review body observed at post-merge collection also blocks
+this pilot; an unchanged body is only a consistency check, not proof
+that there were no intervening edits. The approved retained material,
+rather than perfect GitHub edit-history coverage, is the proposed trust
+basis. No retrospective review, head substitution or merge approval
+derived from CI. The owner ASK remains a review of release planning
+evidence, not a machine GitHub merge or authorization to deploy.
+
+**Normative CI policy:** enroll the existing source-pinned four-job
+profile as an independent Registry requirement, with a protected
+immutable policy revision/digest, effective enrollment/source boundary,
+and owner approval. The policy requires GitHub Actions app ID 15368,
+slug github-actions, exact workflow IDs/paths/content hashes and exact
+successful run/job/check identities from the reviewed bundle:
+
+| Workflow ID | Required jobs |
+| --- | --- |
+| 408327525 | offline-tests, audit-projections |
+| 414303977 | release-impact |
+| 425664934 | p5-retained-impact |
+
+The complete profile is defined in the existing [P5 source policy
+module](https://github.com/AlexPastukhh/fortis-approvals/blob/3dae6d6eb0b8375f15b5f56296dfacb6d171720e/fortis_approvals/integrations/github/gateway/p5_ci_binding.py)
+and its exact workflow byte pins, not a second editable copy of the
+hashes. The live enrollment must retain the full exact profile and
+digest, not a mutable main link. Before owner execution, re-read the
+open PR/body/base/head, current branch rules, exact attempt inventory
+and completed job witnesses; rule drift, unsupported required checks,
+missing association, partial pages or changed attempts stop. Independently
+check raw workflow bytes and approved source policy pin. The fixed
+four-job floor applies even if GitHub allows fewer checks or a bypass;
+a bypass is never Registry admission evidence. Do not weaken GitHub
+required contexts or expand Repo/Publisher scopes.
+
+The original check observations, exact capture/owner decision identities,
+timestamps and policy revision are retained under independent protected
+checkpoints. Require check completion no later than retained capture,
+capture strictly before owner approval/execution, and owner execution
+strictly before provider-observed merge. The audit must bind owner
+approval and execution to the same bundle and policy. Missing, future,
+ambiguous or untrusted timestamps STOP. A separately reviewed maximum
+review-to-merge interval and trusted clock tolerance must be fixed in
+the enrolled policy and tested before activation; source proposal does
+not assert that current clocks meet it. An older approval cannot be
+replayed for another PR, head, base, policy revision or merge. Require
+actual main merge tree/parents, selected-source coverage and continued
+exact identity. Known superseded/failed check attempts or inconsistent
+post-merge provider projections block; do not relabel later reruns as
+checks accepted at the cutoff. Preserve the original readback even if a
+historical PR association is no longer available after merge; missing
+pre-merge association itself still blocks.
+
+**Policy lifecycle:** independent owner-controlled, immutable effective
+policy records with exact repository/enrollment, revision and previous
+digest. A later version does not retrospectively approve a prior
+merge. Workflow/policy changes are separately reviewed; no mutable
+caller-selected pin, dynamic enrollment, silently reduced CI set or
+rebaseline. A policy or catalog transition outside the implemented
+continuity contract blocks intake. Effective policy/cutoff must be
+bound to the original review and source range, not simply looked up
+from current configuration. Do not open a bypass for Registry's own
+source PRs.
+
+**Evidence semantics:** if accepted, use distinctly named
+Registry-specific review/policy admission evidence; do not set
+historicalPolicyVerified or historicalMergeCutoffVerified to true on
+the basis of this alternative. Those fields describe the original
+provider-historical proof and stay false unless actually proven.
+Revise the future admission envelope and readiness gate explicitly to
+accept either the original full proof or this separately implemented
+and protected alternative, including its policy revision, evidence
+digest and owner acceptance. Current candidate snapshots and blocked
+preview are not upgraded by merging this design. No caller booleans,
+signature alone, source CI green or unprotected fixture can satisfy it.
+The remaining baseline acceptance, exact lineage, catalog/component/
+environment bindings, dependency closure, authenticated collector,
+durable writer, independent anchors and recovery gates are unchanged.
+No production grants, keys, live routes, workflow or owner release
+procedure changes in this decision PR.
+
 Next implementation increments, each with exact-head CI and owner
 review:
 
@@ -262,10 +362,12 @@ review:
    independently witnessed candidate snapshot retention accepted in
    [PR #195](https://github.com/AlexPastukhh/fortis-approvals/pull/195).
    These remain source-only, blocked intake, not live trusted evidence.
-2. Establish forward-only baseline identity/coverage checks,
-   owner-reviewed merge cutoff and historical policy provenance for
-   new merges (or a separately accepted trusted alternative), and
-   component/environment bindings. Integrate
+2. The forward-only source coverage candidate is accepted in Approvals
+   [PR #196](https://github.com/AlexPastukhh/fortis-approvals/pull/196).
+   Establish protected baseline acceptance and implement the
+   owner-approved Registry-specific review/policy alternative (or
+   complete provider-historical proof), and component/environment
+   bindings. Integrate
    live pre-merge evidence only after protected capture authority,
    actual storage/anchor and provider scope have been accepted.
 3. Implement canonical durable writer with independent trusted

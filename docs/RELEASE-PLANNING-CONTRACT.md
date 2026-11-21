@@ -351,6 +351,12 @@ queued or blocked action for that same identity.
   All post-baseline merges must be continuously covered; no rebaseline to
   hide gaps. The [P5 baseline contract](RELEASE-REGISTRY-P5-DESIGN.md#forward-only-enrollment-baseline-owner-decision-2026-11-21)
   owns bootstrap details.
+- **Review/CI evidence:** full historical provider proof or a separately
+  owner-accepted protected Registry-specific policy and immutable review
+  cutoff may establish planning admission. See the
+  [P5 alternative proposal](RELEASE-REGISTRY-P5-DESIGN.md#registry-specific-review-cutoff-and-ci-policy-proposed-alternative-2026-11-21).
+  The alternative must not claim historical GitHub policy verification,
+  weaken GitHub merge protection, or authorize deployment.
 - **Manual installation:** record the relevant existing Use Case and approved
   command family; e.g., Gateway [UC-GW-005](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/releases.md#uc-gw-005)
   is `SelfTest → Check → Apply → live readback → Backup → Promote → host inspect`.

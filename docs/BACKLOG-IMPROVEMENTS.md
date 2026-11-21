@@ -437,10 +437,12 @@ PR не может опускать изменения выбранного `mai
   в указанном scope. P3 one-shot E2E ограничен пилотом. Менять release
   contract, machine grants или runtime — только отдельным owner review.
 
-**Следующая конкретная задача:** реализовать source-only проверку
-[forward-only baseline и непрерывной lineage](RELEASE-REGISTRY-P5-DESIGN.md#forward-only-enrollment-baseline-owner-decision-2026-11-21),
-исторический cutoff/policy для новых merge и component/environment bindings,
-затем canonical WRITE с защищённым receipt/recovery. Не расширять scope на другие репозитории,
+**Следующая конкретная задача:** source candidate forward-only lineage
+принят в Approvals PR #196. Owner review
+[Registry-specific review cutoff / CI policy](RELEASE-REGISTRY-P5-DESIGN.md#registry-specific-review-cutoff-and-ci-policy-proposed-alternative-2026-11-21)
+как явной альтернативы историческому GitHub proof; затем protected baseline,
+review/policy evidence, component/environment bindings и canonical WRITE
+с защищённым receipt/recovery. Не расширять scope на другие репозитории,
 не запускать P4 повторно, не делать GitHub Deployment POST и не создавать
 production runner без отдельного owner GO.
 [Handoff для нового чата](RELEASE-REGISTRY-V1-HANDOFF-2026-11-20.md).
