@@ -343,6 +343,14 @@ queued or blocked action for that same identity.
   Release Impact, catalog revision and lineage readback. A changed desired SHA
   links an immutable superseding record; no deletion/rewrite of earlier manual
   outcomes. Do not treat `no-deployment` as a queued target.
+- **Forward-only V1 enrollment:** accounting starts at the first
+  owner-accepted Registry release/enrollment boundary for the enrolled
+  repository. The exact source/catalog baseline and cutover proof are
+  immutable; no pre-baseline PR history backfill or synthetic installation
+  records. Actual state stays unknown without independent target evidence.
+  All post-baseline merges must be continuously covered; no rebaseline to
+  hide gaps. The [P5 baseline contract](RELEASE-REGISTRY-P5-DESIGN.md#forward-only-enrollment-baseline-owner-decision-2026-11-21)
+  owns bootstrap details.
 - **Manual installation:** record the relevant existing Use Case and approved
   command family; e.g., Gateway [UC-GW-005](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/releases.md#uc-gw-005)
   is `SelfTest → Check → Apply → live readback → Backup → Promote → host inspect`.
