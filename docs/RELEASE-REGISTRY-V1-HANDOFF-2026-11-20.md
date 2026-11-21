@@ -1,5 +1,13 @@
 # Fortis Release Registry V1 — handoff нового чата (2026-11-20)
 
+**АРХИВНЫЙ СНИМОК / НЕ ТЕКУЩЕЕ ЗАДАНИЕ.** Этот handoff
+заменён [передачей от 2026-11-21](RELEASE-REGISTRY-V1-HANDOFF-2026-11-21.md).
+Его исторические статусы «source not accepted», «403»
+и локальные task-ветки описывали момент создания, **а не состояние
+после owner-merged PR #210 и четырёх успешных CI**.
+Актуальный план — [единственный roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
+Не исполнять разделы 6–7 этого документа как текущие инструкции.
+
 **Status: PRODUCT DECISION ACCEPTED BY OWNER; DESIGN/SOURCE/REGISTRY IMPLEMENTATION NOT ACCEPTED.**
 Эта передача не разрешает CD automation, GitHub Deployments WRITE, смену Gateway
 policy/credentials, Windows/Docker execution или релиз нового image.
@@ -99,7 +107,7 @@ Normative identity/evidence boundaries: [Release Planning Contract](RELEASE-PLAN
 - **Post-V1:** отдельная программа CD automation, которая повторно использует
   существующие контроллеры и их безопасные gates.
 
-## 6. Следующему чату: порядок действий (source-only)
+## 6. Исторические инструкции 2026-11-20 (не выполнять как текущую работу)
 
 1. Начать с `/workspace/repo/README.md` и `AGENTS.md`, прочитать полностью
    UC-CONT-002, UC-CONT-003 и UC-GW-009; затем применимые UC-CONT-019/024,
@@ -119,7 +127,7 @@ Normative identity/evidence boundaries: [Release Planning Contract](RELEASE-PLAN
    GitHub push/PR/CI → owner UI merge → exact-main readback. Новые права,
    runtime release и CD требуют отдельного owner GO.
 
-## 7. Статус документационного изменения
+## 7. Исторический статус документационного изменения на 2026-11-20
 
 Источник на момент подготовки: `fortis-container/main` =
 `8710c45b8a4e786dccbd641f824ddf698269586a`; Gateway source main =

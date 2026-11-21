@@ -224,7 +224,7 @@ report; this is not technical proof of deployment. Source/readback collector,
 CD runner, GitHub deployment WRITE and Registry write API are NOT deployed.
 Sequence and open work remain solely in the
 [single current roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
-[Exact handoff / open gates](RELEASE-REGISTRY-V1-HANDOFF-2026-11-20.md).
+[Current handoff / open gates](RELEASE-REGISTRY-V1-HANDOFF-2026-11-21.md).
 
 The desired deployment identity is `repository + deployment target +
 environment + desired source/artifact identity`. A repository is an
@@ -334,7 +334,7 @@ its *latest desired* and *last confirmed actual*, with an explicit evidence
 freshness/completeness flag. Unknown effect takes precedence over a nominally
 queued or blocked action for that same identity.
 
-#### Canonical Fortis Registry V1 (owner product decision; schema not yet accepted)
+#### Canonical Fortis Registry V1 (owner product decision; offline source schema v2 accepted, not live)
 
 - **Authoritative queue:** durable Fortis-owned records, not Deployment objects;
   proposed logical key `{repository,target,environment,desiredSourceSha,catalogSha,
@@ -370,7 +370,7 @@ queued or blocked action for that same identity.
   when available, is labeled by its own verified evidence class.
 - **Security/unknowns:** define authoritative data owner, storage, ACL/backup,
   CAS/idempotency, concurrent merges/annotations, actor policy, append-only audit,
-  stale SHA checks and negative/recovery tests **before** coding Registry.
+  stale SHA checks and negative/recovery tests **before live Registry activation**.\n  Offline source candidates through Approvals PR #210 are not a protected runtime.
   If the entry cannot be bound to the intended source/target, STOP/UNKNOWN.
   No installed write API exists today. CD automation and automatic receipt
   collection are future separately owner-approved milestones.

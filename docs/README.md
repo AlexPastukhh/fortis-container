@@ -37,7 +37,8 @@ This is the topic index for the Fortis Container documentation set. The reposito
 ### Source, operations and planning
 
 - [Release planning contract v1](RELEASE-PLANNING-CONTRACT.md) — normative cross-repository build units, deployment targets and PR Release Impact. Current Publisher/CD Queue milestones live only in the [single roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue); the contract is not a deployment service.
-- [Fortis Release Registry P5 — design candidate](RELEASE-REGISTRY-P5-DESIGN.md) — proposed durable storage, typed trust boundary, desired records, CAS, unknown/recovery and negative tests; owner decisions required, no live Registry API.
+- [Fortis Release Registry P5 — accepted source design, runtime not live](RELEASE-REGISTRY-P5-DESIGN.md) — D1–D7 architecture, offline schema/CAS/checkpoint and remaining protected host/owner acceptance gates.
+- [Fortis Release Registry V1 — current next-chat handoff (2026-11-21)](RELEASE-REGISTRY-V1-HANDOFF-2026-11-21.md) — verified PR #210/main, P5 implementation progress, remaining live gates and exact next task. [Earlier handoff](RELEASE-REGISTRY-V1-HANDOFF-2026-11-20.md) is historical.
 - [P5 component release restrictions](RELEASE-REGISTRY-P5-COMPONENT-RESTRICTIONS.md) — exception-only constraints on components/shared resources and operations; independent work is not automatically frozen, and no restriction is not a permission.
 - [P5 durable component restriction candidate](RELEASE-REGISTRY-P5-DURABLE-CONSTRAINTS.md) — offline SQLite CAS, immutable events, loss-of-ACK receipts and backup; NOT a live release policy or Registry API.
 - [P5 desired release preview candidate](RELEASE-REGISTRY-P5-DESIRED-PREVIEW.md) — deterministic offline target/environment plan from unverified claimed merge/CI/catalog evidence; no Registry ingestion.

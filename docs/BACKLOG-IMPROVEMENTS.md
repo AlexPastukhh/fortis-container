@@ -370,20 +370,72 @@ P4 контракт идентичности target/env/source, pagination, line
 хранилищем очереди **заменён** текущим product decision. DR старого Gateway
 не доказан; исторические rollback-ресурсы не удалять.
 
-**P5 — собственный Fortis Release Registry и post-merge planning (PLANNED).**
-[P5 Design](RELEASE-REGISTRY-P5-DESIGN.md): D1–D7 source architecture accepted in PR #41, single-repository pilot and [forward-only enrollment baseline](RELEASE-REGISTRY-P5-DESIGN.md#forward-only-enrollment-baseline-owner-decision-2026-11-21). No pre-cutover PR history backfill. Approvals PR #194 (closed boundary) and #195 (independently witnessed collector candidate snapshots) accepted in source; no admission, Registry writer, or live API yet. Operational acceptance remains separate.
-[Component/restriction-only coordination proposal](RELEASE-REGISTRY-P5-COMPONENT-RESTRICTIONS.md) adds a P5 parallel-work safety view: store affected component/resource/operation restrictions, not lists of allowed actions. Without complete trusted coverage, effectful work remains subject to review and existing UCs; no automated Gateway stop or release lock is installed.
-[P5 offline durable storage reference](RELEASE-REGISTRY-P5-DURABLE-CONSTRAINTS.md) exercises versioned restriction snapshots, SQLite CAS, original-operation receipts, clearance references and backup with source tests. This is **not** a live service, deployed DB, trusted collector or full desired-release queue.
-[P5 offline desired-record preview](RELEASE-REGISTRY-P5-DESIRED-PREVIEW.md) adds a deterministic, untrusted fixture-only release plan per target/environment and combined PR lineage. The required typed merge/catalog evidence collector and durable desired queue remain **unimplemented**.
-[P5 durable desired candidate journal](RELEASE-REGISTRY-P5-DESIRED-STORE.md) now stores that offline plan with CAS, original-operation receipts and append-only supersession. These remain **unverified candidate rows**, not a trusted or deployed canonical queue.
-[P5 post-merge evidence readiness](RELEASE-REGISTRY-P5-POST-MERGE-EVIDENCE.md) adds an offline fail-closed gap assessor and future typed collector proposal. Current scoped READs, including open-PR-only impact evidence, are **not** sufficient for authorized ingestion.
-После owner-confirmed merge в `main`, проверенных Release Impact/catalog и
-полного merged-PR lineage формировать desired release record на target и
-environment. Один desired SHA включает все накопленные PR; одинаковую
-версию не дублировать, supersession делать отдельной ссылкой с историей.
-Не требовать публикации GitHub Deployment и не запускать релиз. Спроектировать
-постоянное хранилище, owner/AI typed read/write policy, version/CAS,
-audit, recovery и тесты, прежде чем объявлять Registry доступным.
+**P5 — Fortis Release Registry и post-merge planning (SOURCE IMPLEMENTATION MERGED THROUGH APPROVALS PR #210; RUNTIME NOT LIVE).**
+D1–D7 source architecture принята в fortis-container PR #41, пилот
+строго `AlexPastukhh/fortis-approvals`, учёт **forward-only с первого
+owner-accepted Registry release/enrollment**. Никакого исторического
+backfill PR/CI/installed state и автоматического CD. Само наличие
+`main` SHA или прошедшего source PR **не является cutover**.
+[Точный design и trust boundary](RELEASE-REGISTRY-P5-DESIGN.md),
+[текущий handoff](RELEASE-REGISTRY-V1-HANDOFF-2026-11-21.md).
+
+**Принятый P5 source milestone:** Approvals PR #194–#196 закрывают typed
+boundary, retained collector и first-parent lineage; #197–#199 —
+Registry-specific reviewed policy/CI, immutable evidence и component/
+environment bindings; #200–#203 — initial/suffix planning, отдельную
+SQLite v1/v2 candidate, immutable operations/CAS и supersession;
+#204–#206 — inactive backup, owner-side **offline** checkpoint CAS,
+read-only reconciliation и safe STOP на неоднозначном откате;
+#207–#209 — Unix SO_PEERCRED source boundary, Linux owner/Registry/Repo
+isolation preflight и cross-UID owner-storage denial probe; #210 —
+точный source first-enrollment cutover preflight (pinned baseline,
+нулевой Registry/owner genesis, согласованные offline host evidence).
+[Approvals source boundary](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-REGISTRY-P5-TYPED-BOUNDARY.md)
+и [post-merge evidence source](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-REGISTRY-P5-POST-MERGE-GATEWAY-CONTRACT.md)
+сохраняют точные схемы, ограничения и negative tests.
+[PR #210](https://github.com/AlexPastukhh/fortis-approvals/pull/210)
+слит (merge SHA `dba87732383e49f4cbff2076c7e62b4d22290253`);
+все четыре exact-head CI для `3fbbc58cb198d69f38acadb1d357f26c6d964771`
+завершились SUCCESS. Это **source acceptance**, не runtime release.
+
+**Старые container offline references:** [component/restriction view](RELEASE-REGISTRY-P5-COMPONENT-RESTRICTIONS.md),
+[durable restriction fixture](RELEASE-REGISTRY-P5-DURABLE-CONSTRAINTS.md),
+[desired preview](RELEASE-REGISTRY-P5-DESIRED-PREVIEW.md),
+[desired candidate store](RELEASE-REGISTRY-P5-DESIRED-STORE.md),
+[post-merge readiness](RELEASE-REGISTRY-P5-POST-MERGE-EVIDENCE.md).
+Это не вторая рабочая каноническая очередь; актуальные source-only
+Registry schema v2/owner checkpoints в `fortis-approvals`. Модель
+компонентной координации фиксирует **ограничения операций**,
+а не разрешённые действия. Отсутствие restriction — не grant.
+
+**Что блокирует P5 live GO:**
+1. Отдельный owner-reviewed Registry runtime и независимый owner
+   checkpoint service с доказанными host identity/UID/GID, volumes,
+   immutable anchor, OS/socket ACL, encrypted storage, protected backup
+   и реальными негативными cross-principal тестами. Offline JSON/digest,
+   тестовый UID или два локальных SQLite **не** доказывают защищённость.
+2. Owner-controlled auth/acceptance (включая WebAuthn), проверенный
+   original pending operation readback, crash/lost ACK/rollback/restore
+   reconciliation и отдельные monotonic-witness protections.
+3. Доверенное original collector evidence, immutable review/policy,
+   lineage/CI/catalog/dependency completeness; bounded typed
+   planner/reader API с действующими grants, оригинальными receipts,
+   безопасной ID/CAS и READ projection. Все Registry WRITE пока DENY.
+4. **Protected first enrollment**: владелец принимает exact repository,
+   source main SHA, catalog/binding/policy, начальный checkpoint и
+   дату/receipt cutover. Если `main` изменился, нужны все промежуточные
+   merges как post-baseline, а не скрытое смещение baseline.
+5. Отдельный owner-reviewed non-Production E2E на реально изолированном
+   хосте: blocked intake, no-deployment без записей, один
+   PLANNED_UNVERIFIED desired record при полном accepted evidence,
+   fail-closed recovery/restart/backup restore в inactive instance.
+   Production release, credential/grant activation, Windows work и
+   Registry WRITE требуют **отдельного owner GO**, не PR merge.
+
+**Отдельный infra gap:** в GitHub у `fortis-approvals/main`
+`protected:false` на дату сверки. Exact-head CI работает, но не
+является GitHub-enforced merge-gate. До включения и отдельного
+теста Ruleset проверять четыре CI вручную перед owner merge.
 
 **P6 — manual release result marking (PLANNED, без автоматического CD).**
 Владелец вручную выполняет действующие Use Cases и reusable controllers.
@@ -437,15 +489,17 @@ PR не может опускать изменения выбранного `mai
   в указанном scope. P3 one-shot E2E ограничен пилотом. Менять release
   contract, machine grants или runtime — только отдельным owner review.
 
-**Следующая конкретная задача:** source candidate forward-only lineage
-принят в Approvals PR #196. Owner review
-[Registry-specific review cutoff / CI policy](RELEASE-REGISTRY-P5-DESIGN.md#registry-specific-review-cutoff-and-ci-policy-proposed-alternative-2026-11-21)
-как явной альтернативы историческому GitHub proof; затем protected baseline,
-review/policy evidence, component/environment bindings и canonical WRITE
-с защищённым receipt/recovery. Не расширять scope на другие репозитории,
-не запускать P4 повторно, не делать GitHub Deployment POST и не создавать
-production runner без отдельного owner GO.
-[Handoff для нового чата](RELEASE-REGISTRY-V1-HANDOFF-2026-11-20.md).
+**Следующая конкретная задача P5:** не очередной synthetic positive
+preflight, а конкретный **owner-reviewed source/runbook** для
+выполнимого отделённого Registry process + защищённого owner checkpoint
+runtime (identity, storage, peer auth, CAS/recovery, provisioning,
+negative host E2E и rollback). Затем отдельный implementation PR в
+`fortis-approvals` и host activation/Protected Enrollment **только
+после отдельного owner acceptance/GO**. Не трогать P4 повторно,
+не расширять пилот на другие репозитории, не делать GitHub Deployments
+POST, не приписывать прохождению CI права на Production.
+[Актуальный handoff для нового чата](RELEASE-REGISTRY-V1-HANDOFF-2026-11-21.md);
+[архивный handoff 2026-11-20](RELEASE-REGISTRY-V1-HANDOFF-2026-11-20.md).
 
 ## Future: CI, GitHub Actions и сценарии настройки
 
