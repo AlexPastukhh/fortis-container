@@ -371,7 +371,7 @@ P4 контракт идентичности target/env/source, pagination, line
 не доказан; исторические rollback-ресурсы не удалять.
 
 **P5 — собственный Fortis Release Registry и post-merge planning (PLANNED).**
-[Source-only design candidate](RELEASE-REGISTRY-P5-DESIGN.md) proposes D1–D7 storage, authority, evidence and recovery choices; these are **not yet owner-accepted** and no Registry API is live.
+[Source-only design candidate](RELEASE-REGISTRY-P5-DESIGN.md) now includes a [concrete single-repository pilot decision proposal](RELEASE-REGISTRY-P5-DESIGN.md#21-concrete-first-pilot-decision-proposal-2026-11-21) for D1–D7 storage, authority, evidence and recovery. Owner source review and distinct live acceptance remain required; no Registry API is live.
 [Component/restriction-only coordination proposal](RELEASE-REGISTRY-P5-COMPONENT-RESTRICTIONS.md) adds a P5 parallel-work safety view: store affected component/resource/operation restrictions, not lists of allowed actions. Without complete trusted coverage, effectful work remains subject to review and existing UCs; no automated Gateway stop or release lock is installed.
 [P5 offline durable storage reference](RELEASE-REGISTRY-P5-DURABLE-CONSTRAINTS.md) exercises versioned restriction snapshots, SQLite CAS, original-operation receipts, clearance references and backup with source tests. This is **not** a live service, deployed DB, trusted collector or full desired-release queue.
 [P5 offline desired-record preview](RELEASE-REGISTRY-P5-DESIRED-PREVIEW.md) adds a deterministic, untrusted fixture-only release plan per target/environment and combined PR lineage. The required typed merge/catalog evidence collector and durable desired queue remain **unimplemented**.
@@ -437,12 +437,13 @@ PR не может опускать изменения выбранного `mai
   в указанном scope. P3 one-shot E2E ограничен пилотом. Менять release
   contract, machine grants или runtime — только отдельным owner review.
 
-**Следующая конкретная задача:** P5 source-only design самостоятельного
-Fortis Release Registry. Сначала зафиксировать пользовательские сценарии,
-storage/authority, статус `REPORTED_COMPLETE` отдельно от `DEPLOYED`,
-actor/policy, запись после owner merge, идемпотентность и history; затем тесты
-и reviewed PR/CI. Не запускать P4 повторно, не делать GitHub Deployment POST,
-не создавать production runner. [Handoff для нового чата](RELEASE-REGISTRY-V1-HANDOFF-2026-11-20.md).
+**Следующая конкретная задача:** owner review [конкретных решений D1–D7
+для P5 pilot](RELEASE-REGISTRY-P5-DESIGN.md#21-concrete-first-pilot-decision-proposal-2026-11-21),
+затем закрытая source-only Registry preview/receipt boundary и source evidence
+gates до canonical WRITE. Не расширять scope на другие репозитории,
+не запускать P4 повторно, не делать GitHub Deployment POST и не создавать
+production runner без отдельного owner GO.
+[Handoff для нового чата](RELEASE-REGISTRY-V1-HANDOFF-2026-11-20.md).
 
 ## Future: CI, GitHub Actions и сценарии настройки
 
