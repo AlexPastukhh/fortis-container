@@ -9,9 +9,33 @@ Gateway permission or runtime image is installed by this document.
 
 **Authority:** [Release Planning Contract](RELEASE-PLANNING-CONTRACT.md#post-merge-cd-queue-and-fortis-release-board),
 [one roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue),
-[handoff](RELEASE-REGISTRY-V1-HANDOFF-2026-11-20.md).
+[current handoff](RELEASE-REGISTRY-V1-HANDOFF-2026-11-21.md).
 All changes described below remain subject to source review and separate owner
 approval of the trust boundary. GitHub PR merge alone is not deployment.
+
+## Current source implementation checkpoint (2026-11-21)
+
+**After accepted Approvals [PR #210](https://github.com/AlexPastukhh/fortis-approvals/pull/210)**:
+source design D1–D7 and its pilot decisions are reflected in a sequence
+of **offline-only** modules in `fortis-approvals/fortis_approvals/registry`
+and the [post-merge Gateway evidence contract](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-REGISTRY-P5-POST-MERGE-GATEWAY-CONTRACT.md).
+The source includes retained review/CI and component bindings, bounded
+forward-lineage and planning, SQLite schema v2 CAS with immutable
+supersessions, inactive backup/owner-side checkpoint CAS, read-only
+recovery reconciliation, Linux owner/socket/storage boundary probes
+and first-enrollment genesis/main-cutover preflight. All four exact
+PR #210 CI passed, and the owner merged that source.
+
+**No protected owner checkpoint service, independent security principal,
+encrypted owner-provisioned volume, trusted live collector, activated
+Registry typed API, accepted WebAuthn first enrollment or deployed
+desired queue has been evidenced by this source milestone.**
+The source-only positive tests and hashes cannot attest a protected
+host or change `admissionAllowed`. Source status is more advanced
+than the initial design proposal below, but the owner/live gates
+in sections D1–D7 remain open. **A source main merge SHA is not
+an enrollment baseline.** The single living schedule and next task
+remain in [the roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
 
 ## 1. Scope and ownership
 
@@ -241,11 +265,12 @@ After enrollment require continuous first-parent coverage from the
 anchored baseline (or last fully covered source checkpoint) to selected
 main, attribution of every intervening merge to reviewed evidence,
 and the unchanged historical policy/cutoff, dependency and component
-gates for new PRs. Only the exact tip merge with no unresolved
-dependency can be a candidate under the current source implementation;
-multi-PR coverage is not yet implemented. A gap, divergence, unknown
-merge strategy, catalog remapping or unproved PR dependency blocks
-intake. No silent cherry-picking of merges. External dependencies
+gates for new PRs. The current offline forward-lineage and
+initial/suffix planning sources cover bounded complete multi-merge
+ranges from the exact baseline or last covered cursor to a selected
+main tip. They do **not** authorize live admission. A gap, divergence,
+unknown merge strategy, catalog remapping or unproved PR dependency
+blocks intake. No silent cherry-picking of merges. External dependencies
 remain blocked on this single-repository scope; new repository
 enrollment requires its own owner review and immutable source policy.
 
@@ -256,8 +281,9 @@ created by this decision.
 
 ##### Registry-specific review cutoff and CI policy (proposed alternative, 2026-11-21)
 
-**Owner source decision required.** The existing GitHub READ surface and
-retained observations do not prove the complete historical effective
+**Source-only alternative accepted in Approvals PR #197; protected
+owner-effective policy acceptance remains OPEN.** The existing GitHub READ
+surface and retained observations do not prove the complete historical effective
 branch protection, bypass rules, or every PR-body edit at merge time.
 Repeated current-state reads or green CI cannot close that gap.
 For the forward-only pilot, propose an independent, stricter Registry
@@ -354,8 +380,8 @@ durable writer, independent anchors and recovery gates are unchanged.
 No production grants, keys, live routes, workflow or owner release
 procedure changes in this decision PR.
 
-Next implementation increments, each with exact-head CI and owner
-review:
+Historical source implementation sequence, subsequently accepted through
+Approvals PR #210 with exact-head CI and owner review:
 
 1. Closed Registry preview/receipt boundary accepted in Approvals
    [PR #194](https://github.com/AlexPastukhh/fortis-approvals/pull/194);
@@ -364,15 +390,15 @@ review:
    These remain source-only, blocked intake, not live trusted evidence.
 2. The forward-only source coverage candidate is accepted in Approvals
    [PR #196](https://github.com/AlexPastukhh/fortis-approvals/pull/196).
-   Establish protected baseline acceptance and implement the
-   owner-approved Registry-specific review/policy alternative (or
-   complete provider-historical proof), and component/environment
-   bindings. Integrate
-   live pre-merge evidence only after protected capture authority,
-   actual storage/anchor and provider scope have been accepted.
-3. Implement canonical durable writer with independent trusted
-   evidence retrieval, CAS and anchored operation recovery; verify
-   backup/restore and negative/concurrency tests. No false evidence
+   Registry-specific review/policy and component/environment bindings
+   were subsequently added in source-only PR #197–#199; **protected**
+   original host evidence, authenticated capture and owner runtime
+   acceptance are still pending.
+3. Source-only SQLite schema v1/v2, CAS, supersession, backup,
+   checkpoint/recovery and cutover preflight followed through
+   PR #200–#210. The independent **trusted** evidence retrieval,
+   actually protected external checkpoint/host backup authority
+   and live canonical writer are still pending. No false evidence
    flags or placeholder admission path to demonstrate a queue.
 4. Separately approve runtime placement, exact credentials and
    scopes, release, and new one-repository end-to-end acceptance
