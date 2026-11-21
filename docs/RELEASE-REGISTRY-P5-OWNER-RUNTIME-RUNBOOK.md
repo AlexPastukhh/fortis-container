@@ -1,0 +1,93 @@
+# P5 owner-isolated Registry runtime — proposed host contract and acceptance runbook
+
+Status: **SOURCE PROPOSAL / NOT PROVISIONED / NO OWNER GO** (2026-11-21).
+Scope: **only** `AlexPastukhh/fortis-approvals`. No Registry release, protected enrollment, public endpoint, installation, WebAuthn operation, host change, or Gateway permission is authorized by this document.
+
+This is the implementation-ready owner review gate for D1/D6, **not** a second roadmap. Milestones remain in [the single CD Queue roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue); the canonical release semantics are in [Release Planning Contract](RELEASE-PLANNING-CONTRACT.md), [P5 Design](RELEASE-REGISTRY-P5-DESIGN.md), and the Approvals [typed/storage](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-REGISTRY-P5-TYPED-BOUNDARY.md) and [collector/lineage](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-REGISTRY-P5-POST-MERGE-GATEWAY-CONTRACT.md) source contracts.
+
+## 1. Trust model, resources, and prohibited shortcuts
+
+The **Repo AI, GitHub Gateway/Primary, Publisher, Registry planner/writer, owner checkpoint authority, and owner operator** are distinct roles; same-UID containers or two databases on a shared writable volume are **not** independent. Repo/AI and the Registry writer are potentially compromised. Their compromise must not rewrite accepted checkpoint history, impersonate owner acceptance, or silently roll back *both* checkpoint and witness.
+
+Assume NO existing host path, UID/GID, namespace, secret, socket, volume, encrypted device, backup service, or WebAuthn verification route. All names and IDs below are **proposals**, to be allocated and inspected by the owner before any provisioning. Do not run these commands as an AI task; every host effect requires separate owner GO.
+
+| Runtime role | Candidate process boundary | State/mounts | Allowed outward effects |
+| --- | --- | --- | --- |
+| Registry reader | distinct non-root identity, read-only typed projection | no owner ledger or GitHub token; read-only verified Registry snapshot; no host/engine socket | bounded `capabilities`, `preview`, `list/get`, original receipt read |
+| Registry writer | dedicated non-root UID/GID (illustrative 10001:10001, **collision check required**) | exclusive encrypted Registry volume (illustrative in-container `/var/lib/fortis-registry`, 0700), SQLite v2 0600; only fixed peer socket access | authenticated fixed-scope `ingest_merged` **only after acceptance**, no arbitrary SQL/path/exec |
+| Registry evidence collector | separately authenticated scoped capture principal; no Registry DB or owner ledger write | immutable reviewed source/CI/catalog evidence via owner-reviewed provider grants and protected retention | tightly bounded signed/pinned evidence envelope, not untrusted self-claims |
+| Owner checkpoint authority | separate UID/GID, separate namespace and owner-provisioned encrypted volume; no shared writable mounts with Registry/Repo/Gateway/Publisher | checkpoint SQLite ledger 0600 in exclusive 0700 host directory and protected external monotonic witness | `checkpoint.get`, `checkpoint.original` with peer policy; advancing CAS only after independently authenticated owner ceremony and bound original pending operation |
+| Owner operator/acceptance | separate authenticated principal and WebAuthn-controlled decision path; not a Repo actor flag | owner-private acceptance ledger, key material and recovery records inaccessible to Registry/Repo | one exact acceptance; may not delegate `advance` to writer's claim |
+| Independent witness/backup operator | independent owner-managed domain **outside rollback control of both data volumes** | monotonic externally retained revision/digest + encrypted immutable backups and recovery keys | append/check exact revision; never accepts a lower revision or silent genesis |
+
+A single Docker daemon controlled by Repo/AI or by the Registry process fails the host-admin adversary model. If the owner cannot establish a separately enforced control plane, choose a different host or **STOP**; a container boundary on a fully AI-writable host does not constitute owner isolation.
+
+## 2. Proposed deployment topology, to be proven before installation
+
+1. Owner identifies host and threat boundary, including who controls Docker Engine, root, filesystem backups and restore. Repo/AI and Gateway/Publisher must have **no** host-admin, Docker socket, or writable bind mount to the owner checkpoint, witness, owner acceptance, or their backups. Record actual `uid_map`/`gid_map` and host mappings for every relevant process; a numeric UID observed inside a container is insufficient.
+2. Owner allocates **different, collision-free** service UIDs/GIDs, verified host group membership and non-overlapping mapped host IDs. Rootless/userns or other explicit host isolation must be verified on actual processes. Registry DB and checkpoint DB are on **different** exclusive encrypted volumes, not paths on the shared `fortis-repo-workspace` volume. Bind mounts must be narrowly scoped, with no docker.sock or inherited credential paths.
+3. Owner-owned socket directory and filesystem AF_UNIX socket are explicitly provisioned and inspected: candidate directory 0710 and socket 0660, exact owner/registry peer policy, no symlink, no abstract socket, no TCP listener. Verify socket inode, owner/group, directory path, and kernel `SO_PEERCRED` for **each** accepted connection; recheck after framed request parsing. Bind a pinned owner profile digest, exact instance UUID, scope digest and original enrollment receipt digest. The existing `owner_peer_boundary` **only classifies** peers; it does not launch a server or authorize `advance`.
+4. Reader and planner use separately fixed read/write capabilities; do not pass caller-supplied paths, shell, actor flags, UID, repo selector, SQL, machine tokens or arbitrary URLs to the Registry. Reserve closed `ingest_merged` for a subsequent independently reviewed implementation. Until then live Registry WRITE, public REST and automatic CD remain **DENY**.
+5. Owner chooses and verifies encrypted-at-rest storage for DBs, witness and backup media; records key custody, restore process, key rotation, disk-full behavior, access logs and retirement plan. Do not commit real host paths, credential values or private enrollment records in this repository.
+
+**Non-negotiable evidence:** capture independent host inspection of actual effective mounts, namespaces, user mappings, process privileges, per-principal EACCES/EPERM probes, socket kernel credentials, encryption status and witness immutability. Merely comparing local JSON SHA256 or running positive fixture tests is not host evidence.
+
+## 3. Protected checkpoint and transaction state machine
+
+The source has `RegistryStateJournalV2`, `OfflineCheckpointCAS`, original operations/receipts, and offline recovery reconciliation. They are **not live authority**. The following is a required *future runtime protocol*, not a claim of implemented distributed atomicity.
+
+- **Genesis:** owner pins exact repository, instance UUID, source main SHA, catalog SHA, component/environment binding, review policy, schema version, and nonempty enrollment receipt digest. Owner authenticates acceptance independently, records an immutable external monotonic genesis witness, and provisions empty owner/Registry databases with fixed instance/scope. Never infer genesis from a current DB, previous handoff SHA or GitHub branch tip.
+- **Prepare:** under Registry SQLite transaction, verify complete post-baseline first-parent lineage, retained review/CI/Release Impact/catalog and dependency closure. Insert immutable pending operation with UUID, canonical arguments/evidence fingerprint, previous and proposed checkpoints and local receipt `UNKNOWN_OUTCOME`; fsync/commit. Do **not** make desired records authoritative or return `EXECUTED`.
+- **Authorize/advance:** owner authority independently reads the **original pending operation** from its pinned, authenticated source, verifies owner-approved scope/policy and external monotonic witness, and performs one owner-ledger revision CAS from exact previous to exact proposed checkpoint. Owner-approved service refuses caller-provided paths, opaque `verified` booleans, untrusted actor headers and writer-controlled acceptance. For a duplicate original UUID, only the identical persisted receipt is returned; changed fingerprint returns conflict.
+- **Confirm:** Registry reads owner original operation/ledger and external witness under independently authenticated read channels, verifies matching instance/scope/revision/hash and post-commit operation; only then transitions the original receipt to anchored candidate and exposes authoritative records **after separately accepted live admission**. No newly invented ID on lost ACK.
+- **Recover:** if DB commit succeeded but owner CAS outcome is unknown, refuse another advance; read original UUID at owner service and witness. If the owner ledger advanced but Registry acknowledgement was lost, reconcile the *same* operation. Unexpected witness revision, missing original row, divergent local/owner hash, possible DB rollback, source lineage gap or unverified owner acceptance => **STOP/UNKNOWN**, owner-run recovery.
+- **Anti-rollback:** owner checkpoint and Registry DB cannot be jointly rewound. External witness must be independently controlled, monotonically compare-and-set, and retained beyond the active host/backup rollback boundary. Restoring either local copy alone requires witness readback and a verified unbroken history; restoring **both** from old backups must be detected and denied. A hash chain within one rewritable storage domain does **not** solve rollback.
+
+The unavoidable pending window across two SQLite databases + external witness is a recovery state, not a silently committed transaction. A plan claiming all three are atomically committed without a tested protocol must be rejected.
+
+## 4. Host provisioning and controlled release — owner-only draft sequence
+
+**PRECONDITIONS:** separate owner authorization for host/runtime effects; reviewed exact source commit and image manifests; approved host identity/volume/transport map; dedicated recovery operator, external witness, encryption/backup policy, and rollback capability. Every step records the expected and observed state. No actual host resources are provisioned by this document.
+
+1. **Inventory, no mutation:** identify host namespaces, Docker/root access, existing UID/GID collisions, mapped IDs, mount propagation, security capabilities/seccomp, storage encryption/key ownership and backup control. Confirm Repo/Gateway/Publisher have no forbidden mounts or group membership. Failure => STOP before installation.
+2. **Create isolated identities and volumes:** only owner provisioning may create principals/volumes and set ownership/modes. Refuse shared or preexisting unknown state, symlinks, permissive directories and owner ledger writable by Registry identity. Capture an independent before/after host manifest without private keys.
+3. **Provision owner authority and monotonic witness first:** install exact pinned source under owner identity, authenticate peer and WebAuthn acceptance paths; initialize genesis only with owner consent and matched source. Keep `advance` closed unless original pending operation, owner decision and witness are independently present. Audit immutable acceptance/witness IDs without leaking secrets.
+4. **Initialize separate Registry schema v2:** exact instance/scope, schema, WAL/FULL, busy timeout, 0700 directory/0600 DB, no missing-db auto-create or opportunistic migration. Grant fixed socket access only. Startup requires read-only compare of local checkpoint, owner ledger and witness before any planner operation.
+5. **Offline/local preflight before first external input:** verify process identity and denial probes under **actual separate principals**; run typed operation negative tests, real kernel peer verification, no REST exposure and no GitHub tokens. An observation from the Repo's shared UID or injected test fixture is not PASS.
+6. **Trusted collector/typed runtime in a later independently reviewed implementation PR:** only after authenticated immutable original capture, exact repo policy and full lineage can one bounded non-production ingestion be tested. Even a successful dry run does not activate Production Registry WRITE.
+7. **First enrollment ceremony separately approved:** owner re-reads current remote `main`, exact catalog/component/policy and evidence at activation. If main has advanced since initial selection, prove **every** intermediate first-parent merge from selected baseline, or STOP; do not move baseline silently. First accepted enrollment is forward-only, never historical backfill.
+
+## 5. Negative non-Production acceptance matrix (mandatory before P5 GO)
+
+| Probe | Required result |
+| --- | --- |
+| Repo/Gateway/Publisher attempting owner DB/ledger writes | kernel EACCES/EPERM or verified equivalent denial under their **real** effective identities, even if a caller supplies forged role/UID headers |
+| Registry writer attempting owner DB/backup/witness write or host socket/root access | denied; no mounted write path, Docker socket, credentials or delegated owner acceptance |
+| Same-UID/cross-UID peer, symlink/socket replacement, wrong profile, double JSON frame, duplicate keys, wrong scope | fail-closed; actual kernel peer credentials required |
+| Owner operator authenticated but without original owner WebAuthn acceptance | `checkpoint.advance` DENY |
+| Missing/replaced original pending operation, stale previous revision, duplicate UUID with altered payload | DENY/CONFLICT; no witness advance |
+| Concurrent exact UUID calls and lost ACK after DB commit / after anchor CAS | one durable result; original-operation readback; no duplicate mutation |
+| Crash at each prepare, owner CAS, witness and Registry confirmation boundary | restart results in exact readback/reconcile or STOP/UNKNOWN; never empty success |
+| Restore Registry-only, owner-only and **both** local databases to earlier revisions | external monotonic witness detects regression, blocks authoritative reads/writes; no self-reseed |
+| Corrupted backup, wrong encryption key, unsupported schema, missing original receipts | inactive restore failure; no overwrite active data |
+| Fully reviewed no-deployment merged change | zero new desired records, immutable lineage still accounted for |
+| Complete accepted merged multi-PR evidence for one target/environment | exactly one `PLANNED_UNVERIFIED` candidate on desired SHA with lineage; no actual/DEPLOYED |
+| Missing CI or lineage, changed catalog/target policy, missing review, unknown installed actual | STOP/UNKNOWN, not empty queue or inferred success |
+
+For **every** test record principal, exact binary/source/image hashes, host namespace/mount evidence, before/after DB+external witness revisions, original UUID/receipt, negative result and independent reviewer attestation. Tests using only fakes, isolated temp SQLite or injected credential observations remain `SOURCE_ONLY`.
+
+## 6. Backups, restart, switchover and retirement
+
+- **Backup:** consistent inactive SQLite backup with source schema/instance/revision/row counts/event digest, original pending and anchored receipts, owner ledger checkpoint and independently retained external witness reference. Encryption and immutable retention owned outside Repo/Registry; candidate policy is 30 daily copies plus all pre-migration/pre-switchover snapshots until explicit owner retirement. Read back each backup in an isolated, non-Production instance.
+- **Restart:** no auto-genesis and no automatic promotion of `UNKNOWN_OUTCOME`. Verify protected runtime identity, original pending receipts, owner ledger and witness before enabling any read/write route. On mismatch keep writes closed and show `UNKNOWN` with bounded diagnostics.
+- **Restore:** only into a **new inactive instance** under owner-controlled identity. Check encryption/integrity, schema, lineage, operation history and current external witness before any switchover. Never reset accepted owner checkpoint to accommodate an old Registry snapshot. Restoration cannot rewrite the external monotonic witness or discard newer accepted source events.
+- **Switchover:** explicit owner GO after inactive E2E, with old instance disabled from writes, unique active-writer proof and rollback/fencing evidence. Do not point production routes or grants at the candidate automatically.
+- **Retirement:** revoke credentials and socket grants only after independent confirmation of retained evidence, verified encrypted backups, successor witness and audit access; do not delete snapshots, owner ledger or old task worktrees still used as protected source evidence.
+
+## 7. Acceptance records and next implementation cut
+
+**Owner decisions still needed:** selected independent host/control plane, exact UID/userns mapping, encrypted volumes, owner WebAuthn adapter and witness with protected monotonicity guarantees, trusted capture identity, backup/retention/restore operator, pinned source/image hashes and test window. If any cannot be proven, P5 remains blocked.
+
+**Narrow next source PR (in `fortis-approvals`, only after design review):** implement the fixed owner-checkpoint *service* boundary, external monotonic witness protocol and precise original pending-operation readback without exposing an unauthenticated `advance`. Include contract-validated event/receipt identity, refusal of rollback, no auto-seed, crash/lost-ACK/idempotency and real isolated principal integration tests. Later, separately review bounded Registry API and trusted collector. No GitHub Deployments WRITE, installed-state claim, Board, P6/P7/P8 or unattended CD.
+
+**Exit criterion:** exact source PR/CI/owner merge is only `SOURCE_ACCEPTED`. P5 `RUNTIME_GO` requires independent owner acceptance of actual host security, witness/enrollment, non-Production E2E and protected recovery. Keep `admissionAllowed=false` and `protectedAnchorVerified=false` in source-only or untrusted observations.

@@ -489,11 +489,12 @@ PR не может опускать изменения выбранного `mai
   в указанном scope. P3 one-shot E2E ограничен пилотом. Менять release
   contract, machine grants или runtime — только отдельным owner review.
 
-**Следующая конкретная задача P5:** не очередной synthetic positive
-preflight, а конкретный **owner-reviewed source/runbook** для
-выполнимого отделённого Registry process + защищённого owner checkpoint
-runtime (identity, storage, peer auth, CAS/recovery, provisioning,
-negative host E2E и rollback). Затем отдельный implementation PR в
+**Следующая конкретная задача P5:** owner-review
+[предлагаемого runtime/owner checkpoint runbook](RELEASE-REGISTRY-P5-OWNER-RUNTIME-RUNBOOK.md)
+(только source proposal; ни host, ни owner authority не provisioned).
+Он определяет отдельные principal/volume/transport, protected monotonic witness,
+original-operation readback, recovery, negative host E2E и owner-only cutover.
+После review — отдельный implementation PR в
 `fortis-approvals` и host activation/Protected Enrollment **только
 после отдельного owner acceptance/GO**. Не трогать P4 повторно,
 не расширять пилот на другие репозитории, не делать GitHub Deployments
