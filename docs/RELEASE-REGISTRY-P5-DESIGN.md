@@ -1,6 +1,6 @@
 # Fortis Release Registry V1 — P5 source-only design candidate (2026-11-20)
 
-**Status: DESIGN CANDIDATE / OWNER REVIEW REQUIRED / NOT LIVE.**
+**Status: D1–D7 SOURCE ARCHITECTURE ACCEPTED (PR #41); IMPLEMENTATION IN PROGRESS / NOT LIVE.**
 This document proposes implementation decisions for P5. The accepted product
 decision is a **Fortis-owned canonical release queue**, with **manual owner
 release execution** in V1; GitHub Deployments are optional READ/projections.
@@ -38,9 +38,10 @@ The [post-merge evidence readiness contract](RELEASE-REGISTRY-P5-POST-MERGE-EVID
 shared Release Impact/catalog schemas; an independently reviewed Fortis
 Registry component owns state and audit, with typed brokered API integration
 in the Gateway-owned `fortis-approvals` source if selected by the owner.
-No AI/Repo process gets raw SQL access or a direct GitHub token. Whether the
-Registry component lives in an isolated runtime or a separately isolated
-module remains an **owner decision**, not something inferred from this file.
+No AI/Repo process gets raw SQL access or a direct GitHub token. The
+dedicated Registry runtime is the source architecture accepted in PR #41;
+actual placement, identity, credentials and runtime activation still need
+separate owner acceptance.
 
 ## 2. Decisions required before implementation
 
@@ -199,29 +200,72 @@ policy/cutoff, dependency closure, component binding and admission.
 See the [owning Gateway evidence contract](https://github.com/AlexPastukhh/fortis-approvals/blob/407f9c7be730af73a8df84fda4ed2ebedafbc994/docs/RELEASE-REGISTRY-P5-POST-MERGE-GATEWAY-CONTRACT.md).
 No old merged PR body is reconstructed from current editable text.
 
-Initial pilot must use new reviewed captures, not backfill history
-from CI green or old merge descriptions. Require an owner-reviewed
-baseline source/coverage decision, including any unapplied earlier
-PRs; do not silently assume existing production is at current main.
-Only the exact tip merge with no unresolved dependency can be a
-candidate under the existing source implementation; complete lineage
-from baseline and policy/cutoff still need independent proof. A
-later main, multi-PR gap, catalog remapping or PR dependency not fully
-proved against enrolled source blocks intake. An external target or
-PR dependency is BLOCKED on this single-repository scope, even if a
-local checkout happens to exist. Cross-repository enrollment needs
-separate owner-selected canonical repo and immutable source policy
-with recursive graph/cycle checks. No automatic grant expansion.
+##### Forward-only enrollment baseline (owner decision, 2026-11-21)
+
+V1 accounting starts at the first **owner-accepted Registry release and
+enrollment cutover**. No historical backfill, reconstruction of pre-cutover
+PR bodies/CI evidence or per-PR deployment reconciliation is required.
+The baseline is an accounting boundary, not an assertion that every
+earlier PR was installed, and not a retroactive deployment receipt.
+
+At cutover the owner selects the exact enrolled repository main SHA, its
+pinned catalog commit/raw digest and the closed target/environment/component
+bindings. The initial release and acceptance evidence, enrollment identity,
+source SHA, timestamp, and independent initial Registry checkpoint must
+be retained as one immutable bootstrap decision. Capture the starting
+actual identity for a target/environment only where a matching original
+controller receipt and independent target readback exist; otherwise
+actual=null (UNKNOWN). Do not set actual to the baseline SHA merely
+because the Registry runtime or source was released. Unknown actual alone
+does not demand historical reconstruction, and does not prevent forward
+planning with independently complete post-baseline source evidence.
+
+No pre-baseline merge needs a separate desired record or historical
+releaseImpact/CI proof. A deployment of a later complete source SHA may
+include older code; the Registry tracks the full selected source, not
+selective application of PRs. Old external/PR dependency requirements
+are not automatically satisfied merely by predating enrollment: evaluate
+the exact active target catalog and new release requirements, blocking
+any unresolved dependency under the pilot scope.
+
+The enrollment decision must be made against an exact accepted main SHA,
+not a floating branch or wall-clock date. Coordinate cutover so no merge
+is silently lost between source selection and protected enrollment:
+require unchanged main at activation, or collect and prove every
+intervening merge as post-baseline input before accepting coverage.
+No implicit rebaseline to skip changes, advance a stalled cursor, or
+erase previous receipts. Re-enrollment/recovery needs an independently
+reviewed operation preserving existing history and scope.
+
+After enrollment require continuous first-parent coverage from the
+anchored baseline (or last fully covered source checkpoint) to selected
+main, attribution of every intervening merge to reviewed evidence,
+and the unchanged historical policy/cutoff, dependency and component
+gates for new PRs. Only the exact tip merge with no unresolved
+dependency can be a candidate under the current source implementation;
+multi-PR coverage is not yet implemented. A gap, divergence, unknown
+merge strategy, catalog remapping or unproved PR dependency blocks
+intake. No silent cherry-picking of merges. External dependencies
+remain blocked on this single-repository scope; new repository
+enrollment requires its own owner review and immutable source policy.
+
+The exact baseline SHA is intentionally unset until actual rollout
+acceptance; a documentation/source merge is not the first live release.
+No initial record, credential, volume, deployment or live scope is
+created by this decision.
 
 Next implementation increments, each with exact-head CI and owner
 review:
 
-1. Define and implement closed Registry preview/receipt boundary,
-   explicitly fail closed on all current evidence gaps. Reuse
-   candidate-store invariant tests; never promote a fixture DTO.
-2. Establish owner-reviewed merge cutoff and historical policy
-   provenance (or a separately accepted trusted alternative), full
-   source coverage and component/environment bindings. Integrate
+1. Closed Registry preview/receipt boundary accepted in Approvals
+   [PR #194](https://github.com/AlexPastukhh/fortis-approvals/pull/194);
+   independently witnessed candidate snapshot retention accepted in
+   [PR #195](https://github.com/AlexPastukhh/fortis-approvals/pull/195).
+   These remain source-only, blocked intake, not live trusted evidence.
+2. Establish forward-only baseline identity/coverage checks,
+   owner-reviewed merge cutoff and historical policy provenance for
+   new merges (or a separately accepted trusted alternative), and
+   component/environment bindings. Integrate
    live pre-merge evidence only after protected capture authority,
    actual storage/anchor and provider scope have been accepted.
 3. Implement canonical durable writer with independent trusted
@@ -234,7 +278,7 @@ review:
    PLANNED_UNVERIFIED desired record. Owner manually runs any
    deployment UC outside this pilot. P6/P7/P8 remain separate.
 
-**STOP** until D1-D7 source choices are reviewed; runtime acceptance
+D1–D7 source choices were accepted in PR #41. Runtime acceptance
 requires all listed operational gates, not merely a merged design.
 P4 and P3 scopes, installed images and permissions are unchanged.
 
@@ -242,8 +286,9 @@ P4 and P3 scopes, installed images and permissions are unchanged.
 
 A post-merge intake must bind **one immutable evidence snapshot**:
 1. Canonical `owner/repository`, full selected GitHub `main` SHA and proven
-   ancestry that contains each attributed merge; no selective cherry-picking
-   from that SHA without a separately accepted source-selection contract.
+   ancestry covering every merge after the accepted enrollment baseline (or
+   last completely covered checkpoint); no selective cherry-picking from
+   that SHA without a separately accepted source-selection contract.
 2. For every included PR: number, exact PR head, actual merge commit/time,
    proof that the merge belongs to this `main`, immutable reviewed PR-body
    `releaseImpact`, exact-head validation and required CI attempt/job results.
