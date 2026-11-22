@@ -351,7 +351,7 @@ receipts/CI описаны выше; не повторять завершённ�
 | **P3** | Owner-authorized one-shot Label Publisher, PASS 2026-11-19. | Массовую публикацию, CD. |
 | **P4** | Scoped GitHub Deployments GET (4 метода), owner-reported RELEASE COMPLETE 2026-11-20. | GitHub Deployments WRITE и Registry authority. |
 
-**P5 — Fortis Release Registry (SOURCE MERGED THROUGH APPROVALS PR #233; RUNTIME NOT LIVE).**
+**P5 — Fortis Release Registry (SOURCE MERGED THROUGH APPROVALS PR #235; RUNTIME NOT LIVE).**
 
 **Пилот:** только `AlexPastukhh/fortis-approvals`; учёт `forward-only`
 с первого **отдельно принятого владельцем** enrollment по exact
@@ -366,6 +366,19 @@ receipts/CI описаны выше; не повторять завершённ�
 | [#194–#223](https://github.com/AlexPastukhh/fortis-approvals/pull/223) | Typed evidence/policy/lineage, исторический SQLite **schema v1/v2** с original UUID/CAS, backup и source-only checkpoint/Unix/host preflight; owner checkpoint и witness **не работают как live authority**. |
 | [#224–#230](https://github.com/AlexPastukhh/fortis-approvals/pull/230) | Отдельный функциональный SQLite **schema 3** (`FunctionalV1CandidateJournal`), initial/suffix, local event chain, original collector method pin, WAL-safe inactive backup; два настоящих **локальных тестовых** Core/collector merge → желаемые записи и supersession (GitHub/owner verifier — fixtures). |
 | [#231–#233](https://github.com/AlexPastukhh/fortis-approvals/pull/233) | Исполняемый private AF_UNIX **candidate READ** процесс; owner-run probe для настоящих cross-UID отказов; Broker/Core + `/v1/reads` → socket → schema 3 в локальных тестах. `SOURCE_ONLY_CANDIDATE_READ`, никакой авторитетной очереди или активированных machine grants. |
+| [#234](https://github.com/AlexPastukhh/fortis-approvals/pull/234) | Real UID/GID, supplementary groups, capabilities/no-new-privs/seccomp и tracer fail-closed reader guards; source regression, **не** настоящий host proof. |
+| [#235](https://github.com/AlexPastukhh/fortis-approvals/pull/235) | Typed Repo candidate client + явный opt-in R7 factory → Core/Broker → Unix → schema 3; тестовые policy/grants, source-only. Оба PR **MERGED**, exact-HEAD Source CI, P5 Retained Impact, Fortis Release Impact SUCCESS. |
+
+**Связанный текущий implementation [PR #236](https://github.com/AlexPastukhh/fortis-approvals/pull/236)**,
+HEAD `7c89fc29b2529a07f48290bfcfd6edeed08108a1`: bounded
+Repo→typed Gateway READ с pinned selected-main SHA, original local UUID,
+revision/page/head CAS readback и независимым source-only CLI. Тестовый
+R7→Unix→schema-3 путь: 50/50 PASS; **на live Gateway получен 403**
+(Registry READ отсутствует). Доставка кода в `main` подтверждается
+**только после owner merge и exact-HEAD CI**; этот блок сам по себе
+не меняет E1 на host PASS или E2 на live WRITE. Перед merge этого docs PR
+проверить свежий статус #236 и, если он уже слит, отразить это в
+проверенной таблице source facts.
 
 Точные схемы и инварианты принадлежат
 [Approvals typed/storage boundary](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-REGISTRY-P5-TYPED-BOUNDARY.md)
@@ -392,14 +405,24 @@ exact-HEAD Approvals CI перед owner merge.
 оригинальные UUID/receipts и отрицательные случаи. Не выделять ещё один
 offline journal/пробу вместо интеграции.
 
-| Шаг | Принимаемый end-to-end результат | Gate / граница |
-| --- | --- | --- |
-| **E0 — уже есть source rehearsal** | Два test-fixture merge → original test Core/collector → schema 3 desired/supersession/backup; Broker → реальный Unix socket → локальный candidate page. | **SOURCE_ONLY**, не пользовательский live E2E. |
-| **E1 — host READ pilot** | Владелец выбирает non-Production host и точные UID, запускает pinned candidate reader; настоящий существующий Broker/`/v1/reads` читает SQLite через Unix socket, restart/backup/readback и Repo-denial проверены **под разными real principals**. | Отдельный owner review для host/ACL/volume/grants; до приёмки только `SOURCE_ONLY`. Не вводить checkpoint/witness ради E1. |
-| **E2 — первая рабочая P5 вертикаль** | **Реальный owner-reviewed GitHub merge → authenticated original collector/CI/review/catalog → bounded planner + authorized `ingest_merged` → persistent desired → scoped Gateway READ** для одного target/env; полный lineage, valid no-deployment=0 desired, missing evidence=STOP. Сохранить original UUID после lost ACK и restart. | Exact owner-accepted forward-only enrollment, CI/review cutoff policy, separate source/host authority и single-writer/backup. Нет WRITE без отдельного owner GO. |
-| **E3 — расширение тем же E2E до P6/P7** | Владелец выполняет существующий manual release UC; **отдельный** authorized `REPORTED_COMPLETE` → durable event → минимальная Fortis Board показывает desired, owner-reported и verified installed **раздельно**. | Старый owner report не означает `DEPLOYED` или технически verified installed. Без controller receipt + readback actual=UNKNOWN. |
-| **E4 — расширение тем же E2E до P8** | Второй реальный merge меняет desired; прежний report не закрывает новый SHA; Board показывает pending, batch группирует targets/shared build units/dependencies и предлагает существующие ручные UC. | Batch — план, **не** executor; полные lineage/dependency и отрицательные сценарии при rollback/restore/UNCERTAIN. |
-| **E5 — приёмка ограниченной Functional V1** | Повторить E2–E4 с cold restart, duplicate UUID, rejected merge, missing CI, invalid no-deployment, inactive backup/restore, actual UNKNOWN и отсутствием скрытого WRITE. | **Отдельный** owner `FUNCTIONAL_V1_GO` для принятого non-Production scope; PR merge/Source CI не GO. |
+| Шаг | Принимаемый E2E | Проверенный статус на 2026-11-23 | Осталось / gate |
+| --- | --- | --- | --- |
+| **E0 — source rehearsal** | Fixture merge → original test Core/collector → schema 3 desired/supersession/backup → Unix candidate page. | ✅ **SOURCE_REHEARSAL_DONE** (#224–#235); fixture/same-UID, не пользовательский E2E. | Не превращать source PASS в host GO. |
+| **E1 — host READ pilot** | Настоящий Repo → Gateway/Core → socket → persisted schema 3 + UUID + restart/backup, **разные real principals** и kernel Repo-denial. | 🟡 **SOURCE_READY / HOST_BLOCKED**: R7/Repo/Unix source merged #235; live Registry READ capability **нет**. | Owner-approved non-Production host, pin source/image, UID/GID, ACL/mount/grants/backup, independent EACCES/EPERM и readback. Никаких новых grants по source merge. |
+| **E2 — первая рабочая P5 вертикаль** | Реальный owner-reviewed merge → original authenticated collector/CI/review/catalog → forward-only `ingest_merged` → persisted Desired → Gateway READ; original UUID recovery; valid no-deployment = 0 records. | ⬜ **NOT_STARTED_LIVE**, source planner/SQLite только fixture. | E1+ owner enrollment, trusted collector, single-writer и отдельный Registry WRITE GO; no unknown outcome retry. |
+| **E3 — P6/P7** | Manual release UC → authorized immutable `REPORTED_COMPLETE` → Board Desired/Reported/Verified раздельно. | ⬜ **NOT_STARTED_LIVE**. | Owner WRITE and P6 event; actual UNKNOWN пока нет controller receipt+readback. |
+| **E4 — P8** | Второй реальный merge supersedes Desired; pending остаётся; ручной batch с dependency/build-unit группировкой. | ⬜ **NOT_STARTED_LIVE**. | Только по принятому E2/E3 контуру; без CD executor. |
+| **E5 — Functional V1 acceptance** | E2–E4 после restart/recovery, duplicate UUID, invalid CI/source, restore, grants revoke, UNKNOWN. | ⬜ **NOT_ACCEPTED**. | Отдельный owner `FUNCTIONAL_V1_GO`; PR/CI/host source не GO. |
+
+**Правило актуализации roadmap для каждого шага (с 2026-11-23).**
+Каждый implementation PR должен ссылаться на изменение **этой** таблицы:
+если код живёт в `fortis-approvals`, нужен связанный docs PR в
+`fortis-container`, поскольку нормативный roadmap имеет одного владельца.
+До owner merge не писать `MERGED` или `HOST_PASS` про открытый PR; перед
+merge docs PR проверить последний source SHA, exact-head CI, фактический
+merge, Gateway capabilities и обновить соответствующие статус/остаток.
+После каждого завершённого шага выводить E0–E5 пользователю. Никаких
+вторых roadmap и переноса owner GO через PR.
 
 **Порядок ответственности:** E1 — host owner; E2 — Registry
 single-writer / trusted collector + существующий Gateway Core/Owner Portal;
