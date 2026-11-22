@@ -351,7 +351,7 @@ receipts/CI описаны выше; не повторять завершённ�
 | **P3** | Owner-authorized one-shot Label Publisher, PASS 2026-11-19. | Массовую публикацию, CD. |
 | **P4** | Scoped GitHub Deployments GET (4 метода), owner-reported RELEASE COMPLETE 2026-11-20. | GitHub Deployments WRITE и Registry authority. |
 
-**P5 — Fortis Release Registry (SOURCE MERGED THROUGH APPROVALS PR #235; RUNTIME NOT LIVE).**
+**P5 — Fortis Release Registry (SOURCE MERGED THROUGH APPROVALS PR #236; RUNTIME NOT LIVE).**
 
 **Пилот:** только `AlexPastukhh/fortis-approvals`; учёт `forward-only`
 с первого **отдельно принятого владельцем** enrollment по exact
@@ -368,17 +368,15 @@ receipts/CI описаны выше; не повторять завершённ�
 | [#231–#233](https://github.com/AlexPastukhh/fortis-approvals/pull/233) | Исполняемый private AF_UNIX **candidate READ** процесс; owner-run probe для настоящих cross-UID отказов; Broker/Core + `/v1/reads` → socket → schema 3 в локальных тестах. `SOURCE_ONLY_CANDIDATE_READ`, никакой авторитетной очереди или активированных machine grants. |
 | [#234](https://github.com/AlexPastukhh/fortis-approvals/pull/234) | Real UID/GID, supplementary groups, capabilities/no-new-privs/seccomp и tracer fail-closed reader guards; source regression, **не** настоящий host proof. |
 | [#235](https://github.com/AlexPastukhh/fortis-approvals/pull/235) | Typed Repo candidate client + явный opt-in R7 factory → Core/Broker → Unix → schema 3; тестовые policy/grants, source-only. Оба PR **MERGED**, exact-HEAD Source CI, P5 Retained Impact, Fortis Release Impact SUCCESS. |
+| [#236](https://github.com/AlexPastukhh/fortis-approvals/pull/236) | **MERGED**: bounded Repo→typed Gateway READ с pin selected-main SHA, original operation UUID, revision/page/head readback и source-only CLI. Exact HEAD `7c89fc29b2529a07f48290bfcfd6edeed08108a1`, merge main `827e2eee388d9eb430aa8db9ba1a25c7dd90a916`; Source CI, P5 Retained Impact и исправленный Release Impact **SUCCESS**. R7→Unix→schema-3 source regression 50/50 PASS; на установленном Gateway `FORTIS_HTTP_403`: Registry READ **не** активирован. Это не host E1 PASS, не authoritatively persisted Desired и не E2 WRITE. |
 
-**Связанный текущий implementation [PR #236](https://github.com/AlexPastukhh/fortis-approvals/pull/236)**,
-HEAD `7c89fc29b2529a07f48290bfcfd6edeed08108a1`: bounded
-Repo→typed Gateway READ с pinned selected-main SHA, original local UUID,
-revision/page/head CAS readback и независимым source-only CLI. Тестовый
-R7→Unix→schema-3 путь: 50/50 PASS; **на live Gateway получен 403**
-(Registry READ отсутствует). Доставка кода в `main` подтверждается
-**только после owner merge и exact-HEAD CI**; этот блок сам по себе
-не меняет E1 на host PASS или E2 на live WRITE. Перед merge этого docs PR
-проверить свежий статус #236 и, если он уже слит, отразить это в
-проверенной таблице source facts.
+**Проверка связанного плана:** [container PR #48](https://github.com/AlexPastukhh/fortis-container/pull/48)
+**MERGED**, docs main `a8966253a66946764d2e60b09e2e3cff152a2757`,
+Release schema source checks SUCCESS. Эта строка закрывает фактическую
+ошибку статуса в #48, где #236 ещё значился ожидающим принятия.
+Дальнейший source merge должен отражаться в этом единственном roadmap
+только после независимого GitHub readback (PR+exact-head CI+main).
+
 
 Точные схемы и инварианты принадлежат
 [Approvals typed/storage boundary](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-REGISTRY-P5-TYPED-BOUNDARY.md)
@@ -400,19 +398,76 @@ cross-UID host, trusted live collector/owner acceptance, рабочей
 установлена. До отдельного enforcement review вручную сверять четыре
 exact-HEAD Approvals CI перед owner merge.
 
-**Порядок: одна пользовательская вертикаль, затем её расширение.**
-Каждый шаг обязан проверять **сквозной путь до читаемого результата**,
-оригинальные UUID/receipts и отрицательные случаи. Не выделять ещё один
-offline journal/пробу вместо интеграции.
+**Обновлённый порядок (архитектурная сверка UC, 2026-11-23): одна
+пользовательская вертикаль, затем расширение того же Registry.** Перед
+Docker E1 pilot обязателен закрытый выбор **существующего** механизма
+provider/операций Gateway; одно лишь `RepoIntentBroker.read_adapters`
+не регистрирует управляемую операцию в Owner Portal. Каждый шаг проверяет
+сквозной путь до читаемого результата, исходные UUID/receipts и отказы.
+Новый journal, policy engine, Owner Portal или общий proxy ради Registry
+не создавать. Source-кандидат и его диагностика не являются live Desired.
 
-| Шаг | Принимаемый E2E | Проверенный статус на 2026-11-23 | Осталось / gate |
+**Нормативный выбор для E1.0 (перед реализацией и host release):**
+- [UC-GW-002](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/integrations.md#uc-gw-002)
+  задаёт provider/closed operations; [UC-GW-003](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/integrations.md#uc-gw-003)
+  — совместимость методов, policy и receipt; [UC-GW-012](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/own-api.md#uc-gw-012)
+  **обязателен для отдельного HTTP own API** с профилями
+  WIN-HTTPS/DOCKER-HTTPS. Его GET/443 manifest checker **не проверяет AF_UNIX**;
+  не выдавать Unix-кандидат за принятый DOCKER-HTTPS.
+- Сначала практически проверить уже установленный `extensions/` путь:
+  `Provider/Operation`, `ExtensionRuntime`, `/v1/integrations/catalog`,
+  `/call`, `/result`, общий `extensions.client.default_client()`,
+  owner inventory, Core/ASK/WebAuthn и возможность reviewed private
+  transport **без** нового controller. Если собственный HTTP API выбран,
+  строго пройти UC-GW-012 (HTTPS/443, upstream credential/vault, negatives).
+- Если extension runtime не может безопасно соблюдать owner identity,
+  независимый Registry writer/reader и Unix peer boundary, записать
+  **конкретный проверенный blocker** и использовать существующий
+  **native Core/Broker** path (`/v1/reads`) с полной provider registration,
+  policy authority и Owner Portal. Не вводить параллельный
+  `/v1/integrations/*` и `/v1/reads` интерфейсы для одних методов.
+  Сам `AF_UNIX` — специальный reviewed transport, не автоматическое
+  исключение из UC-GW-002/003. Решение transport/API/source owner
+  фиксируется **до** реализации E1.1.
+- Для любого пути требуется инвентаризация и редактирование только
+  заранее допущенных `provider+operation+actor+target`:
+  `core.adapters`/provider definitions, реальные handlers, trusted
+  policy admission, WebAuthn, запрет подмены grant и отсутствие WRITE.
+  ID `registry` нельзя одновременно регистрировать как native и
+  extension; проверить/защитить namespace в выбранной композиции.
+  Нет прав менять глобальный policy или выдавать READ/WRITE из AI payload.
+
+| Этап | Принимаемый результат / критерий | Фактический статус на 2026-11-23 | Что осталось |
 | --- | --- | --- | --- |
-| **E0 — source rehearsal** | Fixture merge → original test Core/collector → schema 3 desired/supersession/backup → Unix candidate page. | ✅ **SOURCE_REHEARSAL_DONE** (#224–#235); fixture/same-UID, не пользовательский E2E. | Не превращать source PASS в host GO. |
-| **E1 — host READ pilot** | Настоящий Repo → Gateway/Core → socket → persisted schema 3 + UUID + restart/backup, **разные real principals** и kernel Repo-denial. | 🟡 **SOURCE_READY / HOST_BLOCKED**: R7/Repo/Unix source merged #235; live Registry READ capability **нет**. | Owner-approved non-Production host, pin source/image, UID/GID, ACL/mount/grants/backup, independent EACCES/EPERM и readback. Никаких новых grants по source merge. |
-| **E2 — первая рабочая P5 вертикаль** | Реальный owner-reviewed merge → original authenticated collector/CI/review/catalog → forward-only `ingest_merged` → persisted Desired → Gateway READ; original UUID recovery; valid no-deployment = 0 records. | ⬜ **NOT_STARTED_LIVE**, source planner/SQLite только fixture. | E1+ owner enrollment, trusted collector, single-writer и отдельный Registry WRITE GO; no unknown outcome retry. |
-| **E3 — P6/P7** | Manual release UC → authorized immutable `REPORTED_COMPLETE` → Board Desired/Reported/Verified раздельно. | ⬜ **NOT_STARTED_LIVE**. | Owner WRITE and P6 event; actual UNKNOWN пока нет controller receipt+readback. |
-| **E4 — P8** | Второй реальный merge supersedes Desired; pending остаётся; ручной batch с dependency/build-unit группировкой. | ⬜ **NOT_STARTED_LIVE**. | Только по принятому E2/E3 контуру; без CD executor. |
-| **E5 — Functional V1 acceptance** | E2–E4 после restart/recovery, duplicate UUID, invalid CI/source, restore, grants revoke, UNKNOWN. | ⬜ **NOT_ACCEPTED**. | Отдельный owner `FUNCTIONAL_V1_GO`; PR/CI/host source не GO. |
+| **E0 — foundation** | Fixture merge → Core/collector → schema 3 desired, supersession, original UUID, backup → candidate Unix READ. | ✅ **SOURCE_REHEARSAL_DONE** (#224–#236), исключительно source/fixtures; не host. | Не повторять прототипы; не объявлять live. |
+| **E1.0 — решение об API-интеграции** | Проверить `extensions/` provider + existing Core/Owner Portal и native `/v1/reads` по UC; выбрать **один** путь с проверенным транспортом и доказанной совместимостью. | 🟡 **AUDITED / DECISION_OPEN**: source Unix/typed client есть, контракт выбора ещё не принят. | Source-only fit-test обоих путей, policy editor/inventory/actor/transport proof; фиксировать точный blocker отклонённого варианта. |
+| **E1.1 — Gateway provider** | `registry` и закрытые candidate READ операции зарегистрированы в **реальном** Gateway Core/catалогe, с handler, actor/target, grant, схемами и fail-closed; отсутствие runtime → STOP. | ⬜ **NOT_REGISTERED** в штатном R7; #235–#236 дают opt-in Broker seam, не provider admission. | Выбранный штатный механизм; конфликт имён, permissions, source tests. Никаких WRITE/автоматических grants. |
+| **E1.2 — Owner Portal** | Registry виден в owner inventory; для уже допущенных actor/target разрешённые policy-переходы проходят существующий Owner Policy V2 + WebAuthn; DENY/ASK/revoke, чужой actor и неподдерживаемый scope проверены. | ⬜ **NOT_INTEGRATED**; синтетический Core-тест не заменяет R7/editor. | Не создавать второй policy engine или фиктивный handler; editor не выдаёт недостающий machine grant. |
+| **E1.3 — non-Production Docker pilot** | Owner-approved отдельный Registry image/process, protected SQLite volume, backup/restore, pin source/image, реально разные UID/GID и допустимый AF_UNIX **либо** HTTPS transport; Gateway отдельно обновлён по UC-GW-005. | ⬜ **HOST_BLOCKED**; никакой Registry live capability. | Owner host, placement/permissions/transport, installer, rollback, independent EACCES/EPERM. |
+| **E1.4 — live typed READ** | Реальный Repo → Gateway provider/Core → Registry → SQLite → Repo; проверенный source SHA, original UUID, restart, отрицательные grants/policies, отсутствие прямого Repo-доступа. | ⬜ **NOT_LIVE**: прежний installed Gateway READ → `FORTIS_HTTP_403`. | Owner acceptance полного пути; candidate READ **не** authoritative desired queue. |
+| **E2 — P5 Desired** | Owner-reviewed настоящий GitHub merge → trusted existing GitHub provider/collector + pinned CI/policy/catalog/owner evidence → авторизованный единственный `ingest_merged` → durable Desired → штатный Gateway READ; valid no-deployment = 0. | ⬜ **NOT_STARTED_LIVE**, offline fixture существует. | First forward-only enrollment, reviewed collector origin, separate planner WRITE authority, CAS/original receipt/UNKNOWN/readback. |
+| **E3 — P6/P7** | Отдельно разрешённый manual `REPORTED_COMPLETE` → immutable event; Board отдельно отображает Desired / OwnerReported / VerifiedInstalled / UNKNOWN. | ⬜ **NOT_STARTED_LIVE**. | Owner event+receipt; никакого `DEPLOYED` без controller proof и независимого target readback. |
+| **E4 — P8** | Второй реальный merge supersedes Desired, оставляет pending; Release Batch группирует зависимости/build units и предлагает **ручные** UC. | ⬜ **NOT_STARTED_LIVE**. | Реальная сохранность очереди, version provenance, отказные сценарии, без CD execution. |
+| **E5 — Functional V1 acceptance** | E2–E4 целиком с cold restart, duplicate UUID, rejected source, missing CI, restore, revoke, no-deployment, UNKNOWN и owner proof. | ⬜ **NOT_ACCEPTED**. | Отдельный scoped non-Production `FUNCTIONAL_V1_GO`; PR/CI/host E1 сами по себе не GO. |
+
+**Сверка со старым планом (не терять уже принятые требования):**
+D1–D7, единый writer, отдельный persistent Registry/backup, точный
+`AlexPastukhh/fortis-approvals` forward-only enrollment, полный
+collector/CI/review/catalog lineage, `no-deployment=0`, immutable UUID/CAS,
+`UNKNOWN`, P6 owner report ≠ technical installed, P7 Board и P8 manual
+batch **сохранены**. Старый E1 ошибочно начинался с host/socket, не
+проверяя регистрацию Registry как управляемого provider. Старые
+`candidate_*` и Unix/E1 probes — **source диагностика**, а не готовый
+`registry.list_records` или ALLOW в Owner Portal. При выборе extension
+маршрута мигрировать клиент/адаптер только через review и совместимые
+версии; удалять устаревший candidate path **после** accepted E2 readback,
+не заранее. Проверки owner WebAuthn и policy grants нельзя заменить
+синтетической регистрацией `core.adapters['registry']=object()`.
+Provider credentials/CA через существующий [UC-GW-004](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/credential-lifecycle.md#uc-gw-004),
+Gateway image activation — только [UC-GW-005](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/releases.md#uc-gw-005);
+отдельная Registry runtime/backup установка остаётся owner-only.
+Hardened checkpoint/witness и автоматический CD **после** Functional V1,
+без удаления их source-кандидатов и без навязывания их E1.
 
 **Правило актуализации roadmap для каждого шага (с 2026-11-23).**
 Каждый implementation PR должен ссылаться на изменение **этой** таблицы:
@@ -424,9 +479,11 @@ merge, Gateway capabilities и обновить соответствующие �
 После каждого завершённого шага выводить E0–E5 пользователю. Никаких
 вторых roadmap и переноса owner GO через PR.
 
-**Порядок ответственности:** E1 — host owner; E2 — Registry
-single-writer / trusted collector + существующий Gateway Core/Owner Portal;
-E3–E4 — те же журналы/акторы и отдельные разрешения на P6 actions.
+**Порядок ответственности:** E1.0–E1.2 — Gateway provider/Owner Policy
+owner и UC review; E1.3–E1.4 — host/runtime owner с независимыми
+UID/ACL/backup и отдельным Gateway release; E2 — Registry single-writer /
+trusted collector + **существующий** Gateway Core/Owner Portal;
+E3–E4 — тот же Registry/события и отдельные разрешения на P6 actions.
 Новые Gateway methods, actor grants, machine credentials, first enrollment,
 Windows/Production и изменение source image/volume только с отдельным
 review и owner approval. В ИИ нет прямого SQL, shell executor, PAT,
