@@ -94,9 +94,15 @@ JSON Schema gate only** (because the current Fortis Repo Python lacks pinned
 `jsonschema`); the real preview itself fails closed when that dependency is
 missing. Full unmocked schema integration in pinned CI remains pending.
 
-Before any actual queue is live: authenticate actor, extend typed Gateway
-READ to immutable complete merge/catalog/CI evidence, bind exact component
-catalog identities, add independent integrity checkpoint/restore acceptance
-and obtain owner-controlled operational grants. No P4 Deployments READ
+Before **limited functional V1** queue is live: authenticate the actor,
+extend typed Gateway READ to immutable complete merge/catalog/CI evidence,
+bind exact component catalog identities, implement a reviewed **single**
+canonical Registry writer with append-only release events, CAS/UUID receipts,
+local event-chain verification, private persistent storage, owner-managed
+backup/inactive restore tests and owner-controlled operational grants.
+The separately protected checkpoint and external monotonic witness belong
+to the later `HARDENED_REGISTRY_GO`; do not claim anti-rollback security for
+the limited V1. This historical offline candidate store is **not** a second
+production writer or an installed-state verifier. No P4 Deployments READ
 re-release, GitHub Deployments WRITE, Windows release or Production change
 is part of this source-only milestone.

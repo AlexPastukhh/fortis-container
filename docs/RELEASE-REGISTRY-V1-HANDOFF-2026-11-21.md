@@ -1,5 +1,16 @@
 # Fortis Release Registry V1 — передача работы новому чату (2026-11-21)
 
+> **Датированный snapshot, не текущий статус на 2026-11-22.** После него
+> слиты container PR #44/#45 и approvals PR #211 (source READ checkpoint),
+> а owner-policy V3 source принят в approvals PR #216. Позднее source-only
+> Registry READ/peer milestone #219/#220/#222/#223 тоже слиты. На 2026-11-22
+> уточнён продуктовый план: ограниченная функциональная V1 event accounting
+> и Board предшествуют отдельному anti-rollback hardening checkpoint/witness;
+> решение **не** предоставляет действующий runtime GO. Для актуального
+> состояния и порядка работ открыть **единственный**
+> [P5–P8 roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue);
+> точные спецификации — в ссылках ниже. Не создавать второй план по этому handoff.
+
 **Проверенный исходный рубеж:** `fortis-approvals` [PR #210](https://github.com/AlexPastukhh/fortis-approvals/pull/210)
 слит в `main` с merge SHA
 `dba87732383e49f4cbff2076c7e62b4d22290253`.
