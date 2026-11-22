@@ -9,41 +9,36 @@ Gateway permission or runtime image is installed by this document.
 
 **Authority:** [Release Planning Contract](RELEASE-PLANNING-CONTRACT.md#post-merge-cd-queue-and-fortis-release-board),
 [one roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue),
-[current handoff](RELEASE-REGISTRY-V1-HANDOFF-2026-11-21.md).
+[current handoff](RELEASE-REGISTRY-V1-HANDOFF-2026-11-23.md).
 All changes described below remain subject to source review and separate owner
 approval of the trust boundary. GitHub PR merge alone is not deployment.
 
-## Current source implementation checkpoint (historical 2026-11-21; reviewed 2026-11-22)
+## Implementation version and runtime status (readback 2026-11-23)
 
-**After accepted Approvals [PR #210](https://github.com/AlexPastukhh/fortis-approvals/pull/210)**:
-source design D1–D7 and its pilot decisions are reflected in a sequence
-of **offline-only** modules in `fortis-approvals/fortis_approvals/registry`
-and the [post-merge Gateway evidence contract](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-REGISTRY-P5-POST-MERGE-GATEWAY-CONTRACT.md).
-The source includes retained review/CI and component bindings, bounded
-forward-lineage and planning, SQLite schema v2 CAS with immutable
-supersessions, inactive backup/owner-side checkpoint CAS, read-only
-recovery reconciliation, Linux owner/socket/storage boundary probes
-and first-enrollment genesis/main-cutover preflight. All four exact
-PR #210 CI passed, and the owner merged that source.
+**D1–D7 remain the design baseline, not a second implementation roadmap.**
+Accepted Approvals [#194–#223](https://github.com/AlexPastukhh/fortis-approvals/pull/223)
+contain the earlier SQLite v1/v2 and hardened checkpoint/Unix **source
+candidates**. Functional V1 now has a **separately versioned SQLite
+schema 3** `FunctionalV1CandidateJournal` ([#225–#230](https://github.com/AlexPastukhh/fortis-approvals/pull/230))
+with local initial/suffix CAS, original collector pin, event-chain and
+inactive backup. [#231–#233](https://github.com/AlexPastukhh/fortis-approvals/pull/233)
+added a runnable private AF_UNIX **candidate READ** process, cross-UID
+owner-run probe source, and Broker/Core + `/v1/reads` → Unix → schema-3
+diagnostic integration in tests. Source CI and a same-UID fixture do not
+prove a deployed owner-isolated host, authenticated GitHub/owner source
+or accepted enrollment. All candidate reads remain `SOURCE_ONLY`;
+`registry.ingest_merged` / authoritative list / P6 writes remain disabled.
 
-**No protected owner checkpoint service, independent security principal,
-encrypted owner-provisioned volume, trusted live collector, activated
-Registry typed API, accepted WebAuthn first enrollment or deployed
-desired queue has been evidenced by this source milestone.**
-The source-only positive tests and hashes cannot attest a protected
-host or change `admissionAllowed`. Source status is more advanced
-than the initial design proposal below, but the owner/live gates
-in sections D1–D7 remain open. **A source main merge SHA is not
-an enrollment baseline.** Since this snapshot, Approvals source-only
-PR #211/#219/#220/#222/#223 were owner-merged; they still do not prove
-installed runtime. The roadmap now separates limited
-`FUNCTIONAL_V1_GO` from future `HARDENED_REGISTRY_GO`. Existing
-`RegistryStateJournalV2` source currently couples admission to an owner
-checkpoint: **do not bypass that gate by returning fake `verified=true`**.
-A functional-V1 deployment requires a separately reviewed and tested
-single-writer storage/composition path or explicit schema migration
-with local original receipt/event integrity, not a silent drop of checks. The single living schedule and next task
-remain in [the roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
+The **limited Functional V1** needs owner-reviewed host isolation,
+trusted collector and an authorized forward-only ingestion/READ path
+before extending the **same end-to-end** to P6 manual owner report,
+P7 Board and P8 manual batch. A protected independent checkpoint,
+monotonic witness and joint rollback proof belong to the **later**
+`HARDENED_REGISTRY_GO`. Do not remove original integrity checks from
+the older v2 model or promote schema-3 flags by returning a fake
+`verified=true`; any runtime admission is a separate accepted design/
+security change. The exact current sequencing and acceptance gates
+belong only to [the roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
 
 ## 1. Scope and ownership
 

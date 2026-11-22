@@ -230,7 +230,7 @@ grant, repo and operation registration plus reviewed runtime acceptance; a
 source schema or owner policy ALLOW alone does not authorize Registry WRITE.
 Sequence and open work remain solely in the
 [single current roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
-[Current handoff / open gates](RELEASE-REGISTRY-V1-HANDOFF-2026-11-21.md).
+[Current handoff / open gates](RELEASE-REGISTRY-V1-HANDOFF-2026-11-23.md).
 
 The desired deployment identity is `repository + deployment target +
 environment + desired source/artifact identity`. A repository is an
@@ -373,16 +373,18 @@ queued or blocked action for that same identity.
 
 **Two gates, not one ambiguous `RUNTIME_GO`:**
 
-1. **`FUNCTIONAL_V1_GO` (proposed, owner-reviewed, not granted).** Pilot
-   `fortis-approvals` with an owner-provisioned persistent single-writer
-   Registry, strict process/filesystem access control, versioned SQLite,
-   append-only records, CAS/original UUID receipts, backup/restore tests,
-   trusted merge/CI/catalog collector, reviewed Gateway actors/grants,
-   forward-only owner-accepted cutover, non-Production negative/restart E2E.
-   Registry may serve scoped planning READ and authorized exact ingestion;
-   P6 manual owner-reporting is a separate reviewed write. No arbitrary
-   SQL, live release executor, automatic CD, proof of adversarial rollback
-   resistance, synthetic `DEPLOYED`, or automatic permission to Production.
+1. **`FUNCTIONAL_V1_GO` (proposed, owner-reviewed, not granted).**
+   **Only after the integrated P5–P8 non-Production E2E**, not after
+   the intermediate P5 read-only/ingestion pilot: persistent single-writer
+   Registry with owner-reviewed host/ACL/backup, exact-original UUID/CAS
+   and restore/restart tests, trusted merge/CI/catalog collector, scoped
+   Gateway ingestion/READ, forward-only owner enrollment; then P6
+   separately authorized immutable manual `REPORTED_COMPLETE`, P7 Board
+   and P8 manual batch in **the same continuing end-to-end path**.
+   E1/E2 acceptance is separately bounded and never silently promotes
+   to the full V1 gate. No arbitrary SQL, live release executor,
+   automatic CD, adversarial anti-rollback guarantee, synthetic
+   `DEPLOYED`, or automatic permission to Production.
 2. **`HARDENED_REGISTRY_GO` (separate future security gate).** Adds the
    independently protected checkpoint owner process, monotonic witness
    outside the joint rollback domain, real Linux cross-principal isolation
@@ -399,7 +401,19 @@ Existing source-only checkpoint/CAS candidates stay inactive and cannot be
 presented as verified security. The single milestone ordering is in
 [the roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
 
-#### Canonical Fortis Registry V1 (owner product decision; offline source schema v2 accepted, not live)
+#### Canonical Fortis Registry V1 (owner product decision; functional source schema 3 SOURCE_ONLY, not live)
+
+**Do not conflate version namespaces.** Release Impact YAML remains
+`releaseImpact.schemaVersion: 1`; historical source Registry SQLite
+schemas **v1/v2** / `RegistryStateJournalV2` are separate from the
+limited functional path `FunctionalV1CandidateJournal` **SQLite schema 3**
+and its event-chain/CAS/backup. The private AF_UNIX candidate READ wire
+uses **protocol `schemaVersion: 1`**, which is not an SQLite version
+or a live Registry API version. No automatic v2→3 migration or downgrade,
+shared authority, production install or independent rollback guarantee
+follows from the newer source. Exact methods and flags are defined in
+the [Approvals typed boundary](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-REGISTRY-P5-TYPED-BOUNDARY.md);
+the single milestone sequence remains in [the roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
 
 - **Authoritative queue:** durable Fortis-owned records, not Deployment objects;
   proposed logical key `{repository,target,environment,desiredSourceSha,catalogSha,
@@ -435,7 +449,7 @@ presented as verified security. The single milestone ordering is in
   when available, is labeled by its own verified evidence class.
 - **Security/unknowns:** define authoritative data owner, storage, ACL/backup,
   CAS/idempotency, concurrent merges/annotations, actor policy, append-only audit,
-  stale SHA checks and negative/recovery tests **before live Registry activation**.\n  Offline source candidates through Approvals PR #210 are not a protected runtime.
+  stale SHA checks and negative/recovery tests **before live Registry activation**.\n  Approvals source through merged PR #233 is still SOURCE_ONLY; functional SQLite schema 3 and the Unix/Broker diagnostic reader are not a protected or deployed Registry runtime.
   If the entry cannot be bound to the intended source/target, STOP/UNKNOWN.
   No installed write API exists today. CD automation and automatic receipt
   collection are future separately owner-approved milestones.
