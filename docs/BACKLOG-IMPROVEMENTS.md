@@ -351,7 +351,7 @@ receipts/CI описаны выше; не повторять завершённ�
 | **P3** | Owner-authorized one-shot Label Publisher, PASS 2026-11-19. | Массовую публикацию, CD. |
 | **P4** | Scoped GitHub Deployments GET (4 метода), owner-reported RELEASE COMPLETE 2026-11-20. | GitHub Deployments WRITE и Registry authority. |
 
-**P5 — Fortis Release Registry (SOURCE MERGED THROUGH APPROVALS PR #235; RUNTIME NOT LIVE).**
+**P5 — Fortis Release Registry (SOURCE MERGED THROUGH APPROVALS PR #236; RUNTIME NOT LIVE).**
 
 **Пилот:** только `AlexPastukhh/fortis-approvals`; учёт `forward-only`
 с первого **отдельно принятого владельцем** enrollment по exact
@@ -368,17 +368,15 @@ receipts/CI описаны выше; не повторять завершённ�
 | [#231–#233](https://github.com/AlexPastukhh/fortis-approvals/pull/233) | Исполняемый private AF_UNIX **candidate READ** процесс; owner-run probe для настоящих cross-UID отказов; Broker/Core + `/v1/reads` → socket → schema 3 в локальных тестах. `SOURCE_ONLY_CANDIDATE_READ`, никакой авторитетной очереди или активированных machine grants. |
 | [#234](https://github.com/AlexPastukhh/fortis-approvals/pull/234) | Real UID/GID, supplementary groups, capabilities/no-new-privs/seccomp и tracer fail-closed reader guards; source regression, **не** настоящий host proof. |
 | [#235](https://github.com/AlexPastukhh/fortis-approvals/pull/235) | Typed Repo candidate client + явный opt-in R7 factory → Core/Broker → Unix → schema 3; тестовые policy/grants, source-only. Оба PR **MERGED**, exact-HEAD Source CI, P5 Retained Impact, Fortis Release Impact SUCCESS. |
+| [#236](https://github.com/AlexPastukhh/fortis-approvals/pull/236) | **MERGED**: bounded Repo→typed Gateway READ с pin selected-main SHA, original operation UUID, revision/page/head readback и source-only CLI. Exact HEAD `7c89fc29b2529a07f48290bfcfd6edeed08108a1`, merge main `827e2eee388d9eb430aa8db9ba1a25c7dd90a916`; Source CI, P5 Retained Impact и исправленный Release Impact **SUCCESS**. R7→Unix→schema-3 source regression 50/50 PASS; на установленном Gateway `FORTIS_HTTP_403`: Registry READ **не** активирован. Это не host E1 PASS, не authoritatively persisted Desired и не E2 WRITE. |
 
-**Связанный текущий implementation [PR #236](https://github.com/AlexPastukhh/fortis-approvals/pull/236)**,
-HEAD `7c89fc29b2529a07f48290bfcfd6edeed08108a1`: bounded
-Repo→typed Gateway READ с pinned selected-main SHA, original local UUID,
-revision/page/head CAS readback и независимым source-only CLI. Тестовый
-R7→Unix→schema-3 путь: 50/50 PASS; **на live Gateway получен 403**
-(Registry READ отсутствует). Доставка кода в `main` подтверждается
-**только после owner merge и exact-HEAD CI**; этот блок сам по себе
-не меняет E1 на host PASS или E2 на live WRITE. Перед merge этого docs PR
-проверить свежий статус #236 и, если он уже слит, отразить это в
-проверенной таблице source facts.
+**Проверка связанного плана:** [container PR #48](https://github.com/AlexPastukhh/fortis-container/pull/48)
+**MERGED**, docs main `a8966253a66946764d2e60b09e2e3cff152a2757`,
+Release schema source checks SUCCESS. Эта строка закрывает фактическую
+ошибку статуса в #48, где #236 ещё значился ожидающим принятия.
+Дальнейший source merge должен отражаться в этом единственном roadmap
+только после независимого GitHub readback (PR+exact-head CI+main).
+
 
 Точные схемы и инварианты принадлежат
 [Approvals typed/storage boundary](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-REGISTRY-P5-TYPED-BOUNDARY.md)
@@ -407,8 +405,8 @@ offline journal/пробу вместо интеграции.
 
 | Шаг | Принимаемый E2E | Проверенный статус на 2026-11-23 | Осталось / gate |
 | --- | --- | --- | --- |
-| **E0 — source rehearsal** | Fixture merge → original test Core/collector → schema 3 desired/supersession/backup → Unix candidate page. | ✅ **SOURCE_REHEARSAL_DONE** (#224–#235); fixture/same-UID, не пользовательский E2E. | Не превращать source PASS в host GO. |
-| **E1 — host READ pilot** | Настоящий Repo → Gateway/Core → socket → persisted schema 3 + UUID + restart/backup, **разные real principals** и kernel Repo-denial. | 🟡 **SOURCE_READY / HOST_BLOCKED**: R7/Repo/Unix source merged #235; live Registry READ capability **нет**. | Owner-approved non-Production host, pin source/image, UID/GID, ACL/mount/grants/backup, independent EACCES/EPERM и readback. Никаких новых grants по source merge. |
+| **E0 — source rehearsal** | Fixture merge → original test Core/collector → schema 3 desired/supersession/backup → Unix candidate page. | ✅ **SOURCE_REHEARSAL_DONE** (#224–#236); fixture/same-UID, не пользовательский E2E. | Не превращать source PASS в host GO. |
+| **E1 — host READ pilot** | Настоящий Repo → Gateway/Core → socket → persisted schema 3 + UUID + restart/backup, **разные real principals** и kernel Repo-denial. | 🟡 **SOURCE_READY / HOST_BLOCKED**: E1 Repo→R7→Unix + bounded UUID/revision readback source **merged #236**, exact-head CI SUCCESS; live Registry READ capability **нет**. | Owner-approved non-Production host, pin source/image, UID/GID, ACL/mount/grants/backup, independent EACCES/EPERM и readback. Никаких новых grants по source merge. |
 | **E2 — первая рабочая P5 вертикаль** | Реальный owner-reviewed merge → original authenticated collector/CI/review/catalog → forward-only `ingest_merged` → persisted Desired → Gateway READ; original UUID recovery; valid no-deployment = 0 records. | ⬜ **NOT_STARTED_LIVE**, source planner/SQLite только fixture. | E1+ owner enrollment, trusted collector, single-writer и отдельный Registry WRITE GO; no unknown outcome retry. |
 | **E3 — P6/P7** | Manual release UC → authorized immutable `REPORTED_COMPLETE` → Board Desired/Reported/Verified раздельно. | ⬜ **NOT_STARTED_LIVE**. | Owner WRITE and P6 event; actual UNKNOWN пока нет controller receipt+readback. |
 | **E4 — P8** | Второй реальный merge supersedes Desired; pending остаётся; ручной batch с dependency/build-unit группировкой. | ⬜ **NOT_STARTED_LIVE**. | Только по принятому E2/E3 контуру; без CD executor. |
