@@ -222,6 +222,12 @@ and reusable scripts. AI may mark a specific Registry record `REPORTED_COMPLETE`
 only through an independently reviewed, authorized typed API after the owner's
 report; this is not technical proof of deployment. Source/readback collector,
 CD runner, GitHub deployment WRITE and Registry write API are NOT deployed.
+Gateway Core and its existing Owner Portal/WebAuthn own AI operation authorization
+and owner-managed method policies (`DENY/ASK/ALLOW`). The Registry's separate
+checkpoint/witness is a data-integrity/anti-rollback boundary, **not** another
+Owner Authority or policy editor. New Registry methods require exact actor,
+grant, repo and operation registration plus reviewed runtime acceptance; a
+source schema or owner policy ALLOW alone does not authorize Registry WRITE.
 Sequence and open work remain solely in the
 [single current roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
 [Current handoff / open gates](RELEASE-REGISTRY-V1-HANDOFF-2026-11-21.md).
@@ -236,12 +242,17 @@ for every target and environment.
 
 PR merge, Release Impact, labels and GitHub Deployment status are inputs
 or published projections, **not proof of installation**. Only target-specific
-protected controller receipts with independent live readback can establish
-`DEPLOYED` / `VERIFIED`. A manually entered `REPORTED_COMPLETE` event records
+protected controller receipts with independent live readback **at the release
+confirmation boundary** can establish `DEPLOYED` / `VERIFIED`. A manually entered `REPORTED_COMPLETE` event records
 an operator's statement and available references, **not** an independently
 verified installed source/artifact. Missing or conflicting technical evidence
 is `UNKNOWN` for verified actual state, never an implicit deployment success,
-absence of installation or authorization to retry.
+absence of installation or authorization to retry. The Registry keeps the
+**last accepted release-event-derived state** across subsequent merges; the
+planner does **not** poll Docker/Windows or GitHub to rediscover installed SHA
+at every PR. An explicitly dated, previously verified actual may be used for
+planning until a drift/uncertainty signal requires reconciliation. It is
+*last confirmed at the stated time*, not an eternal claim about the host.
 Planning/publication cannot trigger Production without separately reviewed
 owner authority. GitHub Projects is excluded from the current roadmap.
 
@@ -277,10 +288,14 @@ provider wire semantics; Fortis owns the stricter interpretation below.
   Before a build, \`artifactDigest=null\` means **not verified/built**, never
   a wildcard matching the installed artifact. A source-only target binds an
   owner-verifiable source/installation manifest identity instead of an image.
-- **Actual version:** per-target/per-environment source SHA **and** installed
-  artifact/manifest identity, observed timestamp, controller identity, protected
-  immutable original receipt ID/hash, and independent target-specific readback.
-  \`actual=null\` means unknown, not absent. A GitHub deployment/status/CI or
+- **Actual version:** per-target/per-environment **last accepted installation
+  event**: source SHA, installed artifact/manifest identity, confirmation time,
+  controller identity, protected immutable original receipt ID/hash, and the
+  independent target-specific readback obtained **during release verification**.
+  The Registry projects this last confirmed event on subsequent merges without
+  demanding another live readback for routine queue computation; retain
+  verification time and reconcile on detected drift, lost ACK, restore or
+  ambiguous outcome. \`actual=null\` means unknown, not absent. A GitHub deployment/status/CI or
   Docker image existing in a registry alone cannot fill this field.
 - **Logical version key:** \`{repository,target,environment,desiredSourceSha,
   catalogSha,artifactIdentity}\`; the stable \`projectionId\` is a digest of the
@@ -318,14 +333,14 @@ version may legitimately be older than the newest desired version.
 
 | Fortis state | Sufficient evidence / effect |
 | --- | --- |
-| \`QUEUED\` | Desired target/version and complete lineage/dependencies are verified; independent fresh actual/readback proves a different installed version, no unconfirmed in-flight attempt. Planning only. |
+| \`QUEUED\` | Desired target/version and complete lineage/dependencies are verified; the Registry's last **previously accepted and time-stamped verified installation event** identifies a different installed version, with no unresolved in-flight attempt or known drift. Do not demand new runtime readback for every merge. Planning only. |
 | \`BLOCKED\` | Known unmet dependency, required prerequisite, policy or owner gate, with no ambiguous effect; preserve the specific blocking reason. |
 | \`IN_PROGRESS\` | Protected controller record proves an actual authorized attempt started for **this exact identity**; a GitHub \`in_progress\` status alone is insufficient. |
-| \`DEPLOYED\` | Immutable original controller receipt **and** independent fresh live readback match this target, environment, source and artifact identity. |
+| \`DEPLOYED\` | At the successful release confirmation, immutable original controller receipt **and** independent target-specific live readback matched this target, environment, source and artifact identity. The Registry retains this accepted event as **last confirmed installed** with timestamp/evidence; later drift or uncertainty may invalidate the current-state claim without erasing history. |
 | \`FAILED\` | A protected receipt proves an error of the identified attempt; it does not prove that an older installed version is gone. Retry requires a separate authorized attempt. |
 | \`UNKNOWN\` | Missing/stale/conflicting receipt or readback, ambiguous lineage/ancestry, unconfirmed ACK, \`UNCERTAIN\`/active claim or identity mismatch. Never silently map to \`QUEUED\`, \`FAILED\` or \`DEPLOYED\`. |
 | \`REPORTED_COMPLETE\` (proposed V1 registry event) | Owner states that a specific manual UC release finished; AI registers original target/desired SHA, owner assertion and optional evidence references via scoped typed API. No independent installed proof is implied. |
-| \`PLANNED_UNVERIFIED\` (proposed V1 display) | Confirmed target/desired source from merge, but current installed state is not independently known. It is a planning item, not a verified mismatch or known-queued deployment. |
+| \`PLANNED_UNVERIFIED\` (proposed V1 display) | Confirmed target/desired source from merge, but no acceptable prior verified installation event is known, or its validity is uncertain. It remains **visible and actionable for owner review** as a planning item, not a proven mismatch or permission for unattended deployment. |
 
 \`NO_DEPLOYMENT\` is an exact-head, validated impact classification and creates
 **no** deployment identity. \`SUPERSEDED\` is a relation between immutable
@@ -333,6 +348,56 @@ desired versions, not proof of a deployment result. A target can expose both
 its *latest desired* and *last confirmed actual*, with an explicit evidence
 freshness/completeness flag. Unknown effect takes precedence over a nominally
 queued or blocked action for that same identity.
+
+#### V1 release-event accounting and separate protection gates (2026-11-22 clarification)
+
+**Event-sourced accounting, not continuous installation discovery.** For
+`repository / target / environment`, maintain three independent projections:
+
+- **Latest desired** — accepted post-merge target SHA and artifact identity,
+  with exact lineage/catalog. A new merge does not mutate installed state.
+- **Last owner-reported** — an append-only, authorized `REPORTED_COMPLETE`
+  event bound to the exact desired record/source, owner report and original
+  attempt when known. It may update the *owner-reported* display and move an
+  item out of the manual-action view, but **never** sets verified actual,
+  `DEPLOYED` or a controller receipt. A subsequent merge remains pending;
+  an old report must not close a newer desired record.
+- **Last technically confirmed installed** — derived from the last accepted
+  original controller receipt **and** independent target readback captured
+  during the installation verification step. Persist source/artifact identity,
+  target, environment, verifier, timestamp and evidence identifiers as an
+  immutable release event. Routine queue projections reuse this accepted
+  event; they do not require another Docker/Windows inspection per merge.
+  On drift, missing initial state, stale/invalidated evidence, restore or
+  `UNKNOWN_OUTCOME`, report uncertainty and require bounded reconciliation.
+
+**Two gates, not one ambiguous `RUNTIME_GO`:**
+
+1. **`FUNCTIONAL_V1_GO` (proposed, owner-reviewed, not granted).** Pilot
+   `fortis-approvals` with an owner-provisioned persistent single-writer
+   Registry, strict process/filesystem access control, versioned SQLite,
+   append-only records, CAS/original UUID receipts, backup/restore tests,
+   trusted merge/CI/catalog collector, reviewed Gateway actors/grants,
+   forward-only owner-accepted cutover, non-Production negative/restart E2E.
+   Registry may serve scoped planning READ and authorized exact ingestion;
+   P6 manual owner-reporting is a separate reviewed write. No arbitrary
+   SQL, live release executor, automatic CD, proof of adversarial rollback
+   resistance, synthetic `DEPLOYED`, or automatic permission to Production.
+2. **`HARDENED_REGISTRY_GO` (separate future security gate).** Adds the
+   independently protected checkpoint owner process, monotonic witness
+   outside the joint rollback domain, real Linux cross-principal isolation
+   and crash/rollback/restore evidence. Required *before* claiming
+   anti-rollback integrity or relying on that guarantee for high-impact
+   unattended CD, not a prerequisite for the explicitly limited,
+   owner-reviewed functional accounting V1.
+
+The previous P5 runbook assumed the second gate for **all** live operation.
+Changing that gate requires explicit owner review of the new bounded runtime
+architecture: a docs/source merge is **not** host provisioning, credential
+activation, enrollment, Production GO or an already executed policy change.
+Existing source-only checkpoint/CAS candidates stay inactive and cannot be
+presented as verified security. The single milestone ordering is in
+[the roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
 
 #### Canonical Fortis Registry V1 (owner product decision; offline source schema v2 accepted, not live)
 

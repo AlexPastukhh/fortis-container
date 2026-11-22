@@ -293,6 +293,10 @@ Publisher, не удаления метки и не CD. Точная экспл�
    event `REPORTED_COMPLETE`. Можно приложить ссылки на evidence, но отметка
    **не подделывает** исходный controller receipt и не становится `VERIFIED`.
    Если результат противоречив или target/SHA не установлен — STOP/UNKNOWN.
+   При записи подтверждённого controller result отдельный оригинальный
+   receipt + проверка фактического артефакта **на шаге релиза** позволяют
+   сохранить lastVerifiedInstalled; при следующем merge используется
+   сохранённое событие. Это не постоянный опрос Docker/Windows.
 5. **Внешняя GitHub-проекция (не обязательна в V1):** P4 четырёхоперационный
    typed Deployments READ активирован только для `fortis-approvals`; будущие
    Gateway WRITE/Publisher требуют отдельного security review, owner grants,
@@ -303,19 +307,25 @@ Publisher, не удаления метки и не CD. Точная экспл�
 
 ### Очередь и семантика статусов — требования к проектированию
 
-- **PLANNED/QUEUED:** принятое изменение требует CD, точный desired
-  target/environment/version известен; ещё нет соответствующей подтверждённой
-  успешной установки. Если evidence неполно — `UNKNOWN`, не безусловное
-  `QUEUED`.
+- **PLANNED_UNVERIFIED:** desired по проверенному merge известен, но
+  нет допустимого последнего verified installed event; это видимый
+  пункт плана для владельца, а не доказанный mismatch.
+- **QUEUED:** desired и все source/dependency proofs приняты, а
+  сохранённое **последнее технически подтверждённое событие установки**
+  для данного target/environment содержит другой SHA/artifact. Для
+  обычного нового merge свежий live readback хоста **не требуется**;
+  при drift/restore/UNKNOWN требуется отдельная reconciliation.
 - **IN_PROGRESS:** отдельное подтверждение начала ручного релиза; источник
   отмечается, это не доказательство исполнения или результата.
-- **REPORTED_COMPLETE (V1):** владелец сообщил, что релиз завершён, ИИ
-  зафиксировал exact запись с происхождением события. Это *не* `DEPLOYED`;
-  Board явно показывает, что независимой technical verification может не быть.
-- **APPLIED/DEPLOYED (verified):** установлен именно desired
-  source/artifact target/environment и существует допустимый protected
-  receipt + независимый readback; GitHub `success` — опубликованное
-  представление этого факта.
+- **REPORTED_COMPLETE (V1):** owner-authorized append-only событие exact
+  record/source сохраняет **lastOwnerReported**, но никогда не записывает
+  `verifiedInstalled` и не закрывает более новый desired. Board явно
+  отличает сообщение владельца от подтверждённой установки.
+- **APPLIED/DEPLOYED (verified):** в момент релиза original protected
+  controller receipt и независимый target readback подтвердили source/
+  artifact/target/env. Registry сохраняет это **неизменяемым событием
+  lastVerifiedInstalled** со временем и происхождением; новый merge
+  не требует повторной live проверки. GitHub `success` — проекция.
 - **FAILED:** доказанная ошибка конкретной попытки; новая попытка — отдельная
   авторизованная операция, не автоматический retry неизвестного эффекта.
 - **UNKNOWN / NEEDS_RECONCILIATION:** stale/отсутствующие records, потерянный
@@ -329,7 +339,7 @@ Publisher, не удаления метки и не CD. Точная экспл�
   target. GitHub deployment status timeline — не готовая агрегированная
   очередь; правила выбора **актуального** состояния реализуются отдельно.
 
-### Порядок реализации и критерии выхода (последовательно, без shortcuts)
+### Порядок реализации и критерии выхода (функциональная V1, затем hardening)
 
 **P1 — Release Labels owner-ASK пилот (DONE, PASS 2026-11-16).**
 Выполнены свежий exact-HEAD/diff/body/labels/CI/policy preflight, одна ASK,
@@ -370,14 +380,14 @@ P4 контракт идентичности target/env/source, pagination, line
 хранилищем очереди **заменён** текущим product decision. DR старого Gateway
 не доказан; исторические rollback-ресурсы не удалять.
 
-**P5 — Fortis Release Registry и post-merge planning (SOURCE IMPLEMENTATION MERGED THROUGH APPROVALS PR #210; RUNTIME NOT LIVE).**
+**P5 — Fortis Release Registry и post-merge planning (SOURCE MERGED THROUGH APPROVALS PR #223; RUNTIME NOT LIVE).**
 D1–D7 source architecture принята в fortis-container PR #41, пилот
 строго `AlexPastukhh/fortis-approvals`, учёт **forward-only с первого
 owner-accepted Registry release/enrollment**. Никакого исторического
 backfill PR/CI/installed state и автоматического CD. Само наличие
 `main` SHA или прошедшего source PR **не является cutover**.
 [Точный design и trust boundary](RELEASE-REGISTRY-P5-DESIGN.md),
-[текущий handoff](RELEASE-REGISTRY-V1-HANDOFF-2026-11-21.md).
+[датированный handoff (история)](RELEASE-REGISTRY-V1-HANDOFF-2026-11-21.md).
 
 **Принятый P5 source milestone:** Approvals PR #194–#196 закрывают typed
 boundary, retained collector и first-parent lineage; #197–#199 —
@@ -390,13 +400,39 @@ read-only reconciliation и safe STOP на неоднозначном откат
 isolation preflight и cross-UID owner-storage denial probe; #210 —
 точный source first-enrollment cutover preflight (pinned baseline,
 нулевой Registry/owner genesis, согласованные offline host evidence).
+[#211](https://github.com/AlexPastukhh/fortis-approvals/pull/211) —
+закрытый `checkpoint.get` / `checkpoint.original` READ adapter
+поверх accepted Unix `SO_PEERCRED`; `checkpoint.advance` остаётся DENY,
+нет listener/owner host, независимого witness или Registry admission.
+[#219](https://github.com/AlexPastukhh/fortis-approvals/pull/219) —
+source-only Gateway Registry READ schemas и opt-in Broker/Core adapter
+с `DENY/ASK/ALLOW`, без фактической регистрации R7 grants/actor,
+без live Registry и без WRITE; merged main `4cac6502d2937af5a81c69adf13cd8dedc9ad187`,
+четыре exact-HEAD CI для `c9cb43360bf8b35102d650c1a5aadf1dcb679abc`
+завершились SUCCESS. [PR #220](https://github.com/AlexPastukhh/fortis-approvals/pull/220)
+слит (remote main `c5591ff52ad77e853fee96073e9a629859a23db4`),
+четыре exact-HEAD CI для `a3736d83f478e22acbff8db61a4573e2d4eb913b`
+завершились SUCCESS: source-only read-only SQLite v2 startup preflight
+через отдельные owner-checkpoint/witness **callback-claims**; результат всегда
+`INACTIVE_UNVERIFIED`, не свидетельство runtime/anti-rollback.
+[#222](https://github.com/AlexPastukhh/fortis-approvals/pull/222)
+после разрешения конфликта с merged PR #221 принят owner в `main`
+(`6b82efe7a71f6e865bafa96078a6015070605a60`);
+четыре exact-HEAD CI на `905c80bb21de5abaa90c51f5bffb820348583a60`
+завершились SUCCESS. Добавлен **source-only pinned AF_UNIX
+`checkpoint.get` READ-клиент** с `SO_PEERCRED`, без live listener,
+protected witness или новой Owner Authority.
 [Approvals source boundary](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-REGISTRY-P5-TYPED-BOUNDARY.md)
 и [post-merge evidence source](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-REGISTRY-P5-POST-MERGE-GATEWAY-CONTRACT.md)
 сохраняют точные схемы, ограничения и negative tests.
 [PR #210](https://github.com/AlexPastukhh/fortis-approvals/pull/210)
 слит (merge SHA `dba87732383e49f4cbff2076c7e62b4d22290253`);
 все четыре exact-head CI для `3fbbc58cb198d69f38acadb1d357f26c6d964771`
-завершились SUCCESS. Это **source acceptance**, не runtime release.
+завершились SUCCESS. Позднее #211 также слит
+(merge `fb577437babcbdeb8702a53488b2c5e122eaf9f3`), и его четыре
+exact-HEAD CI завершились SUCCESS для `a4fe659c50438152a3b6d0828613214bcad024a0`.
+[Контейнерный P5 runtime runbook](RELEASE-REGISTRY-P5-OWNER-RUNTIME-RUNBOOK.md)
+принят как документация PR #45. Это **source acceptance**, не runtime release.
 
 **Старые container offline references:** [component/restriction view](RELEASE-REGISTRY-P5-COMPONENT-RESTRICTIONS.md),
 [durable restriction fixture](RELEASE-REGISTRY-P5-DURABLE-CONSTRAINTS.md),
@@ -408,62 +444,112 @@ Registry schema v2/owner checkpoints в `fortis-approvals`. Модель
 компонентной координации фиксирует **ограничения операций**,
 а не разрешённые действия. Отсутствие restriction — не grant.
 
-**Что блокирует P5 live GO:**
-1. Отдельный owner-reviewed Registry runtime и независимый owner
-   checkpoint service с доказанными host identity/UID/GID, volumes,
-   immutable anchor, OS/socket ACL, encrypted storage, protected backup
-   и реальными негативными cross-principal тестами. Offline JSON/digest,
-   тестовый UID или два локальных SQLite **не** доказывают защищённость.
-2. Owner-controlled auth/acceptance (включая WebAuthn), проверенный
-   original pending operation readback, crash/lost ACK/rollback/restore
-   reconciliation и отдельные monotonic-witness protections.
-3. Доверенное original collector evidence, immutable review/policy,
-   lineage/CI/catalog/dependency completeness; bounded typed
-   planner/reader API с действующими grants, оригинальными receipts,
-   безопасной ID/CAS и READ projection. Все Registry WRITE пока DENY.
-4. **Protected first enrollment**: владелец принимает exact repository,
-   source main SHA, catalog/binding/policy, начальный checkpoint и
-   дату/receipt cutover. Если `main` изменился, нужны все промежуточные
-   merges как post-baseline, а не скрытое смещение baseline.
-5. Отдельный owner-reviewed non-Production E2E на реально изолированном
-   хосте: blocked intake, no-deployment без записей, один
-   PLANNED_UNVERIFIED desired record при полном accepted evidence,
-   fail-closed recovery/restart/backup restore в inactive instance.
-   Production release, credential/grant activation, Windows work и
-   Registry WRITE требуют **отдельного owner GO**, не PR merge.
+**Уже существующая авторизация:** единый Owner Portal / Core Gateway
+управляет зарегистрированными методами по `DENY / ASK / ALLOW` и owner WebAuthn.
+В `fortis-approvals` принят [PR #216](https://github.com/AlexPastukhh/fortis-approvals/pull/216)
+с source-моделью `OWNER_ALL_METHODS_V1`; её наличие в установленном owner
+runtime требуется проверять отдельно. **Не строить второй Owner Authority,
+owner-policy editor или независимый ASK для Registry.** Registry checkpoint
+service и monotonic witness — граница целостности/anti-rollback данных, а не
+альтернативная система решений владельца. Регистрация новых Registry методов,
+actor grants и фактическая политика требуют отдельного owner-reviewed rollout;
+текущие machine capabilities Registry методов не объявляют.
+[Gateway owner-policy contract](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/OWNER-POLICY-EDITOR-V2.md).
+
+**Два разных, пока не выданных разрешения:** `FUNCTIONAL_V1_GO` для ограниченной
+ручной системы учёта и поздний `HARDENED_REGISTRY_GO` для защищённого от
+совместного отката Registry. Это **предложение изменить прежний P5 gate**;
+до отдельного owner-reviewed rollout ни один из них не действует.
+
+**Что блокирует функциональный E2E V1 (P5 → P6 → P7 → P8):**
+1. Owner-reviewed **отдельный persistent single-writer Registry** с
+   закрытым process/filesystem доступом, версионированной SQLite,
+   append-only журналом, CAS/original UUID receipt, backup/restore
+   и проверенными restart/lost-ACK/unknown-outcome тестами. Нельзя
+   размещать live БД в общей записи ИИ/Repo; проверка host ACL,
+   source/image, доступности и backup остаётся обязательной.
+   Независимые owner checkpoint/witness и изолированный owner-side
+   listener **не требуются для ограниченной функциональной V1**.
+2. Доверенное original post-merge collector evidence, полный
+   first-parent lineage, review/CI/catalog/dependency completeness,
+   bounded typed planner/reader с действующими Gateway grants и
+   оригинальными receipts. Только отдельно разрешённый `ingest_merged`;
+   все live WRITE до owner approval продолжают **DENY**.
+3. **Forward-only первый enrollment:** владелец фиксирует exact repo,
+   main SHA, catalog/binding/policy, дату и original owner cutover receipt.
+   Стартовая installed identity берётся только из принятого release event
+   либо остаётся UNKNOWN; наличие baseline SHA не делает его установленным.
+   Если `main` сдвинулся, доказать все промежуточные merges.
+   Локальный event-chain head и consistent backup обязателен, но
+   независимая monotonic witness-опора для ограниченной V1 не требуется.
+4. **Функциональный non-Production E2E:** trusted merge → accepted
+   desired/queue → owner manual UC → отдельный authorized
+   `REPORTED_COMPLETE` (P6) → Board (P7) → ручной batch (P8).
+   При наличии оригинального protected controller receipt + readback
+   на момент релиза можно отдельно зарегистрировать verified installed;
+   без них Board показывает owner-reported и UNKNOWN verified actual.
+   Новые merges используют сохранённые события, не требуют нового
+   live Docker readback для каждого вычисления очереди.
+5. Отрицательные E2E: неизвестный actual виден как
+   `PLANNED_UNVERIFIED`, а не «установлено»; нет запретного replay,
+   прямого SQL, GitHub Deployment WRITE, автоматического controller run
+   или повторного эффекта после `UNCERTAIN`. Production/Windows,
+   credentials/grants, первый enrollment и переход к live всегда требуют
+   **отдельного owner GO**, не PR merge.
+
+**Hardening после функциональной V1 (не выбрасывать принятый source):**
+отдельный защищённый checkpoint process/ledger, независимый monotonic
+witness вне совместного rollback-домена, привязка точной Gateway
+owner-authorized операции к original pending CAS, реальные Linux
+cross-principal E2E и crash/rollback/restore recovery.
+До `HARDENED_REGISTRY_GO` нельзя заявлять защиту истории от
+злоумышленника с доступом к Registry/его backup или полагаться на
+непроверенную anti-rollback гарантию для unattended CD. Нового owner
+policy editor/WebAuthn сервиса не создавать.
 
 **Отдельный infra gap:** в GitHub у `fortis-approvals/main`
 `protected:false` на дату сверки. Exact-head CI работает, но не
 является GitHub-enforced merge-gate. До включения и отдельного
 теста Ruleset проверять четыре CI вручную перед owner merge.
 
-**P6 — manual release result marking (PLANNED, без автоматического CD).**
-Владелец вручную выполняет действующие Use Cases и reusable controllers.
-После точного сообщения владельца и проверки идентичности queued target/SHA
-ИИ через scoped Registry API записывает `REPORTED_COMPLETE` с происхождением,
-датой, связанной попыткой и доступными evidence. Переход в `VERIFIED`/
-`DEPLOYED` не допускается без independent receipt + live readback; они не
-обязательны для честной ручной *отметки*. Не создавать общий collector в V1.
-Failure/UNCERTAIN не разрешают повтор исходной физической установки.
+**P6 — manual release result marking (PLANNED, обязательная часть Functional V1).**
+Владелец вручную выполняет существующие Use Cases и controllers.
+ИИ через отдельно разрешённый scoped Registry API записывает ровно один
+`REPORTED_COMPLETE` для exact record/target/env/source и исходной попытки.
+Это обновляет **lastOwnerReported**, но не `verifiedInstalled` и не
+`DEPLOYED`. Технически подтверждённое installed обновляется **событием
+релиза**, привязанным к original protected controller receipt и target
+readback, полученному в момент выпуска. Последующие merge используют
+принятый last verified event, а не постоянный опрос хоста. В V1 не
+создавать универсальный collector; drift/restore/UNCERTAIN требуют
+отдельной сверки. Failure/UNCERTAIN не разрешают слепой retry.
 
-**P7 — Fortis Release Board (PLANNED, own UI).**
+**P7 — Fortis Release Board (PLANNED, обязательная часть Functional V1).**
 UI получает canonical Registry queue и history; фильтры repo/target/env,
 actions, desired SHA, merged PR, Use Case и состояния `QUEUED`,
-`REPORTED_COMPLETE`, `VERIFIED`, `BLOCKED`, `UNKNOWN` с видимой evidence class.
-Отсутствующая проверка не отображается как `DEPLOYED` или как отсутствие работы.
+`PLANNED_UNVERIFIED`, `REPORTED_COMPLETE`, `VERIFIED`, `BLOCKED`, `UNKNOWN`.
+Отдельно показывать **desired**, **lastOwnerReported**, **lastVerifiedInstalled**
+и время последнего технического подтверждения. Ручная отметка может
+закрывать *предлагаемое действие владельцу*, но не создавать ложное
+`DEPLOYED` или закрывать desired, появившийся позже. Неизвестный installed
+не превращать в «всё установлено» и не скрывать его из planning view.
 Board не управляет Production. GitHub Projects не нужен; внешние GitHub
 Deployments могут дополнять UI, но не обязательны для V1.
 
 **P8 — Release Batch preparation (PLANNED, ручное выполнение).**
 Сгруппировать изменения по source, target, shared build unit и dependencies,
-выдать человеку план по конкретным существующим UC. Даже один batch с несколькими
-PR не может опускать изменения выбранного `main` SHA. Применение вручную;
-не запускать checked controllers из Registry или Board.
+выдать человеку план по конкретным существующим UC. Учитывать отдельно
+owner-reported и technically verified installed, не считать их взаимозаменяемыми.
+Даже один batch с несколькими PR не может опускать изменения выбранного
+`main` SHA. Применение вручную; не запускать checked controllers из
+Registry или Board.
 
-**После V1 — отдельный CD automation project (НЕ АВТОРИЗОВАН).**
-Автоматизировать owner-reviewed запуск уже существующих контроллеров и
-получение их technical evidence с собственными gates и recovery, а не
-добавлять универсальный shell или обходить UC/approval.
+**После V1 — отдельные Hardening и CD automation (НЕ АВТОРИЗОВАНЫ).**
+Сначала отдельно проверенная защита checkpoint/witness и rollback, если
+автоматизация будет полагаться на соответствующую гарантию истории;
+затем owner-reviewed запуск существующих контроллеров и получение их
+technical evidence со своими gates/recovery. Не добавлять универсальный
+shell или обход существующих UC/Owner Portal.
 
 ### Непереходимые границы
 
@@ -489,17 +575,42 @@ PR не может опускать изменения выбранного `mai
   в указанном scope. P3 one-shot E2E ограничен пилотом. Менять release
   contract, machine grants или runtime — только отдельным owner review.
 
-**Следующая конкретная задача P5:** owner-review
-[предлагаемого runtime/owner checkpoint runbook](RELEASE-REGISTRY-P5-OWNER-RUNTIME-RUNBOOK.md)
-(только source proposal; ни host, ни owner authority не provisioned).
-Он определяет отдельные principal/volume/transport, protected monotonic witness,
-original-operation readback, recovery, negative host E2E и owner-only cutover.
-После review — отдельный implementation PR в
-`fortis-approvals` и host activation/Protected Enrollment **только
-после отдельного owner acceptance/GO**. Не трогать P4 повторно,
-не расширять пилот на другие репозитории, не делать GitHub Deployments
-POST, не приписывать прохождению CI права на Production.
-[Актуальный handoff для нового чата](RELEASE-REGISTRY-V1-HANDOFF-2026-11-21.md);
+**P5 source cut принят (implementation [PR #223](https://github.com/AlexPastukhh/fortis-approvals/pull/223), MERGED; не docs-only):**
+после принятого [#222](https://github.com/AlexPastukhh/fortis-approvals/pull/222)
+принят кандидатный **принимающий one-shot `checkpoint.get` READ responder** на
+предварительно принятом Linux AF_UNIX socket. Перед чтением owner ledger
+проверять peer/profile/instance/scope, ровно один canonical запрос и EOF;
+ответ — строго bounded READ candidate с `admissionAllowed=false`. Никакого
+`checkpoint.original` через этот route, никакого `checkpoint.advance`,
+нового Owner Portal/ASK, bind/listen lifecycle, независимого witness,
+автоматического host запуска или enrollment. Same-UID positive тесты —
+только synthetic role classification, не host isolation. Owner-merged
+`fortis-approvals/main=dc8614c0b453c2858c826fc1a9689801aac07a61`, четыре
+exact-HEAD CI SUCCESS на `55b8813fc22c3c403f291f86bc9a1ce8cd926dbb`.
+Источник схем и source-only checkpoint кандидата —
+[Approvals typed boundary](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/RELEASE-REGISTRY-P5-TYPED-BOUNDARY.md).
+
+**Следующий functional implementation cut (в этой же ветке с docs):**
+offline event-accounting projection для `P5 desired → P6
+REPORTED_COMPLETE → P7 Board`: отдельные desired и
+lastOwnerReported/lastVerifiedInstalled, новый merge не закрывается
+старым owner report. `tools/registry/release_state_projection.py`
+и тесты показывают только `SOURCE_ONLY_RELEASE_QUEUE_CANDIDATE`,
+не доверяют caller-owned receipt/actor, не создают `DEPLOYED` или
+live Gateway WRITE. Код прототипа не становится вторым production
+Registry; существующий canonical writer — в `fortis-approvals`.
+
+**Реальная последовательность после этого PR:** (1) trusted source
+collector + owner-reviewed persistent Registry и typed READ/ingest;
+(2) functional non-Production E2E и отдельно принятый forward-only
+`FUNCTIONAL_V1_GO`; (3) P6 ручная отметка → P7 Board → P8 ручной
+batch; (4) отдельно `HARDENED_REGISTRY_GO` по
+[host runbook](RELEASE-REGISTRY-P5-OWNER-RUNTIME-RUNBOOK.md) с
+checkpoint/witness/cross-UID и восстановлением; (5) только
+дополнительно авторизованная автоматизация CD. Публикация исходников
+не разрешает Windows/Production/credentials/grants, GitHub Deployments
+POST или реальный первый enrollment.
+[Датированный handoff 2026-11-21 (исторический snapshot)](RELEASE-REGISTRY-V1-HANDOFF-2026-11-21.md);
 [архивный handoff 2026-11-20](RELEASE-REGISTRY-V1-HANDOFF-2026-11-20.md).
 
 ## Future: CI, GitHub Actions и сценарии настройки

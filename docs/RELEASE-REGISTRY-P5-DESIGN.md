@@ -13,7 +13,7 @@ Gateway permission or runtime image is installed by this document.
 All changes described below remain subject to source review and separate owner
 approval of the trust boundary. GitHub PR merge alone is not deployment.
 
-## Current source implementation checkpoint (2026-11-21)
+## Current source implementation checkpoint (historical 2026-11-21; reviewed 2026-11-22)
 
 **After accepted Approvals [PR #210](https://github.com/AlexPastukhh/fortis-approvals/pull/210)**:
 source design D1–D7 and its pilot decisions are reflected in a sequence
@@ -34,7 +34,15 @@ The source-only positive tests and hashes cannot attest a protected
 host or change `admissionAllowed`. Source status is more advanced
 than the initial design proposal below, but the owner/live gates
 in sections D1–D7 remain open. **A source main merge SHA is not
-an enrollment baseline.** The single living schedule and next task
+an enrollment baseline.** Since this snapshot, Approvals source-only
+PR #211/#219/#220/#222/#223 were owner-merged; they still do not prove
+installed runtime. The roadmap now separates limited
+`FUNCTIONAL_V1_GO` from future `HARDENED_REGISTRY_GO`. Existing
+`RegistryStateJournalV2` source currently couples admission to an owner
+checkpoint: **do not bypass that gate by returning fake `verified=true`**.
+A functional-V1 deployment requires a separately reviewed and tested
+single-writer storage/composition path or explicit schema migration
+with local original receipt/event integrity, not a silent drop of checks. The single living schedule and next task
 remain in [the roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue).
 
 ## 1. Scope and ownership
@@ -57,6 +65,12 @@ The [offline durable restrictions candidate](RELEASE-REGISTRY-P5-DURABLE-CONSTRA
 The [offline desired release preview](RELEASE-REGISTRY-P5-DESIRED-PREVIEW.md) separately derives unverified per-target candidate identities from claimed merge and catalog inputs; it never writes to the authoritative queue and needs a trusted collector.
 The [separate offline durable desired journal](RELEASE-REGISTRY-P5-DESIRED-STORE.md) persists only unverified candidate records and original-operation/supersession history, with no live or trusted API.
 The [post-merge evidence readiness contract](RELEASE-REGISTRY-P5-POST-MERGE-EVIDENCE.md) records why current typed READs are insufficient, without granting an additional actor or installing an endpoint.
+The [offline event-state projector](../tools/registry/release_state_projection.py)
+models P5 desired + P6 owner reports for P7 display without inventing
+verified installed; it is a **source-only test seam**, not a second
+Registry writer or a released P6 API. The exact trusted event admission
+and last-verified controller receipt projection belong to the canonical
+runtime in `fortis-approvals`.
 
 **Proposed source split:** `fortis-container` owns product constraints and
 shared Release Impact/catalog schemas; an independently reviewed Fortis
@@ -98,7 +112,7 @@ the source design, not provisioning, keys, permissions or evidence trust.
 | D3 | Immutable desired subject = canonical repository, target, environment, selected full main SHA and exact catalog commit/raw digest. Artifact identity is a separate immutable event/version; supersession preserves history. | Confirm exact catalog/component/environment continuity and target-specific UC; no artifact/installed-state inference. |
 | D4 | Only independently obtained, owner-bound evidence from the collector may reach admission; full proof and protected provenance required. | Accept historical policy and review cutoff, complete selected-source lineage, component mapping, dependency closure, authenticated collector and evidence retention. |
 | D5 | Separate operation UUID plus canonical actor/scope/arguments/evidence digest fingerprint and revision CAS; original receipt is authoritative. | Concurrency, conflict, lost ACK, restart, unknown outcome tests; no replayed mutation without original receipt reconciliation. |
-| D6 | Immutable records and append-only operation/event histories; independent owner-protected checkpoint and inactive consistent backup. | Validate external anchor authority, crash reconciliation, retention and restore with independent owner readback. |
+| D6 | Functional V1: immutable record/event history, local integrity chain, original CAS/UUID receipts, owner-controlled backup and inactive restore. Hardened stage: independent owner checkpoint and monotonic witness. | Functional V1 requires source/DB/backup integrity and failure tests; the later `HARDENED_REGISTRY_GO` requires separately protected anchor/witness, real cross-principal tests and joint rollback detection. |
 | D7 | Initial enrollment exactly `AlexPastukhh/fortis-approvals`. Preview/queue only; manual UC execution stays outside Registry. No installed-state verifier, manual result marking or deploy in P5. | Separate owner acceptance of protected source, image/runtime, live scopes and end-to-end pilot. |
 
 #### D1/D6 — isolation, persistence and recovery
@@ -118,8 +132,10 @@ are required. Owner must select encrypted-at-rest host storage and
 separate encrypted backup destination; do not invent an existing host
 path or encryption configuration.
 
-The independent integrity anchor is owned outside the Registry writer's
-security boundary. Anchor records contain Registry instance/schema ID,
+**The following external-anchor protocol is the later
+`HARDENED_REGISTRY_GO` target, not an implicit prerequisite of the
+limited `FUNCTIONAL_V1_GO`.** Its independent integrity anchor is owned
+outside the Registry writer's security boundary. Anchor records contain Registry instance/schema ID,
 revision and event digest. Source contract: an ingestion transaction
 atomically appends state, operation fingerprint and original local
 receipt; external anchor advancement uses compare-and-set on the exact
@@ -132,8 +148,12 @@ identities; anchor mismatch, unexpected revision or unverifiable
 pending commit is STOP for owner recovery. The anchor cannot be
 silently initialized from the current DB or rolled back by the writer.
 The exact implementation of this inter-system recovery protocol and
-its fault-injection tests precede admission, rather than treating
-a local hash chain as a protected external anchor.
+its fault-injection tests precede **hardened** admission and any claim
+of anti-rollback integrity. Functional V1 may instead use a private
+single-writer SQLite event-chain head, original UUID receipts, tested
+backup/restore and owner-controlled Gateway grants, **with explicit
+limits**: a compromised Registry/host backup domain may rewrite or roll
+back that history, so no protected-anchor claim or unattended CD trust.
 
 Candidate backup policy: daily consistent SQLite snapshots plus a
 pre-change snapshot before every migration/runtime switchover; retain
@@ -235,8 +255,10 @@ earlier PR was installed, and not a retroactive deployment receipt.
 At cutover the owner selects the exact enrolled repository main SHA, its
 pinned catalog commit/raw digest and the closed target/environment/component
 bindings. The initial release and acceptance evidence, enrollment identity,
-source SHA, timestamp, and independent initial Registry checkpoint must
-be retained as one immutable bootstrap decision. Capture the starting
+source SHA, timestamp, and **local event-chain genesis plus owner-approved
+backup** must be retained as one immutable functional-V1 bootstrap decision.
+An independently protected Registry checkpoint/witness is a **later hardening
+gate**; without it do not claim adversarial rollback protection. Capture the starting
 actual identity for a target/environment only where a matching original
 controller receipt and independent target readback exist; otherwise
 actual=null (UNKNOWN). Do not set actual to the baseline SHA merely
@@ -494,7 +516,13 @@ reading `get_operation(operationId)`; unknown original outcome stays
 
 Append-only events include trusted actor principal, operation ID, exact
 record/revision, event type, evidence digest, timestamp, previous event hash
-and current hash. A hash chain detects local corruption but is **not**
+and current hash. Preserve **three distinct projections** per target/env:
+latest desired from accepted merges, last owner-reported manual result,
+and last technically verified installed from the last accepted controller
+receipt plus target readback captured **at the release confirmation**.
+Normal planning reuses these stored events without rescanning the host;
+rollback/drift/UNKNOWN requires separate reconciliation. A manual event
+must not set verified actual or close a newer desired record. A hash chain detects local corruption but is **not**
 independent tamper-resistance without a protected external checkpoint. Do
 not claim it proves owner intent or installed state. Preserve old records,
 failure/unknown outcomes, prior release assertions and audit on supersession.
@@ -507,8 +535,8 @@ not generate duplicate records or duplicate audit events. Different PRs
 covered by one chosen SHA are stored as a complete lineage of that
 target/version, not separate physical installations.
 
-Before any owner-authorized store activation: define private ownership,
-permissions, at-rest protection, schema migration guards, backup schedule,
+Before any owner-authorized **functional V1** store activation: define private
+ownership, permissions, at-rest protection, schema migration guards, backup schedule,
 retention and verification. Backup must use SQLite's consistent snapshot
 protocol (including WAL semantics), capture schema, row/event counts and
 audit-chain head; restore to **inactive new instance** and verify
