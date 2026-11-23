@@ -641,6 +641,50 @@ approved source/image. Владелец ещё должен проверить �
 registry socket-writer provenance и невозможность mount mutation;
 ни само имя volume, ни self-reported Registry inode этого
 не доказывают. Нет второго Authorization/API или auto-CD.
+**Сверка по нормативным release use cases (UC-GW-005/006/013,
+UC-CONT-021/022; P3.4 owner Publisher mount), 2026-11-23:**
+действующий UC-GW-005 **уже определяет** owner merge → guarded
+Windows Mirror → PowerShell 5.1 SelfTest → manual exact
+`Check -Build` → immutable checked-image record (image SHA, source
+SHA, config/probe/scope) → отдельное owner GO →
+`Apply -CheckedImageRecord` **без второй сборки** →
+owner live readback → Backup → Promote. Первичный opt-in
+mount/grant нельзя создавать через обычный `-Auto`;
+P3.4 показал точный fixed read-only owner volume,
+offline source-image digest preflight, Check/Apply binding
+и повторную проверку без новых grants от source merge.
+`UC-GW-006` требует original protected attempt, original
+image/container/state IDs, protected pointers и один owner
+Return/Resume без слепого повторного Apply. `UC-GW-013`
+при отсутствующем previous image **не является штатным обходом**.
+`UC-CONT-021/022` требуют точного owner Docker inventory,
+RW-writer/consumer/rollback preflight и различения
+BACKUP_CREATED, BACKUP_VERIFIED, RESTORE_TESTED/DR.
+**Но эти UC НЕ содержат** операции, которая выдает
+`gatewaySourceDigest` **до** Check/owner seal:
+активный `r7_unified_server._installed_policy_source_digest()`
+строит SHA256 canonical списка per-file SHA256 **Python/static
+в реально собранном Gateway image**, это НЕ git source SHA,
+НЕ Docker image ID, НЕ `MODULARIZED-SOURCE-MANIFEST.sha256`.
+Значит до seal нужен отдельный owner-reviewed exact-image/source
+*offline* readback этого digest из independently reviewed
+owner image-only build/attestation, с последующим Check на
+точной принятой исходной версии и строгой сверкой одинакового
+внутреннего digest; незаявленный image build или self-reported
+Registry digest не допускается. Нужно проверить возможность
+этого протокола в самом owner runbook/Windows SelfTest, не
+объявлять его уже выполненным.
+Для rollback сохранение per-release named volume и SHA256
+профиля в protected runtime/check **нужно, но недостаточно**:
+требуются owner readback отсутствия RW writer/подмены,
+revalidate старого live pidfd/boot/socket profile при Return,
+previous image retention и история nonce; exit/restart
+Registry или несоответствие старого profile — STOP с
+оригинальным attempt, а не auto reseal.
+**Эта проверка не меняет E1.4–E5:** после E1.3b host gate
+только live READ/Owner WebAuthn (E1.4), затем независимый
+authenticated Collector/granted WRITE (E2), manual Board (E3),
+manual batching (E4), отдельный scoped GO (E5).
 Второй локальный Approvals source checkpoint
 `3ce4bd436d58c8d2d707ed9cbea4a16fc123a988`
 сохранил этот инструмент, ровно два fixed read-only mount и
