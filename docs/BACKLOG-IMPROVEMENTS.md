@@ -462,8 +462,8 @@ Approvals PR #237 + Container PR #50 OWNER-MERGED и main синхронизир
 | --- | --- | --- | --- |
 | **E0 — foundation** | Fixture merge → Core/collector → schema 3 desired, supersession, original UUID, backup → candidate Unix READ. | ✅ **SOURCE_REHEARSAL_DONE** (#224–#236), исключительно source/fixtures; не host. | Не повторять прототипы; не объявлять live. |
 | **E1.0 — выбор API-пути** | Один provider и один API: штатный `extensions/` + `Provider/Operation`/Core/Owner Portal, reviewed AF_UNIX; native candidate остаётся диагностикой. | ✅ **SOURCE_ACCEPTED**: Approvals #237 и Container #50 owner-merged, exact-head CI SUCCESS, оба main синхронизированы; не host/production. | Принятый маршрут сохранять; реальные UID/registry runtime и owner grants позже, не скрывать их в source. |
-| **E1.1 — packaged Registry provider** | Image-owned `integrations/registry/extension.py`: три закрытые candidate READ `Operation`; стандартные `/v1/integrations/catalog|call|result` и Repo IntegrationClient; `Provider.api` связывается лишь с проверенным host-owned Unix reader, единственный `registry` ID. | 🟡 **SOURCE_PR_OPEN #238** (`425ba39e5bbdb57f44f42eac748b05f83e63bf8d`): image discovery default `ready=false`, R7 trusted binding с `ready=true`, Core/Owner Inventory и AF_UNIX SQLite проверены offline; **не merged/live**. | Проверить exact-head Source/P5/Release Impact CI и owner source merge, затем отдельный image/host release; не считать кандидат authoritative Desired. Без runtime reader — STOP до создания owner/Core state; никаких новых machine grants/WRITE или второго public `/v1/reads`. |
-| **E1.2 — Owner Portal acceptance** | Packaged Registry методы представлены Owner Inventory, существующий Policy V2/WebAuthn редактирует лишь заранее допущенные actor/target, DENY/ASK/ALLOW/revoke; editor не создаёт grants. | ⬜ **NOT_OWNER_ACCEPTED**: E1.1 проверяет настоящий packaged provider/handlers, но WebAuthn и Unix peer identity в source-test синтетические. | Независимая криптографическая WebAuthn/Owner Portal UI проверка с реальным trusted host binding; отсутствие чужих grants/WRITE и корректный owner policy revoke. |
+| **E1.1 — packaged Registry provider** | Image-owned `integrations/registry/extension.py`: три закрытые candidate READ `Operation`; стандартные `/v1/integrations/catalog|call|result` и Repo IntegrationClient; `Provider.api` связывается лишь с проверенным host-owned Unix reader, единственный `registry` ID. | ✅ **SOURCE_MERGED, NOT_LIVE**: Approvals #238 (`425ba39e5bbdb57f44f42eac748b05f83e63bf8d`) и Container roadmap #51 (`c47438c8b1e06cd2c026cab1ebb13e29f779c99b`) owner-merged; exact-head Source/P5/Release Impact/schema CI SUCCESS; main синхронизированы. Ready=false до trusted binding; тесты AF_UNIX/SQLite/Owner Inventory — только offline. | E1.2 — настоящее криптографическое owner policy source/UI acceptance; E1.3 — отдельный host bootstrap и образ. Нет установленного Registry/новых machine grants/WRITE; `/v1/reads` не используется как параллельный публичный V1 API, candidate не authoritative Desired. |
+| **E1.2 — Owner Portal source acceptance** | Packaged Registry методы реально доступны в owner inventory/UI; существующий Policy V2 с настоящей криптографической WebAuthn проверяет лишь заранее допущенные actor/target и DENY/ASK/ALLOW/revoke; editor не создаёт grants. | ⬜ **NOT_ACCEPTED**: E1.1 provider принят в source, но WebAuthn и Unix peer identity в его тестах были синтетическими. | Проверить owner UI/crypto, Policy V2 для реального packaged provider в контролируемой source-композиции, включая отказ чужому actor/target, запрет новых grants/WRITE. **Host reader UID/socket и live UI/readback остаются E1.3/E1.4:** нельзя требовать установленный host до host pilot. |
 | **E1.3 — non-Production Docker pilot** | Owner-approved Registry image/process и AF_UNIX, защищённая SQLite+backup/restore, pinned Gateway source/image, реально разные UID/GID и kernel Repo-denial. | ⬜ **HOST_BLOCKED**; нет live Registry, identity/peer/backup не подтверждены. | **Новое явное условие:** owner-reviewed `r7_unified_server` host bootstrap должен конструировать и передавать в R7 доверенный `GatewayRegistryUnixCandidateRead` с pinned UID/GID/PID/socket device+inode, не из AI/Repo params; текущий server его не создаёт, поэтому Registry config STOP. Затем service/socket ACL, backups, release по UC-GW-005, независимый EACCES/EPERM. |
 | **E1.4 — live extension READ** | Настоящий Repo `extensions.client` → TLS Gateway `/v1/integrations/call|result` → Core/Registry provider → AF_UNIX → SQLite → Repo; original UUID, restart, grants/revoke и Repo-denial. | ⬜ **NOT_LIVE**: E1.1 проверил WSGI extension routes offline; прежний `/v1/reads` probe вернул `FORTIS_HTTP_403` и **не** проверяет новый маршрут. | Owner live host source/readback/denial, independent actor/grant revoke и restart; source candidate не называть authoritative Desired. |
 | **E2 — P5 Desired** | Owner-reviewed настоящий GitHub merge → существующий GitHub provider + authenticated Collector/evidence → отдельный planner-only `registry.ingest_merged` → single-writer Desired → **тот же** Registry extension READ. | ⬜ **NOT_STARTED_LIVE**, offline fixture существует. | Новый reviewed WRITE `Operation` через тот же Core: preview/receipt/lookup, ID/CAS/UNKNOWN, first forward-only enrollment и отдельный owner WRITE grant; valid no-deployment=0. Отдельно доказать устойчивую Core `createdAt` ↔ первый PENDING audit timestamp связь при переходе через границу секунды (тестовая фиксация часов не является runtime-исправлением). |
@@ -471,16 +471,20 @@ Approvals PR #237 + Container PR #50 OWNER-MERGED и main синхронизир
 | **E4 — P8** | Второй реальный merge supersedes Desired, оставляет pending; Release Batch группирует зависимости/build units и предлагает **ручные** UC. | ⬜ **NOT_STARTED_LIVE**. | Реальная сохранность очереди, version provenance, отказные сценарии, без CD execution. |
 | **E5 — Functional V1 acceptance** | E2–E4 целиком с cold restart, duplicate UUID, rejected source, missing CI, restore, revoke, no-deployment, UNKNOWN и owner proof. | ⬜ **NOT_ACCEPTED**. | Отдельный scoped non-Production `FUNCTIONAL_V1_GO`; PR/CI/host E1 сами по себе не GO. |
 
-**Пересмотр будущих шагов по результату E1.1 (не только статус):**
-E1.2 теперь проверяет **packaged** provider и реальные owner credentials,
-а не синтетический `Provider('registry')`; E1.3 теперь явно включает
-trusted owner-host bootstrap в `r7_unified_server` (его ещё нет), а не
-предполагает, что source `extension.py` автоматически находит Unix socket.
-E1.4 проверяет **только** `/v1/integrations/*` как публичный V1 путь,
-а не старый native `/v1/reads`. E2 остаётся единственным отдельным
-planner-WRITE с исходным evidence/UUID/UNKNOWN. Пересмотрены E3, E4, E5:
-их порядок и ранее принятые критерии остаются корректными; новые операции,
-таблицы или дополнительный CD сейчас не требуются.
+**Повторная сверка оставшихся E1.2–E5 после owner merge #238/#51:**
+E1.1 закрыт **только как принятый source**; installed Gateway capabilities
+`registry`/`registryRead` отсутствуют, поэтому E1.4 по-прежнему NOT_LIVE.
+Исправлена последовательность E1.2/E1.3: E1.2 проверяет **packaged**
+provider, Owner Portal и настоящую криптографию WebAuthn в контролируемой
+source-композиции **без требования live host**; отдельный owner-reviewed
+host-bound Unix reader bootstrap в `r7_unified_server`, UID/GID/ACL,
+backup и image release принадлежат E1.3. Так устранена циклическая
+зависимость «Owner Portal до Docker, но с уже установленным host reader».
+E1.4 по-прежнему требует live `/v1/integrations/*` readback, grants/revoke,
+real peer и отдельное owner acceptance. E2 требует отдельный trusted
+planner-WRITE, исходный merge/evidence, UUID/UNKNOWN и timestamp review;
+E3, E4, E5 сверены — порядок/границы без изменений. Никаких новых
+автоматических прав, второго Registry API или CD execution не добавлено.
 
 **Сверка со старым планом (не терять уже принятые требования):**
 D1–D7, единый writer, отдельный persistent Registry/backup, точный
