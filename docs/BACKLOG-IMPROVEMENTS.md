@@ -464,12 +464,435 @@ Approvals PR #237 + Container PR #50 OWNER-MERGED и main синхронизир
 | **E1.0 — выбор API-пути** | Один provider и один API: штатный `extensions/` + `Provider/Operation`/Core/Owner Portal, reviewed AF_UNIX; native candidate остаётся диагностикой. | ✅ **SOURCE_ACCEPTED**: Approvals #237 и Container #50 owner-merged, exact-head CI SUCCESS, оба main синхронизированы; не host/production. | Принятый маршрут сохранять; реальные UID/registry runtime и owner grants позже, не скрывать их в source. |
 | **E1.1 — packaged Registry provider** | Image-owned `integrations/registry/extension.py`: три закрытые candidate READ `Operation`; стандартные `/v1/integrations/catalog|call|result` и Repo IntegrationClient; `Provider.api` связывается лишь с проверенным host-owned Unix reader, единственный `registry` ID. | ✅ **SOURCE_MERGED, NOT_LIVE**: Approvals #238 (`425ba39e5bbdb57f44f42eac748b05f83e63bf8d`) и Container roadmap #51 (`c47438c8b1e06cd2c026cab1ebb13e29f779c99b`) owner-merged; exact-head Source/P5/Release Impact/schema CI SUCCESS; main синхронизированы. Ready=false до trusted binding; тесты AF_UNIX/SQLite/Owner Inventory — только offline. | E1.2 принято в source PR #239/#53; E1.3 — отдельный host bootstrap и Registry image. Нет установленного Registry/новых machine grants/WRITE; `/v1/reads` не используется как параллельный публичный V1 API, candidate не authoritative Desired. |
 | **E1.2 — Owner Portal source acceptance** | Стандартный **packaged Registry** виден в owner inventory; owner `/v1/owner/policy/editor/*` использует реальную P-256 WebAuthn/UV-проверку, закрытые actor/target, DENY→ALLOW→ASK→DENY/revoke и оригинальный readback. Policy edit не создаёт machine grants. | ✅ **SOURCE_MERGED, NOT_LIVE**: Approvals #239 (head `1763688b721a2e343ea925d56c5d39330b33dcea`, merged main `f10ae3fbf37ad81e70cec7c2f36c0613d38bb27e`) и Container #53 (head `2a9e05c6e089aafae17d52ce3fbc85ae07728a62`, merged main `55ee7074fc9a731a3024bf7bd3c915a645f1429d`) owner-merged, exact-head Source/P5 Retained/Release Impact/schema CI SUCCESS; 39 local crypto/Registry tests PASS, main синхронизированы. | Не повторять source-прототип. Host UID/peer в этом тесте синтетический; E1.3 — реальные UID/GID, socket, image, backup и изоляция Repo. E1.4 — реальный browser Owner Portal и человеческий passkey в установленном Gateway. Нет новых grants/WRITE/Production. |
-| **E1.3 — non-Production Docker pilot** | E1.3a — owner-fixed Gateway R7 READ bootstrap, separate Registry candidate-only non-Production image, immutable source/release/peer pins without new API/owner policy; E1.3b — separately owner-approved real host UID/GID/Unix/SQLite/backup/Repo denial. | ✅ **SOURCE_MERGED; HOST_NOT_ACCEPTED**: Approvals #240 (head `c21976e9f48c4edbf7875975c63e6c2015b7c071`, main merge `4c00b16d8e34bbaa4967b421ada0e4a9cde4258e`) и Container #54 (head `e96dc7f7e97eb9aa1ba26da3f22519117864c71a`, main merge `eacce2077a0532599621eb28ba60a4220a5f23c0`) owner-merged; exact-head Source CI/P5 Retained/Fortis Release Impact/schema checks SUCCESS; full local source suite PASS; main синхронизированы. | E1.3b **HOST_BLOCKED** до отдельного owner GO и реальных доказательств по `RELEASE-REGISTRY-FUNCTIONAL-V1-PILOT.md`: non-root distinct mapped UID/GID, SO_PEERCRED PID в Gateway namespace (PID=0=STOP), socket `02710` setgid + `0660` и pinned device/inode, kernel Repo EACCES/EPERM (не ENOENT), schema3 private DB/backup/inactive restore, отдельный UC-GW-005 owner release. Четыре Release Impact target (Gateway/Registry/Publisher images и Windows controller) были только учтены; rebuild/Windows update/deploy не выполнялись. Никаких новых grants/WRITE/Production. |
+| **E1.3 — non-Production Docker pilot** | E1.3a — owner-fixed Gateway R7 READ bootstrap, separate Registry candidate-only non-Production image, immutable source/release/peer pins without new API/owner policy; E1.3b — separately owner-approved real host UID/GID/Unix/SQLite/backup/Repo denial. | ✅ **SOURCE_MERGED; HOST_NOT_ACCEPTED**: Approvals #240 (head `c21976e9f48c4edbf7875975c63e6c2015b7c071`, main merge `4c00b16d8e34bbaa4967b421ada0e4a9cde4258e`) и Container #54 (head `e96dc7f7e97eb9aa1ba26da3f22519117864c71a`, main merge `eacce2077a0532599621eb28ba60a4220a5f23c0`) owner-merged; exact-head Source CI/P5 Retained/Fortis Release Impact/schema checks SUCCESS; full local source suite PASS; main синхронизированы. | E1.3b **HOST_BLOCKED / OWNER PIDFD PIN + RELEASE ADMISSION GATE**: owner sandbox подтвердил `SO_PEERCRED pid=0`, но работающий cross-namespace `SO_PEERPIDFD` с уникальным process inode и liveness; общий PID namespace НЕ нужен; до отдельного owner GO и реальных доказательств по `RELEASE-REGISTRY-FUNCTIONAL-V1-PILOT.md`: non-root distinct mapped UID/GID, SO_PEERCRED UID/GID + live pidfd process inode и pinned kernel boot ID (PID=0 без независимого owner pin=STOP), socket `02710` setgid + `0660` и pinned device/inode, kernel Repo EACCES/EPERM (не ENOENT), schema3 private DB/backup/inactive restore, отдельный UC-GW-005 owner release. Четыре Release Impact target (Gateway/Registry/Publisher images и Windows controller) были только учтены; rebuild/Windows update/deploy не выполнялись. Никаких новых grants/WRITE/Production. |
 | **E1.4 — live extension READ + owner UI** | Настоящий Repo `extensions.client` → TLS Gateway `/v1/integrations/call|result` → Core/Registry provider → AF_UNIX → SQLite → Repo; original UUID, restart, grants/revoke и Repo-denial; в **установленном** Owner Portal отображение и изменение методов через реальные browser UI + owner passkey. | ⬜ **NOT_LIVE**: E1.1 проверил WSGI extension routes offline, E1.2 source-only подписанные owner HTTP transitions; прежний `/v1/reads` probe вернул `FORTIS_HTTP_403` и не проверяет extension READ. | Owner live source/readback/denial, browser UI/real owner WebAuthn credential, independent actor/grant revoke, restart, real peer. Candidate данные не называть authoritative Desired. |
 | **E2 — P5 Desired** | Owner-reviewed настоящий GitHub merge → существующий GitHub provider + authenticated Collector/evidence → отдельный planner-only `registry.ingest_merged` → single-writer Desired → **тот же** Registry extension READ. | ⬜ **NOT_STARTED_LIVE**, offline fixture существует. | Новый reviewed WRITE `Operation` через тот же Core: preview/receipt/lookup, ID/CAS/UNKNOWN, first forward-only enrollment и отдельный owner WRITE grant; valid no-deployment=0. Отдельно доказать устойчивую Core `createdAt` ↔ первый PENDING audit timestamp связь при переходе через границу секунды (тестовая фиксация часов не является runtime-исправлением). |
 | **E3 — P6/P7** | Отдельно разрешённый manual `REPORTED_COMPLETE` → immutable event; Board отдельно отображает Desired / OwnerReported / VerifiedInstalled / UNKNOWN. | ⬜ **NOT_STARTED_LIVE**. | Owner event+receipt; никакого `DEPLOYED` без controller proof и независимого target readback. |
 | **E4 — P8** | Второй реальный merge supersedes Desired, оставляет pending; Release Batch группирует зависимости/build units и предлагает **ручные** UC. | ⬜ **NOT_STARTED_LIVE**. | Реальная сохранность очереди, version provenance, отказные сценарии, без CD execution. |
 | **E5 — Functional V1 acceptance** | E2–E4 целиком с cold restart, duplicate UUID, rejected source, missing CI, restore, revoke, no-deployment, UNKNOWN и owner proof. | ⬜ **NOT_ACCEPTED**. | Отдельный scoped non-Production `FUNCTIONAL_V1_GO`; PR/CI/host E1 сами по себе не GO. |
+
+**E1.3b — cross-check against EXISTING Gateway release admission (2026-11-23; SOURCE_REVIEW, NO HOST GO):**
+The current owner-managed `fortis_approvals/deploy/Manage-Integrations.ps1`
+creates a Gateway pilot with `--init`, `--read-only`, `--cap-drop ALL`,
+`no-new-privileges`, fixed source/image/mounts and **without** `--pid`.
+The active (not merely historical) `deploy/github_pilot_helpers.py::admit()`
+**requires** `HostConfig.Init == true`, **empty** `PidMode`, **no**
+`UsernsMode`/host binds/devices, and an **exact** allowlist of mounted
+volumes. Only separately owner-approved Publisher and PowerShell mount
+variations are recognized. Neither the new Registry activation mount nor
+an alternative PID namespace is currently in that admission allowlist.
+The separate E1.3 Functional V1 owner runbook explicitly says **do not
+silently switch to shared or host PID namespaces**. UC-GW-005 requires
+protected, source-pinned owner Check/Apply/Backup/Promote and separate
+approval for new mounts/identities; container UC security boundaries
+prohibit AI access to the Docker socket or arbitrary host namespaces.
+**Therefore: current accepted controller SOURCE does not yet admit a live
+Registry activation under the existing release contract, irrespective of
+sandbox SO_PEERCRED PASS.** The exact controller SHA installed on Windows
+has not been independently read back during this task; do not claim a
+verified installed-controller capability from repository source alone.
+A source-accepted Gateway image and Registry image do not automatically
+extend the owner controller's allowlist or authorize Windows changes.
+
+The earlier assumption “Gateway Python is PID 1” was **incorrect for the
+reviewed release path**, because Docker `--init` inserts the PID 1 init
+process. The actual Gateway Python PID remains to be verified on host;
+current `PrivateCandidateReadService._real_peer` rejects `pid <= 1` and
+therefore normally can admit a positive Gateway Python peer PID under the
+required `--init` topology. This is not a substitute for kernel evidence.
+`r7_unified_server.main()` still requires an **already running** Registry
+socket and owner-sealed source/release/peer pins before starting Owner/Core.
+Its requirement of startup ordering is an intended existing source contract,
+not a reason to install a second Registry/API or authorization service.
+
+**Rejected for the existing owner release contract:**
+- `Gateway --pid=container:Registry`: Registry namespace init stop/restart
+  can kill Gateway; no independent lifecycle.
+- `Registry --pid=container:Gateway`: current Gateway startup requires a
+  prebound Registry socket; there is a cold-start cycle. `--init` also means
+  Gateway Python is not necessarily PID 1. Resolving this would require a
+  source/runtime hot-start redesign AND owner security-policy change.
+- Extra independent PID namespace anchor: the temporary shared-PID sandbox
+  proved positive kernel peer PID, **but** a third runtime and a nonempty
+  Gateway `PidMode` violate current owner release admission. Also introduces
+  shared process visibility, anchor/owner restart dependency, and new
+  lifecycle/rollback controls. **Not the recommended next experiment.**
+
+**E1.3b — owner FORTIS_M cross-PID-namespace pidfd experiment (KERNEL_MECHANISM_PASS / IDENTITY_NOT_ACCEPTED):**
+Владелец проверил два временных non-Production контейнера на Linux Docker
+Desktop с **разными** PID namespaces `pid:[4026533244]` и
+`pid:[4026533170]`. Оба ядром подтверждённых `SO_PEERCRED`
+показали `pid=0` при правильных UID/GID; `SO_PEERPIDFD` вернул
+pidfd с inode реального удалённого процесса, совпавшим с
+независимо полученным `os.pidfd_open(getpid())`:
+client увидел server inode `100438`, server увидел client inode
+`100502`; маркеры `CROSS_NAMESPACE_PIDFD_IDENTITY_MATCH_PASS`,
+`PEERPIDFD_PROCESS_EXIT_PASS`, `SERVER_PIDFD_CHECK_PASS` присутствуют.
+Без `--pid`, новых capabilities, сети, image pulls и приватных mounts;
+не было изменения действующих Gateway/Repo или owner grants.
+**Технически межконтейнерная сверка процесса и фиксация его завершения
+работают без shared namespaces.** Но взаимный обмен self-reported inode
+в этом probe **не является owner authentication**; same-UID
+подставной процесс сам может сообщить корректный inode. E1.3b остаётся
+`HOST_NOT_ACCEPTED`.
+Следующий единый source-cut (не новый API/policy engine): использовать
+`SO_PEERPIDFD` с точным `fstat` inode и проверкой pidfd на живость;
+обязательно сравнить с независимым owner-observed process inode,
+закреплённым в отдельном immutable/read-only R7 mount, source/release
+nonce, kernel boot UUID, Registry UID/GID и socket inode; недоверенный
+Registry ответ **не** может выдавать себе pin. Отдельная серверная
+проверка реального Gateway UID/GID и живого pidfd должна работать при
+`SO_PEERCRED pid=0` без ослабления текущей RO/ACL политики. Закрывать
+fd во всех ветках, сверять до/после ответа; при exit/restart/boot change
+fail closed и повторное owner seal/restart. Нужно расширить строго
+owner-reviewed Gateway release mount allowlist, иначе `UC-GW-005`
+остановит поставку даже при прошедших pidfd тестах. Registry service
+config `profile.json` (UID сервиса 0700/0600) сегодня не имеет
+доказанного RO bind mount: не использовать его как доверенный
+**owner pin** без отдельной защищённой границы. Источник owner-observed
+pidfd inode и надёжное boot-id закрепление должны пройти independent
+review; произвольное self-report/путь/env/Repo не допускаются.
+**Source WIP E1.3b (NOT_MERGED / NOT_DEPLOYED):** в отдельной
+авторизованной Approvals task worktree
+`registry-e13b-pidfd-identity-source-20261123` локально изменены
+**существующие** R7 Registry reader, readonly owner-mounted profile v2
+(`registryPidfdInode`, `registryKernelBootId`, exact release/source pin),
+Registry AF_UNIX listener с обязательным kernel pidfd + реальными
+Gateway UID/GID даже при `SO_PEERCRED pid=0`; cross-UID owner probe
+переведён на процесс/boot pin schema v2, Registry image COPY/catalog,
+Functional V1 owner runbook, source manifests и отрицательные тесты.
+Сохранён числовой PID **только** для legacy offline diagnostic
+constructor, но v2 owner mount не может выбрать downgrade.
+`SO_PEERPIDFD` требует Linux pidfs >=6.9 (64-bit), отсутствие
+опции/pin, wrong UID/GID/boot или peer exit = STOP; каждый fd закрывается.
+**97 совместных профильных тестов PASS** (Registry Unix, cross-UID probe,
+owner R7 profile v2, Extension Provider, Owner Policy/WebAuthn, R7 TLS);
+`source manifest --check` PASS. Исходники сохранены штатным Gateway
+**только локальным WIP checkpoint** `c47eb031badff07a93ea00a89f45ba23a97ffda0`
+в Approvals task branch; **никакого push/PR/owner merge**.
+Полный `test-source.sh`, exact-head Source CI и Release Impact ещё
+не выполнялись; source и host/owner release остаются не приняты.
+Это **не** owner host admission: необходим независимый owner
+process inode attestation, seal/restart/boot/Socket validation,
+реальные cross-principal Repo denial/SQLite backup, и отдельная
+**защищённая поддержка точного Registry readonly mount в
+`Manage-Integrations.ps1`/`github_pilot_helpers.admit`**;
+нынешний release controller его НЕ пропускает.
+Не создавать PR на каждую проверку; собрать единый tested source cut
+с корректным Release Impact и security review, не затрагивая live host.
+**Переоценка оставшихся E1.4–E5:** E1.4 после E1.3b host + live
+extension READ/browser Owner passkey, E2–E5 по-прежнему отдельные
+Collector/WRITE → manual Board → Batch → owner GO, без CD/нового API.
+
+**E1.3b follow-up source work — exact two-mount admission / owner process observation (WIP, NO RELEASE):**
+После локального checkpoint `c47eb031...` текущая *та же* Approvals
+task worktree дополнилась **отдельным read-only owner-invoked**
+`registry/owner_candidate_pidfd_observation.py`: owner independently
+выбирает процесс по Docker Engine `inspect/top`, инструмент сверяет
+реальный live `pidfd_open(selectedPid)` с kernel `SO_PEERPIDFD`
+**фактически соединённого Unix socket**, `/proc` security/process
+start ticks, UID/GID, boot ID, socket mode/inode и owner-config mode.
+Результат `SOURCE_ONLY_..._OBSERVATION` имеет
+`containerImageVerified=false`, `ownerAcceptanceVerified=false`,
+`profileSealed=false`, `releaseAdmitted=false`, не читает SQLite,
+не запускает Registry и не запечатывает pin автоматически.
+Инструмент работает только **после отдельного разрешения владельца**
+и обязательной независимой Docker image/source/provenance сверки;
+подмена `selectedPid` или spoofed listener должны давать STOP.
+В Gateway `r7_registry_reader_mount.py` появился source-only
+`reviewed_registry_reader_mount_digest()`: строгая загрузка
+уже owner-sealed profile v2 + live socket kernel pidfd и SHA256
+профиля, **без создания** mount/grant/volume.
+Источник `github_pilot_helpers.admit()` теперь принимает лишь
+**точную пару read-only mount**, но с защитой будущего rollback:
+`fortis-r7-registry-reader-<owner-releaseNonce-UUIDv4-without-dashes>`
+→ **фиксированный** `/run/r7-registry-reader`, и
+`fortis-registry-read` → `/run/fortis-registry-read`.
+Profile SOURCE volume уникален для каждого checked release; старый
+запечатанный профиль нельзя переписать при новом `Check`/возврате.
+Socket volume остаётся тем же, Registry — его единственный reviewed
+writable владелец; private SQLite **не монтируется** в Gateway/Repo.
+Partial pair, RW, arbitrary bind, wrong nonce, shared/host PID
+и доп. capabilities STOP. Это проверка принятого security-контракта,
+а не установка на Windows.
+**Новый локальный (NOT_MERGED / NOT_WINDOWS_TESTED) owner controller
+source-cut:** `Manage-Integrations.ps1` теперь имеет
+**только manual** `-EnableRegistryMount -RegistryReleaseNonce <UUIDv4>`
+при owner-approved source `Check -Build` → protected checked-image
+`Apply -CheckedImageRecord` (nonce и digest профиля в точной Check
+binding). `Image-RegistryMount-Preflight` в isolated non-root
+Gateway image без TCP и image pull перепроверяет readonly owner
+mount, installed source digest, live pidfd/kernel peer, socket inode
+и возвращает SHA256 точных profile bytes. `Admit` повторяет
+проверку старого и нового Gateway/при возврате; owner nonce в
+`Runtime.releaseNonce` не генерируется повторно. Provider
+`registry` и activation mount обязательны одновременно;
+`-Auto` не активирует Registry, silent downgrade и reuse
+nonce текущего source запрещены. Это **SOURCE_WIP**, без
+PowerShell 5.1 SelfTest, actual source-image build, host-provisioned
+nonce/profile и независимой owner attestation; не утверждать
+готовность установленного Windows controller.
+**Новый важный dependency gate:** профиль должен быть sealed
+владельцем **до защищённого Check**, поэтому installed source
+digest образа должен быть независимо доказан заранее из точного
+approved source/image. Владелец ещё должен проверить отсутствие
+реиспользования nonce во всей retained release history,
+документированный startup/rollback с прежним профилем,
+registry socket-writer provenance и невозможность mount mutation;
+ни само имя volume, ни self-reported Registry inode этого
+не доказывают. Нет второго Authorization/API или auto-CD.
+**Сверка по нормативным release use cases (UC-GW-005/006/013,
+UC-CONT-021/022; P3.4 owner Publisher mount), 2026-11-23:**
+действующий UC-GW-005 **уже определяет** owner merge → guarded
+Windows Mirror → PowerShell 5.1 SelfTest → manual exact
+`Check -Build` → immutable checked-image record (image SHA, source
+SHA, config/probe/scope) → отдельное owner GO →
+`Apply -CheckedImageRecord` **без второй сборки** →
+owner live readback → Backup → Promote. Первичный opt-in
+mount/grant нельзя создавать через обычный `-Auto`;
+P3.4 показал точный fixed read-only owner volume,
+offline source-image digest preflight, Check/Apply binding
+и повторную проверку без новых grants от source merge.
+`UC-GW-006` требует original protected attempt, original
+image/container/state IDs, protected pointers и один owner
+Return/Resume без слепого повторного Apply. `UC-GW-013`
+при отсутствующем previous image **не является штатным обходом**.
+`UC-CONT-021/022` требуют точного owner Docker inventory,
+RW-writer/consumer/rollback preflight и различения
+BACKUP_CREATED, BACKUP_VERIFIED, RESTORE_TESTED/DR.
+**Но эти UC НЕ содержат** операции, которая выдает
+`gatewaySourceDigest` **до** Check/owner seal:
+активный `r7_unified_server._installed_policy_source_digest()`
+строит SHA256 canonical списка per-file SHA256 **Python/static
+в реально собранном Gateway image**, это НЕ git source SHA,
+НЕ Docker image ID, НЕ `MODULARIZED-SOURCE-MANIFEST.sha256`.
+Значит до seal нужен отдельный owner-reviewed exact-image/source
+*offline* readback этого digest из independently reviewed
+owner image-only build/attestation, с последующим Check на
+точной принятой исходной версии и строгой сверкой одинакового
+внутреннего digest; незаявленный image build или self-reported
+Registry digest не допускается. Нужно проверить возможность
+этого протокола в самом owner runbook/Windows SelfTest, не
+объявлять его уже выполненным.
+Для rollback сохранение per-release named volume и SHA256
+профиля в protected runtime/check **нужно, но недостаточно**:
+требуются owner readback отсутствия RW writer/подмены,
+revalidate старого live pidfd/boot/socket profile при Return,
+previous image retention и история nonce; exit/restart
+Registry или несоответствие старого profile — STOP с
+оригинальным attempt, а не auto reseal.
+**Эта проверка не меняет E1.4–E5:** после E1.3b host gate
+только live READ/Owner WebAuthn (E1.4), затем независимый
+authenticated Collector/granted WRITE (E2), manual Board (E3),
+manual batching (E4), отдельный scoped GO (E5).
+Второй локальный Approvals source checkpoint
+`3ce4bd436d58c8d2d707ed9cbea4a16fc123a988`
+сохранил этот инструмент, ровно два fixed read-only mount и
+`reviewed_registry_reader_mount_digest()` со сверкой live peer,
+сопутствующие отрицательные тесты, runbook, release target и
+source manifest. **74 профильных теста PASS** после новой правки
+owner process security (не допускаются неожиданные supplementary
+groups), реально подключённый Unix listener отвергает другой
+живой same-UID selected PID. `source manifest --check`, syntax,
+`git diff --check` PASS; Approvals task branch чистая.
+**Полный `scripts/test-source.sh` НЕ завершён и НЕ PASS:** он
+добровольно остановлен после длинной группы native workflow;
+запущенные test shell/unittest descendants затем адресно завершены,
+другие процессы и WIP не затронуты. В журнале до остановки
+явных FAIL не зафиксировано, но это **не** полный source acceptance.
+**Третий локальный SOURCE_WIP checkpoint E1.3b —
+`670a0b41a4c2d9f4fd9c10fd1182b4d57fc3fc6f` (NOT_PR /
+NOT_MERGED / NOT_WINDOWS_TESTED):**
+ручной `Manage-Integrations.ps1` `Check -Build` →
+protected checked-image `Apply -CheckedImageRecord` требует явный
+`-EnableRegistryMount -RegistryReleaseNonce`; nonce v4, отдельный
+**per-release** readonly profile volume, fixed readonly socket
+volume, обязательное совпадение `registry` provider и mount,
+source-image/live pidfd/profile digest preflight **до остановки
+старого Gateway**, повторный защищённый admission source/target/Return,
+`registryReleaseNonce = Runtime.releaseNonce`. Runtime record и
+checked-image binding хранят nonce, SHA256 профиля и оба volumes;
+`-Auto`, silent downgrade, reuse nonce исходного Registry release,
+несовпадение runtime nonce и расширение PID/privileges STOP.
+Стандартный выпуск без Registry и Backup/Promote/Return сохранены.
+Windows owner `SelfTest` дополнен offline record/flag tests, но
+**не выполнялся на Windows**.
+**230 итоговых профильных Registry/R7/WebAuthn/Owner/release
+тестов PASS**, source manifests `--check`, git diff `--check`
+PASS; task branch чиста после локального Gateway commit.
+Полный `scripts/test-source.sh` остаётся **NOT_COMPLETE**;
+нет actual Windows PowerShell 5.1 `SelfTest`, build/readback
+точного Gateway + Registry image, independently attested Registry
+process/source, owner-sealed profile, read-only socket mount и
+реальных EACCES/SQLite backup/restore, exact-head Source/Release
+Impact CI, owner merge, Windows sync или host GO.
+**Проверка следующего порядка по E0–E5:** сначала ещё раз
+security-review исходников E1.3b, проверить собственно **Windows
+SelfTest/nonce/rollback semantics** на принятом source (после
+одного содержательного GitHub PR/CI/owner merge и Windows guarded
+sync); затем отдельное host owner GO на реальный nonprod Registry
+listener, independent kernel pidfd/image attest + immutable profile
+перед Check, исходный и новый Gateway release с сохранённым
+rollback, Repo socket/SQLite EACCES/EPERM, schema3 backup/inactive
+restore. **Только после доказанного E1.3b HOST acceptance — E1.4**
+реальный Repo→TLS Gateway→Registry READ, browser WebAuthn и
+revokes. E2 — отдельно authenticated GitHub Collector и
+owner-granted planner-only WRITE (original UUID/CAS/UNKNOWN,
+первый PENDING audit timestamp), E3 manual Board,
+E4 ручные batch/supersession, E5 scoped Functional V1 GO.
+Никаких новых API/policy/авто-CD или преждевременного
+перехода к E1.4–E5.
+
+**Local read-only SO_PEERPIDFD feasibility on 2026-11-23 (NOT_HOST_EVIDENCE):**
+Fortis Repo's *development container* reported Linux
+`6.18.33.2-microsoft-standard-WSL2`, Python `3.11.2` (the Python
+`socket.SO_PEERPIDFD` symbol absent). An unprivileged, isolated
+`AF_UNIX socketpair` call with native Linux optname `77` returned a
+real kernel pidfd; `fstat` yielded a positive inode, `poll` reported
+its referenced process alive, and `/proc/self/fdinfo` showed its local
+PID. An independent same-process test obtained both `os.pidfd_open(getpid())`
+and `getsockopt(SO_PEERPIDFD=77)` pidfds; their positive `fstat().st_ino`
+values matched and initial poll was empty, with no processes signalled. No Docker Engine, Windows host, Registry, Gateway or credentials
+were accessed. **This does not test independent PID namespaces and is not
+an owner-pinned process identity**. Linux pidfs inode is documented as a
+stable process identifier for 64-bit kernels >=6.9 for the current boot,
+but source/runtime must prove the owner-trusted identity and restart
+invalidation separately; never accept a self-reported inode alone.
+Next owner-run isolated test: two ephemeral different-PID-namespace
+containers with `SO_PEERCRED` expected `pid=0`, *positive*
+`SO_PEERPIDFD` on both ends, `pidfd_open(getpid())` inode cross-
+comparison and `poll` on peer exit. The test uses existing image,
+no pulls/live mounts/network/grants or shared namespaces. Failures STOP.
+**After-step E1.4–E5 review:** E1.4 remains behind actual owner E1.3b
+identity, allowlisted mount, ACL and backup acceptance. E2–E5 remain
+separate Collector WRITE, Board/manual reporting, batch and scoped GO,
+unchanged. Preserve all existing release policy and source dependencies.
+
+**Preferred research direction aligned with current architecture:**
+keep independent Docker PID namespaces and reuse the existing fixed
+owner-bound AF_UNIX mount, closed Registry provider/Core/Owner Policy V2,
+exact source/instance/scope/UID/GID/socket inode, host access denial and
+owner-controlled grants. Investigate whether the target Docker Desktop Linux
+kernel supports **`SO_PEERPIDFD`** (Linux 6.5+) as a real kernel peer-process
+handle across PID namespaces, and how an **owner-pinned, non-replayable**
+Registry process identity can be checked against that handle. A pidfd merely
+showing that *some* peer is alive does **not** by itself prove the approved
+Registry instance. Treat absence of the option, insufficient identity proof,
+unsupported Python interface, PID/restart ambiguity, or weakened owner
+pinning as **STOP**, not a reason to compare UID/GID alone or accept `pid=0`.
+Do not alter the accepted reader, listener, release controller or owner
+profiles until this source/security design is reviewed and separately
+approved. **If viable**, one scoped implementation cut must update the
+existing Gateway and Registry identity contract, negative tests, owner
+runbook, and exact Gateway controller admission for the *specific* readonly
+Registry mount, preserving all current release gates. No parallel API or CD.
+A later owner-run isolated two-container *no live mounts/no image pulls*
+feasibility test for `SO_PEERPIDFD` may be used after source review and
+explicit approval; do not repeat the three-container anchor experiment.
+
+**After-step future E1.4–E5 review:** E1.4 remains blocked until identity,
+owner mount/release controller support and real E1.3b host ACL/SQLite/backup
+are independently accepted. E2 authenticated Collector/planner-only WRITE,
+E3 manual event/Board, E4 manual batch and E5 scoped Functional V1 GO remain
+unchanged, without a new authority service or unattended CD. Reassess future
+stages after each verified source or actual host result, not only status.
+
+**E1.3b — owner sandbox SO_PEERCRED 2026-11-23 (SEPARATE_PID_FAIL / SHARED_PID_PASS / HOST_STOP):**
+На FORTIS_M владелец запустил временный тест **без image pull**, отдельной
+сетью `--network none`, `--read-only`, `--cap-drop ALL`,
+`--security-opt no-new-privileges`, двумя отдельными default Docker PID
+namespaces и временным Unix socket/volume; действующие Gateway/Repo и
+Registry runtime не менялись. Оба процесса установили соединение:
+`CLIENT_OWN_PID=1`, `CLIENT_SEES_SERVER pid=0 uid=12002 gid=12002`,
+`SERVER_READY own_pid=1`,
+`SERVER_SEES_CLIENT pid=0 uid=10001 gid=10001`.
+`RESULT=SERVER_PID_NOT_VISIBLE` подтвердил, что peer UID/GID видны,
+но **PID другой стороны недоступен** в namespace проверяющего.
+В повторном sandbox-тесте с `--pid=container:<temporary-server>`
+(оба **временных** контейнера, `--network none`, `CapDrop=ALL`,
+без image pull) `CLIENT_PID=7`, `SERVER_PID=1`,
+обе стороны показывают `pid:[4026533170]`;
+`CLIENT_SEES_SERVER pid=1 uid=12002 gid=12002` и
+`SERVER_SEES_CLIENT pid=7 uid=10001 gid=10001`,
+`SHARED_PID_NAMESPACE_TEST_PASS`. Это **только**
+доказательство положительного kernel peer PID внутри общего namespace,
+не admission Registry и не проверка restart.
+Strict `GatewayRegistryUnixCandidateRead` требует именно тройку
+`(registryPid>0, registryUid, registryGid)` и отказал бы при `pid=0`.
+**Следовательно, topology с независимыми PID namespaces непригодна
+для E1.3b; host pilot и E1.4 не начинать.** Никакие `CAP_*`,
+`--pid=host`, игнорирование PID или подмена его Docker `State.Pid`
+не разрешены. Следующий дизайн-gate **после успешного sandbox** —
+security-review shared PID topology, namespace init/lifecycle,
+independent restart, owner repinning and Repo denial. При отказе
+от этой топологии потребуется отдельный owner-reviewed source/topology
+fix с сохранением fail-closed kernel identity. Успех sandbox сам по себе
+не является разрешением на изменение работающего Gateway или релиз.
+**Критический риск жизненного цикла:** в PASS-тесте тестовый Registry-сервер
+был `PID 1` общего пространства имён, а reader присоединился к нему.
+Согласно Linux `pid_namespaces(7)`, завершение namespace init
+`PID 1` приводит к `SIGKILL` остальных процессов в namespace.
+Поэтому прямое `Gateway --pid=container:Registry` потенциально роняет
+Gateway при остановке/рестарте Registry и **не принято**.
+Изоляция `UID/GID` и `CapDrop=ALL` сохраняется на уровне соответствующих
+проверок, но общая видимость `/proc`/процессов и зависимость от init
+снижают прежнюю независимость жизненных циклов.
+До нового релиза нужен review архитектуры PID owner, restart, pin
+`registryPid` и inode при каждом restart, отката Gateway,
+защиты от чужих процессов, сохранения `no-new-privileges`,
+отдельных credentials/volumes. Рассмотреть отдельный стабильно
+управляемый PID anchor **лишь как вариант**, не вводить автоматически
+новый обязательный runtime, или owner-reviewed fail-closed
+source/topology redesign без ослабления идентификации.
+**Пересмотр будущих E1.4–E5:** E1.4 остаётся заблокирован до проверки
+реального E1.3b host, E2–E5 не меняются; после нового измерения
+пересмотреть весь оставшийся план, не только статус.
+
+**E1.3b — owner Windows Docker inventory 2026-11-23 (PARTIAL_HOST_EVIDENCE / STOP):**
+Владелец выполнил *только* read-only `docker version/info/ps -a/inspect` на
+`FORTIS_M` (Windows PowerShell 5.1, Docker Engine 29.9.2). По его выводу
+running `fortis-gateway` healthy, image
+`sha256:2039987ce7c7b15d6fd6dea8111c79bf27098cdf5e9754ddea1a8034d3f20d50`,
+user `10001:10001`, `Privileged=false`, `ReadonlyRootfs=true`, restart
+`unless-stopped`, `PIDMode` и `UsernsMode` пустые; mounted `/state`
+RW + существующие защищённые RO volumes, **без**
+`/run/r7-registry-reader`. `fortis-repo-test` running, image
+`sha256:f6d21fea25a8b67da533a8400f6eb7923a3d22605a00a784d35e3625253496d9`,
+user `1000:1000`, тоже unprivileged и readonly rootfs; его RW
+`fortis-repo-workspace` и RO `/run/fortis-client` не совпадают с
+приватными Gateway mounts. Отдельный Registry container в предоставленном
+`docker ps -a` не показан. Второй owner read-only `docker info/inspect`:
+Docker Desktop Linux Engine `x86_64`; `fortis-gateway` Docker Engine PID
+`1091`, `CapDrop=[ALL]`, `CapAdd=[]`, `GroupAdd=[]`,
+`no-new-privileges:true`, `IPC=private`, `Network=bridge`;
+`fortis-repo-test` Engine PID `1025`, те же снятые capabilities и
+`no-new-privileges`, `IPC=private`, отдельная сеть
+`fortis-repo-egress`. `Config.User` показывает заданные UID/GID, но
+**не доказывает** реальный kernel `getresuid/getresgid` и supplementary
+groups; Docker Engine PID — не PID peer внутри Gateway namespace.
+Это **owner-reported output**, не независимое
+Linux kernel/host readback и не доказательство запрета доступа Repo.
+**Критическое уточнение E1.3b ДО image build/Check/Apply:** пустой
+`PIDMode` у Gateway означает штатную Docker PID-изоляцию, при которой
+`SO_PEERCRED` из будущего *другого* namespace может вернуть `PID=0`
+или PID, не совпадающий с pinned `registryPid`. Утверждать точную
+межконтейнерную PID-видимость без измерения нельзя; `State.Pid` из
+Docker Engine **не** является значением `SO_PEERCRED` в Gateway.
+Read-only `PidMode/UsernsMode/CapDrop/SecurityOpt` inventory **получен**;
+следующий gate — отдельно owner-approved изолированный non-Production
+feasibility test **двух временных контейнеров без участия существующего
+Gateway/Repo и без новых Docker privileges**: точный kernel SO_PEERCRED
+как видит reader при разных PID namespaces. До owner GO никаких новых
+контейнеров, volumes, image pulls или runtime-команд.
+Если точный положительный PID/UID/GID и device/inode
+не доказаны без ослабления policy, **STOP и исправить E1.3b source/topology
+в существующей архитектуре до release**, а не включать `--pid=host`,
+CAP_* или пропускать проверку ради PASS. Нет owner host GO, Registry
+image/volume/socket/SQLite и backup/restore admission.
+**Сверка оставшихся E1.4–E5:** зависит от успешной E1.3b topology/host
+приёмки; порядок collector WRITE → manual events/Board → manual batch →
+scoped owner V1 GO остаётся прежним. После следующего owner host readback
+пересмотреть план снова, а не только сменить статус.
 
 **E1.3b — read-only preflight 2026-11-23 (NOT_HOST_EVIDENCE / STOP):**
 После owner merge #55 и fast-forward `fortis-container/main` проверены единый
