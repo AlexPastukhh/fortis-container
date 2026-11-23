@@ -471,6 +471,29 @@ Approvals PR #237 + Container PR #50 OWNER-MERGED и main синхронизир
 | **E4 — P8** | Второй реальный merge supersedes Desired, оставляет pending; Release Batch группирует зависимости/build units и предлагает **ручные** UC. | ⬜ **NOT_STARTED_LIVE**. | Реальная сохранность очереди, version provenance, отказные сценарии, без CD execution. |
 | **E5 — Functional V1 acceptance** | E2–E4 целиком с cold restart, duplicate UUID, rejected source, missing CI, restore, revoke, no-deployment, UNKNOWN и owner proof. | ⬜ **NOT_ACCEPTED**. | Отдельный scoped non-Production `FUNCTIONAL_V1_GO`; PR/CI/host E1 сами по себе не GO. |
 
+**E1.3b — read-only preflight 2026-11-23 (NOT_HOST_EVIDENCE / STOP):**
+После owner merge #55 и fast-forward `fortis-container/main` проверены единый
+roadmap и фактические возможности текущего доступа. Fortis Repo выполняет
+shell **в Docker-контейнере разработки**, не в установленном non-Production
+Registry/Gateway host: здесь нет Docker CLI, Docker socket и трёх приватных
+путей `/run/r7-registry-reader`, `/run/fortis-registry-runtime`,
+`/run/fortis-registry-read`. Эти наблюдения **не доказывают отсутствие**
+Registry/сокетов на целевом Windows/Linux host. Gateway native capability
+предоставляет Repo/GitHub/read-only request inventory, **не** host Docker
+inventory; PowerShell machine broker `policy=ASK`,
+`machineExecutionAutoApprove=false`. Ни произвольный PowerShell submit, ни
+Docker host call, ни owner Check/Apply/Backup/Promote не отправлялись.
+**E1.3b HOST_NOT_ACCEPTED остаётся без изменений.** Следующая проверка —
+отдельный owner-controlled `UC-CONT-021` inventory точного non-Production host
+(контейнеры/image digests, PID/userns, реальные mount/UID/GID, private volumes,
+backup/recovery), затем только по отдельному owner GO — `UC-GW-005`
+owner-controlled release и независимая OS/peer/Repo-denial/restore приёмка по
+`RELEASE-REGISTRY-FUNCTIONAL-V1-PILOT.md`. Не подменять отсутствующее
+host-доказательство source/CI и не выдавать новые machine grants/Registry
+WRITE ради preflight. **Пересмотр E1.4–E5:** порядок и условия без изменений;
+E1.4 начинается лишь после принятой E1.3b на реальном host, E2/3/4/5 остаются
+отдельными. Следующий выполненный шаг снова требует пересмотра будущего плана.
+
 **Сверка после owner merge E1.3 source (#240 + #54; нет host GO):**
 Оба исходных PR проверены по точным HEAD и merge-коммитам; обязательные
 Source CI, P5 Retained, исправленный Release Impact с четырьмя target и docs
