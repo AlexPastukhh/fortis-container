@@ -471,26 +471,35 @@ Approvals PR #237 + Container PR #50 OWNER-MERGED и main синхронизир
 | **E4 — P8** | Второй реальный merge supersedes Desired, оставляет pending; Release Batch группирует зависимости/build units и предлагает **ручные** UC. | ⬜ **NOT_STARTED_LIVE**. | Реальная сохранность очереди, version provenance, отказные сценарии, без CD execution. |
 | **E5 — Functional V1 acceptance** | E2–E4 целиком с cold restart, duplicate UUID, rejected source, missing CI, restore, revoke, no-deployment, UNKNOWN и owner proof. | ⬜ **NOT_ACCEPTED**. | Отдельный scoped non-Production `FUNCTIONAL_V1_GO`; PR/CI/host E1 сами по себе не GO. |
 
-**E1.3b — единая контрольная таблица после каждого шага (2026-11-23; source vs host):**
+**E1.3b — единая контрольная таблица после каждого шага (checkpoint 2026-11-23; owner readbacks vs source):**
 
-| № | Шаг и критерий | Текущая доказанная стадия | Остаётся / STOP |
+| № | Шаг и критерий | Текущее доказательство | Осталось / STOP |
 | --- | --- | --- | --- |
-| 1 | Owner merge + exact-SHA CI прежних E1.3b исходников | ✅ Approvals #241/#242 и Container #57/#58 **MERGED**, CI на HEAD #242/#58 **PASS**; текущие `main`: Approvals `faebc20ec309014e293ea7ac082ba2341e64a328`, Container `41ab1d50602ff379bd094d90460a91e44fec104f`; локальные primary синхронизированы через защищённый Gateway | Не смешивать source merge с Windows install, Docker host и GO |
-| 2 | A: owner offline installed `gatewaySourceDigest` до owner seal, protected manual Check/Apply | ✅ **SOURCE_MERGED** в #242: `RegistrySourceDigest`, exact source/image pre-seal readback, `RegistryExpectedSourceDigest` и защищённый Check binding | Реальный owner image/source/digest readback, Windows exact-SHA контроллер, real seal/mount до host GO. Digest не Git SHA и не самозаявление Registry |
-| 3 | B: previous profile/nonce/old image/attempt, fail-closed Return | ✅ **SOURCE_MERGED** в #242: исторический nonce scan, previous-image/profile/peer admission до остановки кандидата и повтор после STOP | Отдельные реальные host retained-history, old pidfd/boot/socket, RW writers, rollback/recovery и original UNCERTAIN/attempt; без автоматического reseal/replay |
-| 4 | Устранить обнаруженный gap: неполная история nonce не должна молча пропускаться | 🟡 **SOURCE PR #243 OPEN / NOT MERGED** (head `8f03f5de0350ce5eb6e069d2570def167af07cbd`), roadmap **Container PR #59 OPEN**: missing protected `record.json` и reparse → STOP, strict-mode-safe legacy fields, pure Windows PowerShell `SelfTest` с отрицательными cases. Локальные Registry/release tests **42 PASS**, manifests/compileall/diff check PASS; в первоначальном HEAD `00b758b5…` Windows audit **FAILED**, причина устранена в следующем коммите. | На точном HEAD #243 `8f03f5de…` **offline-tests, Windows audit-projections, Release Impact, P5 Retained — PASS**; Container #59 release-schema **PASS** на текущем проверенном HEAD. Owner review/merge отдельно; CI не является host acceptance |
-| 5 | Source/Windows проверка корректности Controller и release targets | ✅ Для принятых #242/#58 exact-SHA CI PASS. ✅ Для открытого #243 на `8f03f5de…`: Source CI/offline-tests, Windows audit, Release Impact, P5 Retained **PASS**; для открытого #59 release-schema **PASS** | Перед owner merge повторить independent exact-HEAD readback обоих PR и CI; после source merge — отдельно guarded Windows update, host PowerShell SelfTest, независимые Docker/source/nonce/rollback проверки и owner GO |
-| 6 | Owner host preflight по UC-CONT-021/022 и UC-GW-005/006/013 | ⬜ **HOST_NOT_ACCEPTED, NOT_LIVE** | Только отдельное owner GO: точные image/UID/GID/boot/pidfd/socket/RO mounts, Repo `EACCES/EPERM`, schema-3 backup + inactive restore, сохранение старых nonce/volumes/attempt, manual Check→Apply→live readback→Backup→Promote и возврат при STOP |
-| 7 | Будущие E1.4–E5 и ограничения | ⬜ **NOT_STARTED_LIVE** | E1.4 только после E1.3b host acceptance; E2 authenticated Collector + planner-only owner-granted WRITE; E3 manual release events/Board; E4 batching/supersession без CD; E5 отдельный scoped `FUNCTIONAL_V1_GO` |
+| 1 | Exact source merge + CI + guarded Windows update | ✅ Approvals #243 и Container #59 **owner-merged**; принятые `main`: Approvals `8a7e8392663b32ba5cb81e0dae24df8b52f61313`, Container `618d55a762e66c5c803500e16a20390869b11bdf`; Windows Mirror Pull **owner-reported**, Windows PS 5.1 SelfTest после Pull **PASS** | Windows Pull receipt в этом checkpoint отдельно не предъявлен; не принимать source merge за host release |
+| 2 | Gateway pre-seal source digest and image-only build | ✅ Owner Windows image `sha256:97cf261f777bb389a90902654fa8a5c6ca59ff3f46423a4b7aff5d0dacf455cc` c revision=source SHA; `gatewaySourceDigest=7ac243a39ce9264e6330dea1288ba733d792f54a7cd892b40354de67932723a8`; рабочий Gateway **не переключён** | Digest ещё нужно связать с независимым host peer/nonce seal до Check |
+| 3 | Registry base image and separate image-only build | ✅ Локально Linux/AMD64 `python:3.11-slim`, image ID `sha256:673719e071ecf27434fd2635bbd8d00f49f4fdd81f243143438a42ced8bedf60`; Registry candidate `sha256:597152e7160930682a98f676f093243a5b18ebf70c3724bdbae98de21bb1402b`, source revision accepted, UID:GID `20002:20002` | Independent upstream base provenance не доказана; новые image inputs после будущего PR требуют отдельного image-only rebuild/GO |
+| 4 | Реальные Linux runtime credentials, groups, self pidfd | ✅ Owner one-shot isolated `docker run --rm`, `REGISTRY_ISOLATED_RUNTIME_PROBE_PASS`: UID/GID `20002:20002`, groups `[20002]`, mapped IDs `20002`, caps zero, NNP, seccomp, self pidfd | One-shot pidfd **не** pin Registry service; 9 Docker container users из static inventory не разрешены; reader/Repo host mapping не принят |
+| **5** | **Новый source task — Registry owner bootstrap core** | 🟡 **SOURCE PR #244 OPEN / EXACT-HEAD CI PASS, NOT MERGED**: [Approvals #244](https://github.com/AlexPastukhh/fortis-approvals/pull/244), HEAD `5876ceee852cb3cb628da77e03f1d676415ef651`, Source CI `45148481628`, P5 Retained Impact `45148481655`, corrected Fortis Release Impact `45149446959` **SUCCESS**. Body Release Impact declares four catalog-affected targets without granting deployment; no source commit was changed to fix the initial CI failure. Registry source `Preview`/separate owner-approved schema3 `Provision`/inactive `Verify`, Dockerfile/catalog/negative tests: 37 focused tests PASS, source manifest PASS. Pair [Container roadmap PR #60](https://github.com/AlexPastukhh/fortis-container/pull/60) **OPEN / NOT MERGED**, first-head schema checks `45148820544` PASS; verify CI again on its final amended HEAD. Earlier `workspace.inspect`/`stage` without UUID returned `FORTIS_HTTP_403`; corrected stage/commit EXECUTED, separate corrected read-only inspect UUID `ddab75e1-1597-4258-8f33-153b21bddead` remains UNCERTAIN (not host evidence). | Before owner merge check exact live HEAD and required CI for **both** linked PRs, accept changed roadmap status after the last commit and owner UI merge independently. No Windows Docker volume/ownership launcher, host bootstrap, socket, service, seal, grant or host acceptance; future image inputs require separate owner image-only build/GO |
+| 6 | Owner Docker preflight and reviewed host launcher | ⬜ **NOT_STARTED** (UC-CONT-014/016/021/025) | Separate owner-approved host entrypoint for exact volumes/mounts/uid maps, config provenance, RW writers, protected history and rollback; no ad-hoc host mutations |
+| 7 | Owner-selected instance/scope + schema-3 Provision | 🔒 HOST GO REQUIRED | Independently prove immutable scope/instance and exact spec digest; state volume `0700` and DB `0600`; **no automatic retry** of partial initialization |
+| 8 | SQLite backup verified + independent inactive restore | 🔒 HOST GO REQUIRED (UC-CONT-022) | Owner private retention, correct SQLite WAL snapshot, digest and manifest, independently mounted inactive restore; `verify_inactive_local_backup()` alone is **not** restore |
+| 9 | Socket/runtime/peer and real Repo-denial | 🔒 HOST GO REQUIRED | Socket dir `02710`/socket `0660`, no shared PID/socket privileges; independent live `SO_PEERPIDFD`+`SO_PEERCRED`+boot/socket inode, Repo EACCES/EPERM for socket and SQLite |
+| 10 | Owner-sealed nonce-specific Gateway READ profile | 🔒 HOST GO REQUIRED | Unique fresh UUIDv4, exact pre-seal digest, owner-held separate RO profile volume, original history retained; reject RW/replaced peer/inode |
+| 11 | UC-GW-005 manual Check/Apply/live readback/Backup/Promote | 🔒 SEPARATE GO PER EFFECT | Existing current/primary/attempt/history preserved, Check `-Build` and Apply checked image **without Build**, no `-Auto` initial activation; Return per UC-GW-006 |
+| **12** | **E1.3b HOST_ACCEPTED** | ❌ **NOT_ACCEPTED**, Registry **NOT_INSTALLED** | Required independent complete E1.3b host evidence only; E1.4–E5 remain blocked |
 
-**Проверять после каждого шага и перед owner merge:** (1) что завершено фактически;
-(2) что осталось недоказанным; (3) соответствие этому E0–E5 и UC-GW-005/006/009/013,
-UC-CONT-002/003/021/022; (4) новые зависимости и пропорциональность;
-(5) нужно ли скорректировать E1.4–E5, не только статус E1.3b.
-Каждому реализации PR сопутствует update **этого** P5 roadmap в связанном
-Container PR; не создавать второй нормативный план. Текущий статус включает
-исключительно подтверждённые source evidence; `SOURCE_MERGED`, `CI_PASS`,
-`WINDOWS_INSTALLED`, `HOST_ACCEPTED`, `FUNCTIONAL_V1_GO` — разные события.
+**Обязательная актуализация P5 после каждого завершённого шага и в КАЖДОМ PR:**
+(1) обновить именно эту таблицу и E0–E5 статус по подтверждённым фактам;
+(2) показать все оставшиеся и STOP; (3) сверить порядок, зависимости и
+критерии с применимыми UC, при необходимости изменить **будущие шаги**, а
+не только пометку PASS; (4) проверить Release Impact и различить
+`SOURCE_READY / PR_MERGED / WINDOWS_INSTALLED / IMAGE_BUILT / HOST_ACCEPTED /
+FUNCTIONAL_V1_GO`; (5) перед merge проверить точные HEAD/CI и ещё раз
+сопоставить roadmap с реальным состоянием. Source PR в Approvals должен
+сопровождаться связанным обновлением **этого** нормативного Container
+roadmap; не создавать второй authoritative plan. Пока PR находится в review,
+не отмечать его как merged. После merge фиксировать реальный SHA, а не
+предполагаемый. Нет подразумеваемого host GO от изменения документации.
 
 **E1.3b — cross-check against EXISTING Gateway release admission (2026-11-23; SOURCE_REVIEW, NO HOST GO):**
 The current owner-managed `fortis_approvals/deploy/Manage-Integrations.ps1`
