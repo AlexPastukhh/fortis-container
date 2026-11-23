@@ -471,6 +471,39 @@ Approvals PR #237 + Container PR #50 OWNER-MERGED и main синхронизир
 | **E4 — P8** | Второй реальный merge supersedes Desired, оставляет pending; Release Batch группирует зависимости/build units и предлагает **ручные** UC. | ⬜ **NOT_STARTED_LIVE**. | Реальная сохранность очереди, version provenance, отказные сценарии, без CD execution. |
 | **E5 — Functional V1 acceptance** | E2–E4 целиком с cold restart, duplicate UUID, rejected source, missing CI, restore, revoke, no-deployment, UNKNOWN и owner proof. | ⬜ **NOT_ACCEPTED**. | Отдельный scoped non-Production `FUNCTIONAL_V1_GO`; PR/CI/host E1 сами по себе не GO. |
 
+**E1.3b — owner Windows Docker inventory 2026-11-23 (PARTIAL_HOST_EVIDENCE / STOP):**
+Владелец выполнил *только* read-only `docker version/info/ps -a/inspect` на
+`FORTIS_M` (Windows PowerShell 5.1, Docker Engine 29.9.2). По его выводу
+running `fortis-gateway` healthy, image
+`sha256:2039987ce7c7b15d6fd6dea8111c79bf27098cdf5e9754ddea1a8034d3f20d50`,
+user `10001:10001`, `Privileged=false`, `ReadonlyRootfs=true`, restart
+`unless-stopped`, `PIDMode` и `UsernsMode` пустые; mounted `/state`
+RW + существующие защищённые RO volumes, **без**
+`/run/r7-registry-reader`. `fortis-repo-test` running, image
+`sha256:f6d21fea25a8b67da533a8400f6eb7923a3d22605a00a784d35e3625253496d9`,
+user `1000:1000`, тоже unprivileged и readonly rootfs; его RW
+`fortis-repo-workspace` и RO `/run/fortis-client` не совпадают с
+приватными Gateway mounts. Отдельный Registry container в предоставленном
+`docker ps -a` не показан. Это **owner-reported output**, не независимое
+Linux kernel/host readback и не доказательство запрета доступа Repo.
+**Критическое уточнение E1.3b ДО image build/Check/Apply:** пустой
+`PIDMode` у Gateway означает штатную Docker PID-изоляцию, при которой
+`SO_PEERCRED` из будущего *другого* namespace может вернуть `PID=0`
+или PID, не совпадающий с pinned `registryPid`. Утверждать точную
+межконтейнерную PID-видимость без измерения нельзя; `State.Pid` из
+Docker Engine **не** является значением `SO_PEERCRED` в Gateway. Сначала
+получить owner-only read-only `PidMode/UsernsMode/CapDrop/SecurityOpt`
+inventory, затем отдельно утверждённый безопасный non-Production topology
+feasibility test. Если точный положительный PID/UID/GID и device/inode
+не доказаны без ослабления policy, **STOP и исправить E1.3b source/topology
+в существующей архитектуре до release**, а не включать `--pid=host`,
+CAP_* или пропускать проверку ради PASS. Нет owner host GO, Registry
+image/volume/socket/SQLite и backup/restore admission.
+**Сверка оставшихся E1.4–E5:** зависит от успешной E1.3b topology/host
+приёмки; порядок collector WRITE → manual events/Board → manual batch →
+scoped owner V1 GO остаётся прежним. После следующего owner host readback
+пересмотреть план снова, а не только сменить статус.
+
 **E1.3b — read-only preflight 2026-11-23 (NOT_HOST_EVIDENCE / STOP):**
 После owner merge #55 и fast-forward `fortis-container/main` проверены единый
 roadmap и фактические возможности текущего доступа. Fortis Repo выполняет
