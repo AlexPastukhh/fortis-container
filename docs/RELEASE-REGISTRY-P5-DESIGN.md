@@ -9,11 +9,13 @@ Gateway permission or runtime image is installed by this document.
 
 **Authority:** [Release Planning Contract](RELEASE-PLANNING-CONTRACT.md#post-merge-cd-queue-and-fortis-release-board),
 [one roadmap](BACKLOG-IMPROVEMENTS.md#fortis-release-planning--cd-queue),
-[current handoff](RELEASE-REGISTRY-V1-HANDOFF-2026-11-23.md).
+[current handoff](RELEASE-REGISTRY-V1-HANDOFF-2026-11-24.md).
 All changes described below remain subject to source review and separate owner
 approval of the trust boundary. GitHub PR merge alone is not deployment.
 
-## Implementation version and runtime status (readback 2026-11-23)
+## Implementation version and runtime status (historical readback 2026-11-23)
+
+**Current 2026-11-24:** schema-3 bootstrap/backup/restore, live isolated Registry candidate, owner seal and direct Gateway-image READ passed; installed Gateway not switched, cutover recovery STOP after #253. See [current handoff](RELEASE-REGISTRY-V1-HANDOFF-2026-11-24.md) and normative roadmap for latest state; historical source-only statements below are not current host inventory.
 
 **D1–D7 remain the design baseline, not a second implementation roadmap.**
 Accepted Approvals [#194–#223](https://github.com/AlexPastukhh/fortis-approvals/pull/223)
