@@ -4,11 +4,12 @@
 
 ## Full release lifecycle and speed — 2026-11-26
 
-UC-CONT-002 source clarifies the owner-defined end-to-end release boundary,
-conditional target actions and separate wall/active/wait/downtime measurement.
+UC-CONT-002 source distinguishes the end-to-end development/delivery cycle
+from the release itself (Check through accepted retention/Cleanup readback).
+CI and pre-Check source delivery are outside the release timing scope.
 No new workflow engine, schema actions, runtime or approval changes. Actual
-optimization is pending measured bottlenecks across the complete cycle; use
-existing CI/receipts and target markers, not a synthetic production release.
+optimization is pending measured release bottlenecks; use existing receipts
+and target markers, not a synthetic production release.
 Gateway runtime/retention operations remain owned by UC-GW-005/007.
 
 ## Mirror unified API — P0 review (2026-11-15)
