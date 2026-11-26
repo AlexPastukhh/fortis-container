@@ -2,10 +2,35 @@
 
 ## UC-CONT-002
 
-**Цель:** доставить проверенное изменение из Docker через GitHub/CI/owner merge;
-обновить Windows main, если Windows — получатель этих исходников.
+**Когда:** согласованное изменение требуется довести до принятого результата.
+
+**Цель:** выполнить полный **релиз** — от решения начать конкретное изменение
+до подтверждённой доставки и приёмки всех затронутых targets, проверки
+recovery/retention и завершения task. Merge, Windows sync, image build и
+runtime deployment — отдельные действия релиза, не синонимы релиза.
 
 **Как:**
+
+Состав действий выбирается по фактическому scope: подготовка и разработка,
+локальные проверки, commit/publication, PR/CI, owner merge, синхронизация
+Docker/Windows, сборка и развёртывание нужных targets, live acceptance,
+проверка rollback/retention и закрытие task. Не создавать ненужные сборки,
+синхронизации или runtime releases для `no-deployment`/source-only изменений.
+Для нескольких targets учитывать зависимости и общий build unit по
+[Release Planning Contract](../RELEASE-PLANNING-CONTRACT.md); конкретные
+команды и approvals остаются у владельцев target. Recovery и Cleanup —
+условные действия с отдельными допусками, не автоматическая часть deployment.
+
+При анализе скорости измерять весь релиз, а не только runtime deployment:
+от начала задачи до принятого результата, отдельно активные действия,
+ожидание CI/owner/очереди, повторные попытки и downtime (включая backup).
+Использовать существующие timestamps/receipts/markers; не суммировать
+параллельные jobs как wall time. Отсутствующее измерение — UNKNOWN,
+не повод для искусственного релиза или обхода проверок. Перед затратными
+действиями проверить host и guest capacity по UC-CONT-021/025, после
+принятого runtime — необходимость отдельного обслуживания по UC-CONT-023.
+
+Порядок выполнения:
 
 1. [UC-CONT-001](orientation.md#uc-cont-001): установить контекст;
    [UC-CONT-019](worktrees.md#uc-cont-019): выбрать/создать linked task worktree,
@@ -58,7 +83,15 @@
    зафиксировать «Windows sync: не требуется» и не запускать Mirror
    ради формального совпадения SHA. Pull исходников не собирает image
    и не обновляет запущенное приложение.
-6. Завершить свою задачу очисткой выбранного task worktree: сверить repo,
+6. Выполнить требуемое развёртывание и приёмку у владельца target, если это
+   входит в цель. Для Gateway — [UC-GW-005](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/releases.md#uc-gw-005)
+   и [UC-GW-007](https://github.com/AlexPastukhh/fortis-approvals/blob/main/docs/use-cases/primary.md#uc-gw-007), включая
+   SelfTest, Check, отдельно подтверждённый Apply, live readback, Backup,
+   Promote, проверку сохранённых поколений и решение по отдельному Cleanup.
+   Для остальных targets — их собственные UC; не переносить команды Gateway
+   на другие сервисы. При STOP/UNCERTAIN сохранять исходные receipts и
+   recovery resources, не считать релиз завершённым.
+7. Завершить свою задачу очисткой выбранного task worktree: сверить repo,
    task и фактический HEAD, убедиться, что работа закончена и source path не
    нужен deployment/recovery records или другой активной задаче. По
    [контракту очистки][cleanup] проверить live capability и вызвать typed
@@ -80,7 +113,10 @@
 `EXECUTED`/readback либо Windows явно не входил в задачу.
 Не запрашивать дополнительную PowerShell-команду, скриншот или
 ручное сообщение SHA после успешного Mirror readback. Необходимое
-развёртывание прошло [UC-CONT-012](operations.md#uc-cont-012), если оно было целью.
+развёртывание прошло [UC-CONT-012](operations.md#uc-cont-012), если оно было целью;
+все требуемые targets приняты по соответствующим evidence,
+retention/recovery проверены, необязательные отложенные действия обоснованы.
+При блокере обязательного действия релиз остаётся PARTIAL/BLOCKED.
 Task worktree удалён с подтверждённым receipt либо указан конкретный повод
 его сохранить; завершённые задачи не остаются висеть без причины.
 Детальные команды и правила директорий принадлежат [Mirror workflow][mirror],
