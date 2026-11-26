@@ -2,6 +2,16 @@
 
 **Status:** ACTIVE BACKLOG. Завершённые этапы отмечаются отдельно с evidence; будущие пункты **не разрешают** выполнять runtime operations без owner review. Это единственный backlog репозитория. Исторические source/plan записи здесь не являются текущим live state.
 
+## Full release lifecycle and speed — 2026-11-26
+
+UC-CONT-002 source distinguishes the end-to-end development/delivery cycle
+from the release itself (Check through accepted retention/Cleanup readback).
+CI and pre-Check source delivery are outside the release timing scope.
+No new workflow engine, schema actions, runtime or approval changes. Actual
+optimization is pending measured release bottlenecks; use existing receipts
+and target markers, not a synthetic production release.
+Gateway runtime/retention operations remain owned by UC-GW-005/007.
+
 ## Mirror unified API — P0 review (2026-11-15)
 
 UC-CONT-003 содержит узкое **activation-gated proposal**, не разрешение
