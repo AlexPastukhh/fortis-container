@@ -37,7 +37,8 @@ No GitHub write, deployment or privileged action is authorized by this design fi
 ## Canonical source formats
 
 - Per enrolled project: `release/targets.yaml`, one current catalog at repository `main`.
-  [Machine schema](schemas/build-target-catalog-v1.schema.json); inspect
+  [Legacy machine schema v1](schemas/build-target-catalog-v1.schema.json),
+  [maintenance-aware catalog v2](schemas/build-target-catalog-v2.schema.json); inspect
   [Feedbrain topology example](schemas/feedbrain-catalog-example-v1.yaml).
 - Per PR: **exactly one** bounded `releaseImpact` YAML mapping, enclosed by
   `<!-- fortis-release-impact:start -->` and `<!-- fortis-release-impact:end -->`
@@ -45,12 +46,55 @@ No GitHub write, deployment or privileged action is authorized by this design fi
   PR template; typed Gateway PR creation must provide the actual body.
   [Machine schema](schemas/release-impact-v1.schema.json);
   [Feedbrain PR example](schemas/feedbrain-release-impact-example-v1.yaml).
-- `schemaVersion: 1` is pinned. Changes to either schema require reviewed migration
-  and validator tests; don't interpret unknown versions as `no-deployment`.
+- Release Impact remains `schemaVersion: 1`. Catalog v1 remains immutable;
+  the source-candidate validator explicitly selects catalog v1 or v2. Publication
+  and adoption of v2 require reviewed immutable validator pin and migration.
+  Unknown versions must not be interpreted as `no-deployment`.
 - The schemas validate **structure**. A shared validator must also verify repository/target
   references, unique IDs, `buildUnit` existence, safe relative POSIX globs/paths,
   dependency graph, changed files and exact PR HEAD. JSON Schema alone is not proof
   that declared impact is complete or safe.
+
+### Catalog v2 maintenance declaration (source candidate)
+
+Each target explicitly declares a closed `maintenance` object:
+
+```yaml
+maintenance:
+  beginRequired: true
+  stateFreeze: false
+  blockedOperations:
+    - service: registry
+      operation: begin_release
+  notes:
+    - Review affected operations before installation.
+```
+
+This example is illustrative, not an actual registered restriction. The four
+fields are required: `beginRequired` and `stateFreeze` are booleans;
+`blockedOperations` is at most 100 unique literal service/operation pairs;
+`notes` contains at most 20 unique nonblank single-line advisory strings
+(up to 500 characters each). No wildcards, actor grants, target wildcards,
+commands, executable rules or additional fields. A freeze or nonempty
+operation list requires begin; begin may also be mandatory for a reviewed
+exclusive resource even with no operation selector. Empty restrictions and
+beginRequired=false explicitly classify optional begin (notes may remain).
+Non-deployable targets cannot require a hold. Existing resource/environment
+bindings and protected procedures remain the authority for actual scope.
+
+A v1 catalog has no maintenance classification, **not** an implicit
+unrestricted profile. Unknown, unsupported or unbound classifications
+must not allow an affected release. The v2 declaration is not a runtime
+policy, lock, owner approval, installed-state observation or deployment
+authorization. Gateway/Registry must resolve every selector against reviewed
+registered operation and target/resource bindings; global freeze requires
+separate protected controller admission. Untrusted catalog changes cannot
+remove an active hold or weaken a protected floor. Pin the accepted catalog
+revision in an attempt; aggregate independent holds and clear only the
+verified own hold. Actual v2 catalog adoption is deferred until the runtime
+binding and migration are proven. No new runtime authority follows from
+validator PASS. All existing exact HEAD, CI, changed-path, dependency and
+impact rules continue to apply, including catalog edits affecting targets.
 
 ## Required semantics beyond the JSON schemas
 
@@ -540,3 +584,17 @@ Release Board or automatic CD. Any GitHub POST still requires new API contract,
 negative event/policy/receipt/race tests, exact-head CI, trusted Publisher,
 owner-reviewed consumers/webhooks and explicit runtime release. A design-only
 PR remains **SOURCE-CANDIDATE**, not a privileged write acceptance.
+
+### Catalog v2 successor source checkpoint (2026-11-27)
+
+Source-only W1.3: added the explicit maintenance-aware schema and
+version-selecting shared validator; the v1 catalog and Release Impact
+schema snapshots remain unchanged. The local CI adapter selects only
+known versions. The public action worktree contains byte-identical
+shared validator/schema and semantic tests, retaining its label
+projection. Offline release-validator suites: Container 44 PASS, public
+Action 136 PASS, using existing PyYAML 6.0.2/jsonschema 4.23.0.
+Current Approvals worktree v1 catalog also validates (3 build units,
+4 targets). No action publication, caller pin change, catalog conversion
+or live admission. A.3 exact transition and W4 runtime scope proof remain
+required; the successor is not activated.
